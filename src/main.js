@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { LIGHTS, PLAYER, FOG, PALETTE } from './config.js';
 import { U } from './world/shared.js';
+import { Collision } from './player/collision.js';
+import { Player } from './player/controller.js';
+import { Flashlight } from './player/flashlight.js';
 
 const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -25,6 +28,15 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshS
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
+const collision = new Collision();
+const player = new Player(camera, renderer.domElement, collision);
+const flashlight = new Flashlight(scene, camera);
+const overlay = document.getElementById('overlay');
+overlay.addEventListener('click', () => player.controls.lock());
+player.controls.addEventListener('lock', () => overlay.classList.add('hidden'));
+player.controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
+addEventListener('keydown', (e) => { if (e.code === 'KeyF') flashlight.toggle(); });
+
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -33,6 +45,9 @@ addEventListener('resize', () => {
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
-  U.time.value += Math.min(clock.getDelta(), 0.05);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  U.time.value += dt;
+  player.update(dt);
+  flashlight.update(dt);
   renderer.render(scene, camera);
 });
