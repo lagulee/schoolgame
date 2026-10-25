@@ -35,7 +35,7 @@ export function buildProps(root, M, col, ctx) {
   // 앞마당 가로등 3개
   const lamps = [
     makeLamp(g, M, -7, 7.5, { ry: 0.3 }),
-    makeLamp(g, M, 6.6, 8.2, { ry: Math.PI - 0.3 }),
+    makeLamp(g, M, 8.4, -6.2, { ry: Math.PI - 0.5 }),
     makeLamp(g, M, -6.4, -9.6, { ry: -0.6 }),
   ];
   for (const l of lamps) col.circle(l.group.position.x, l.group.position.z, 0.2);

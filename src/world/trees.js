@@ -94,7 +94,7 @@ export function buildShrubs(root, beds, mat, seed = 11) {
     for (let x = b.x0 + 0.5; x < b.x1 - 0.3; x += 0.75) {
       for (let z = b.z0 + 0.5; z < b.z1 - 0.3; z += 0.75) {
         if (R() < 0.25) continue;
-        const s = 0.35 + R() * 0.25;
+        const s = 0.26 + R() * 0.2;
         list.push(mat4(x + (R() - 0.5) * 0.3, 0.3 + s * 0.5, z + (R() - 0.5) * 0.3, R() * 6, s, s * 0.8, s));
         colors.push(new THREE.Color().setHSL(0.27 + R() * 0.06, 0.45, 0.13 + R() * 0.06));
       }

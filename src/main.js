@@ -25,11 +25,10 @@ scene.fog = new THREE.FogExp2(PALETTE.fog, FOG.density);
 const camera = new THREE.PerspectiveCamera(PLAYER.fov, innerWidth / innerHeight, 0.05, 500);
 camera.position.set(...PLAYER.start);
 
-scene.add(new THREE.HemisphereLight(PALETTE.hemiSky, PALETTE.hemiGround, 1));
 
 const collision = new Collision();
 await new Promise((r) => setTimeout(r, 30)); // 로딩 문구가 먼저 그려지도록
-const world = buildWorld(scene, collision);
+const world = buildWorld(scene, collision, renderer);
 document.getElementById('loading').textContent = '';
 const player = new Player(camera, renderer.domElement, collision);
 const flashlight = new Flashlight(scene, camera);
@@ -48,7 +47,7 @@ addEventListener('resize', () => {
 const shot = parseShotParams();
 if (shot) {
   overlay.classList.add('hidden');
-  if (shot.inspect) scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+  world.ctx.lights.setInspect(shot.inspect);
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
   flashlight.setOn(shot.flash);
   flashlight.snap();
