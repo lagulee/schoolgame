@@ -35,7 +35,7 @@ for (const s of SHOTS) {
   await page.goto(`http://localhost:${PORT}/?${q}`);
   await page.waitForFunction(() => window.__READY === true, null, { timeout: 240000 });
   const file = `screenshots/${s.name}${args.suffix || ''}.png`;
-  await page.locator('canvas').screenshot({ path: file });
+  await page.screenshot({ path: file });
   console.log(`${file}  ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 }
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');

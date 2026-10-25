@@ -41,7 +41,7 @@ const world = buildWorld(scene, collision, renderer);
 document.getElementById('loading').textContent = '';
 const player = new Player(camera, renderer.domElement, collision);
 const flashlight = new Flashlight(scene, camera);
-const fx = buildFx(scene, world.ctx, flashlight);
+const fx = buildFx(scene, world.ctx, flashlight, collision);
 const post = new Post(renderer, scene, camera);
 const lights = world.ctx.lights;
 const audio = new AudioSystem(camera, scene);
@@ -154,6 +154,8 @@ if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
   overlay.classList.add('hidden');
   lights.setInspect(shot.inspect);
+  if (shot.noShadow) { lights.setShadows(false); flashlight.spot.castShadow = false; }
+  if (shot.noPost) post.enabled = false;
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
   flashlight.setOn(shot.flash);
   flashlight.snap();
@@ -164,7 +166,10 @@ if (shot) {
   let n = 0;
   renderer.setAnimationLoop(() => {
     step(shot.time, 0);
-    if (++n === shot.frames) window.__READY = true;
+    if (++n === shot.frames) {
+      renderer.setAnimationLoop(null); // 마지막 프레임을 고정한 채 멈춤
+      requestAnimationFrame(() => (window.__READY = true));
+    }
   });
 } else {
   const timer = new THREE.Timer();

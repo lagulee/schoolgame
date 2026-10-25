@@ -13,6 +13,8 @@ export function parseShotParams() {
     time: num('t', 12),
     inspect: q.get('inspect') === '1',
     frames: num('frames', 4),
+    noShadow: q.get('noshadow') === '1',
+    noPost: q.get('nopost') === '1',
     event: q.get('ev'), // lamp | led | figure : 이벤트 상태를 고정해 촬영
   };
 }

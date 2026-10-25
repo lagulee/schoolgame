@@ -69,8 +69,8 @@ export const PLAYER = {
 
 export const LIGHTS = {
   exposure: 0.9,
-  moon: { intensity: 0.42, shadowRange: 30, shadowRes: 1024, offset: [22, 42, 30] },
-  hemi: 0.2,
+  moon: { intensity: 0.95, shadowRange: 30, shadowRes: 1024, offset: [22, 42, 30] },
+  hemi: 0.26,
   lamp: { intensity: 26, distance: 18, decay: 2 },
   entrance: { intensity: 5, distance: 9 },
   green: { intensity: 30, distance: 24 },
@@ -136,5 +136,6 @@ export const SHOTS = [
   { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
   { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
   { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
+  { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
   { name: '06_flashlight_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, flash: 1 },
 ];

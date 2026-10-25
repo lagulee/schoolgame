@@ -123,3 +123,47 @@ export function figureWindowTexture() {
   x.fillRect(0, H * 0.34, W, 9);
   return canvasTexture(c, true, 4);
 }
+
+// 유리 자동문 너머 실내: 청백색 복도 원근(천장 형광등, 신발장 실루엣, 바닥 반사)
+export function doorTexture() {
+  const W = 512;
+  const H = 400;
+  const [c, x] = canvas(W, H);
+  const vx = W * 0.56;
+  const vy = H * 0.42;
+  const g = x.createRadialGradient(vx, vy, 10, vx, vy, W * 0.7);
+  g.addColorStop(0, '#f2f8ff');
+  g.addColorStop(0.35, '#a9c3dc');
+  g.addColorStop(1, '#3d5063');
+  x.fillStyle = g;
+  x.fillRect(0, 0, W, H);
+  // 복도 벽·바닥 원근선
+  x.fillStyle = 'rgba(30,40,52,0.55)';
+  x.beginPath();
+  x.moveTo(0, 0); x.lineTo(vx - 40, vy - 30); x.lineTo(vx - 40, vy + 30); x.lineTo(0, H); x.fill();
+  x.fillStyle = 'rgba(20,28,38,0.45)';
+  x.beginPath();
+  x.moveTo(W, 0); x.lineTo(vx + 40, vy - 30); x.lineTo(vx + 40, vy + 30); x.lineTo(W, H); x.fill();
+  // 신발장 칸
+  x.strokeStyle = 'rgba(10,14,20,0.6)';
+  x.lineWidth = 2;
+  for (let i = 1; i < 8; i++) {
+    const t = i / 8;
+    const xx = t * (vx - 40);
+    x.beginPath();
+    x.moveTo(xx, t * (vy - 30));
+    x.lineTo(xx, H - t * (H - vy - 30));
+    x.stroke();
+  }
+  // 천장 형광등
+  x.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = 0; i < 5; i++) {
+    const t = 1 - i / 6;
+    const w = 70 * t;
+    x.fillRect(vx - w / 2, vy - 30 - 90 * t * t, w, 4 * t + 1);
+  }
+  // 문틀 가운데 이음
+  x.fillStyle = 'rgba(160,170,180,0.9)';
+  x.fillRect(W / 2 - 3, 0, 6, H);
+  return canvasTexture(c, true, 4);
+}

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PALETTE } from '../config.js';
 import { brickMaps, pavingMaps, noiseMaps } from './procedural.js';
-import { windowTexture } from './windowTex.js';
+import { windowTexture, doorTexture } from './windowTex.js';
 
 const STAIN_GLSL = /* glsl */ `
 varying vec3 vWPos;
@@ -106,7 +106,7 @@ export function createMaterials() {
     glassLit: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
       emissiveMap: windowTexture('lit'), emissiveIntensity: 1.5 }),
     door: new THREE.MeshStandardMaterial({ color: 0x0d1418, roughness: 0.08, metalness: 0.3,
-      emissive: PALETTE.entranceLight, emissiveIntensity: 0.5, transparent: true, opacity: 0.92 }),
+      emissive: 0xffffff, emissiveMap: doorTexture(), emissiveIntensity: 0.75 }),
     black: std(0x070707, 0.6),
     metalBox: std(0xbfc2c4, 1, 0.3, { map: panel.map, roughnessMap: panel.roughnessMap }),
     pipe: std(0x8f9497, 0.45, 0.6),

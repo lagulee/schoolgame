@@ -55,7 +55,7 @@ export function buildEntrance(root, M, col) {
   door.rotation.y = -Math.PI / 2;
   door.position.set(wx - 0.05, doorY + 1.2, (dz0 + dz1) / 2);
   g.add(door);
-  const transom = new THREE.Mesh(new THREE.PlaneGeometry(dw, 0.38), M.door);
+  const transom = new THREE.Mesh(new THREE.PlaneGeometry(dw, 0.38), M.glass);
   transom.rotation.y = -Math.PI / 2;
   transom.position.set(wx - 0.05, doorY + 2.71, (dz0 + dz1) / 2);
   g.add(transom);

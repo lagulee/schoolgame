@@ -60,8 +60,8 @@ export function buildLighting(scene, ctx) {
   scene.add(ent);
 
   // 붉은 LED 번짐 (바닥·벽)
-  const red1 = new THREE.PointLight(PALETTE.led, L.led.intensity, L.led.distance, 2);
-  red1.position.copy(ctx.entrance.signPos).add(new THREE.Vector3(-0.4, -0.4, 0));
+  const red1 = new THREE.PointLight(PALETTE.led, L.led.intensity * 1.6, L.led.distance * 1.2, 2);
+  red1.position.copy(ctx.entrance.signPos).add(new THREE.Vector3(-0.6, -0.9, 0));
   red1.userData.base = red1.intensity;
   ctx.entrance.sign.light = red1;
   const red2 = new THREE.PointLight(PALETTE.led, L.led.intensity * 1.4, L.led.distance * 1.4, 2);

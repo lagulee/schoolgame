@@ -36,7 +36,7 @@ export function buildSurroundings(root, M, col, ctx) {
   const R = rng(21);
   const spots = [[-7, -35], [6.8, -40.5], [-1.2, -47], [-12, -42], [11, -33], [-15, -31.5], [15, -44], [3, -52], [-9, -50]];
   for (const [x, z] of spots) parkTrees.push({ x, z, h: 4.6 + R() * 1.6, r: 1.6 + R() * 0.6 });
-  const park = buildTrees(g, parkTrees, { palette: PARK_GREEN, trunkMat: M.trunk, emissive: PALETTE.parkGreen, emissiveIntensity: 0.16 });
+  const park = buildTrees(g, parkTrees, { palette: PARK_GREEN, trunkMat: M.trunk, emissive: PALETTE.parkGreen, emissiveIntensity: 0.3 });
   for (const t of parkTrees) col.circle(t.x, t.z, 0.25);
 
   buildShrubs(g, ctx.yard.beds, M.shrub ?? M.hedge);
@@ -103,7 +103,7 @@ function buildShops(g, M, fenceZ) {
     addBox(g, M.shopWall ?? M.concrete, w - 0.2, h, d, x + w / 2, 0, z0 + d / 2, { tile: 3 });
     // 1층 쇼윈도 (어두운 발광)
     const c = new THREE.Color(neon[Math.floor(R() * neon.length)]);
-    const glow = new THREE.MeshBasicMaterial({ color: c.clone().multiplyScalar(0.25 + R() * 0.25) });
+    const glow = new THREE.MeshBasicMaterial({ color: c.clone().multiplyScalar(0.1 + R() * 0.12) });
     const win = new THREE.Mesh(new THREE.PlaneGeometry(w - 1.2, 2.2), glow);
     win.position.set(x + w / 2, 1.5, z0 - 0.01);
     win.rotation.y = Math.PI;

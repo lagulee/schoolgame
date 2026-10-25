@@ -53,6 +53,39 @@ export class Collision {
     }
   }
 
+  // xz 평면 광선 → 첫 충돌까지 거리 (손전등 원뿔 길이용)
+  rayDistance(ox, oz, dx, dz, maxD) {
+    let best = maxD;
+    for (const b of this.boxes) {
+      let t0 = 0;
+      let t1 = best;
+      for (const [o, d, lo, hi] of [[ox, dx, b.x0, b.x1], [oz, dz, b.z0, b.z1]]) {
+        if (Math.abs(d) < 1e-6) {
+          if (o < lo || o > hi) { t0 = Infinity; break; }
+        } else {
+          let a = (lo - o) / d;
+          let c = (hi - o) / d;
+          if (a > c) [a, c] = [c, a];
+          t0 = Math.max(t0, a);
+          t1 = Math.min(t1, c);
+        }
+      }
+      if (t0 <= t1 && t0 > 0 && t0 < best) best = t0;
+    }
+    for (const c of this.circles) {
+      const fx = ox - c.x;
+      const fz = oz - c.z;
+      const a = dx * dx + dz * dz;
+      const bb = 2 * (fx * dx + fz * dz);
+      const cc = fx * fx + fz * fz - c.r * c.r;
+      const disc = bb * bb - 4 * a * cc;
+      if (disc < 0 || a < 1e-9) continue;
+      const t = (-bb - Math.sqrt(disc)) / (2 * a);
+      if (t > 0 && t < best) best = t;
+    }
+    return best;
+  }
+
   floorHeight(x, z) {
     let h = 0;
     for (const f of this.floors) {

@@ -17,7 +17,7 @@ function fogLayer(cx, cz, w, d, y, density, radius, speed) {
     side: THREE.DoubleSide,
     uniforms: {
       uTime: U.time,
-      uColor: { value: new THREE.Color(0x6d7a8c) },
+      uColor: { value: new THREE.Color(0x56616f) },
       uDensity: { value: density },
       uCenter: { value: new THREE.Vector2(cx, cz) },
       uRadius: { value: radius },
@@ -87,7 +87,7 @@ function coneGeo(length, angle) {
   return g;
 }
 
-export function buildFx(scene, ctx, flashlight) {
+export function buildFx(scene, ctx, flashlight, collision) {
   const groups = { 0: new THREE.Group(), 1: new THREE.Group(), 2: new THREE.Group() };
   for (const g of Object.values(groups)) scene.add(g);
   const fogMats = [];
@@ -139,7 +139,7 @@ export function buildFx(scene, ctx, flashlight) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     uniforms: {
-      uTime: U.time, uCenter: { value: new THREE.Vector3() }, uBox: { value: 8 },
+      uTime: U.time, uCenter: { value: new THREE.Vector3() }, uBox: { value: 5 },
       uSpotPos: { value: new THREE.Vector3() }, uSpotDir: { value: new THREE.Vector3(0, 0, -1) },
       uCos: { value: Math.cos(F.angle) }, uOn: { value: 1 }, uPx: { value: 1 },
     },
@@ -154,17 +154,17 @@ export function buildFx(scene, ctx, flashlight) {
         vec3 d = w - uSpotPos;
         float dist = length(d);
         float c = dot(d / max(dist, 1e-3), uSpotDir);
-        vA = smoothstep(uCos, mix(uCos, 1.0, 0.35), c) * smoothstep(7.5, 1.0, dist) * smoothstep(0.3, 0.9, dist) * uOn;
+        vA = smoothstep(uCos, mix(uCos, 1.0, 0.35), c) * smoothstep(4.8, 1.0, dist) * smoothstep(0.3, 0.8, dist) * uOn;
         vA *= 0.5 + 0.5 * sin(uTime * 1.7 + aSeed * 5.0);
         vec4 mv = viewMatrix * vec4(w, 1.0);
-        gl_PointSize = uPx * 22.0 / -mv.z;
+        gl_PointSize = uPx * 34.0 / -mv.z;
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
       varying float vA;
       void main() {
         float r = length(gl_PointCoord - 0.5);
-        float a = smoothstep(0.5, 0.0, r) * vA * 0.55;
+        float a = smoothstep(0.5, 0.0, r) * vA * 0.9;
         gl_FragColor = vec4(vec3(1.0, 0.95, 0.85) * a, 1.0);
       }`,
   });
@@ -240,8 +240,16 @@ export function buildFx(scene, ctx, flashlight) {
     update(camera) {
       const on = flashlight.on;
       cone.visible = on;
-      cone.position.copy(flashlight.spot.position);
-      cone.lookAt(tmp.copy(flashlight.spot.position).add(flashlight.dir));
+      // 벽·바닥에 닿는 곳에서 원뿔이 0 으로 사라지도록 길이를 맞춘다 (딱딱한 단면 방지)
+      const sp = flashlight.spot.position;
+      const d = flashlight.dir;
+      const hz = Math.hypot(d.x, d.z);
+      let len = coneLen;
+      if (hz > 1e-3) len = Math.min(len, collision.rayDistance(sp.x, sp.z, d.x / hz, d.z / hz, coneLen * hz) / hz);
+      if (d.y < -1e-3) len = Math.min(len, sp.y / -d.y);
+      cone.scale.setScalar(Math.max(0.3, len * 1.15) / coneLen);
+      cone.position.copy(sp);
+      cone.lookAt(tmp.copy(sp).add(d));
       const u = dustMat.uniforms;
       u.uCenter.value.copy(camera.position);
       u.uSpotPos.value.copy(flashlight.spot.position);
