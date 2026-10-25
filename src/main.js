@@ -4,6 +4,7 @@ import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
 import { Flashlight } from './player/flashlight.js';
+import { buildWorld } from './world/world.js';
 
 const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -24,11 +25,9 @@ const camera = new THREE.PerspectiveCamera(PLAYER.fov, innerWidth / innerHeight,
 camera.position.set(...PLAYER.start);
 
 scene.add(new THREE.HemisphereLight(PALETTE.hemiSky, PALETTE.hemiGround, 1));
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x333333 }));
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
 
 const collision = new Collision();
+const world = buildWorld(scene, collision);
 const player = new Player(camera, renderer.domElement, collision);
 const flashlight = new Flashlight(scene, camera);
 const overlay = document.getElementById('overlay');
@@ -49,5 +48,6 @@ renderer.setAnimationLoop(() => {
   U.time.value += dt;
   player.update(dt);
   flashlight.update(dt);
+  world.update(U.time.value, dt, camera);
   renderer.render(scene, camera);
 });
