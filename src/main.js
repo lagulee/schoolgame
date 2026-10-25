@@ -8,6 +8,7 @@ import { buildWorld } from './world/world.js';
 import { buildFx } from './world/fx.js';
 import { Post } from './post/composer.js';
 import { AudioSystem } from './audio/audio.js';
+import { Director } from './events/director.js';
 import { parseShotParams } from './debug/screenshot.js';
 
 const shot = parseShotParams();
@@ -46,6 +47,11 @@ audio.addLedBuzz(world.ctx.entrance.signPos);
 audio.addLedBuzz(world.ctx.sur.sign.group.position);
 for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
+const director = new Director({
+  scene, camera, lights, audio,
+  signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
+  litInfo: world.ctx.bld.litInfo,
+});
 
 const state = { quality: 'high', inspect: false, fog: FOG.density };
 
@@ -101,6 +107,7 @@ addEventListener('keydown', (e) => {
     case 'Digit1': applyQuality('low'); toast('품질 Low'); break;
     case 'Digit2': applyQuality('mid'); toast('품질 Mid'); break;
     case 'Digit3': applyQuality('high'); toast('품질 High'); break;
+    case 'KeyE': director.force(); toast(`이벤트: ${director.status}`); break;
     case 'KeyM': toast(audio.toggleMute() ? '음소거' : '소리 켜짐'); break;
     case 'KeyH': toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`); break;
     default:
@@ -121,6 +128,7 @@ function step(t, dt) {
   U.time.value = t;
   if (dt > 0) player.update(dt);
   flashlight.update(dt);
+  if (!shot) director.update(t, dt);
   world.update(t, dt, camera);
   fx.update(camera);
   audio.update();
@@ -134,6 +142,10 @@ if (shot) {
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
   flashlight.setOn(shot.flash);
   flashlight.snap();
+  if (shot.event) {
+    director.t = shot.time;
+    director.trigger(shot.event);
+  }
   let n = 0;
   renderer.setAnimationLoop(() => {
     step(shot.time, 0);

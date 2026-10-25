@@ -68,26 +68,6 @@ export function windowTexture(kind) {
   return canvasTexture(c, true, 4);
 }
 
-// 서 있는 사람 실루엣 (알파)
-export function silhouetteTexture() {
-  const [c, x] = canvas(128, 256);
-  x.fillStyle = '#000';
-  x.beginPath();
-  x.ellipse(64, 46, 17, 21, 0, 0, Math.PI * 2);
-  x.fill();
-  x.beginPath();
-  x.moveTo(44, 70);
-  x.quadraticCurveTo(64, 62, 84, 70);
-  x.lineTo(98, 120);
-  x.lineTo(92, 256);
-  x.lineTo(36, 256);
-  x.lineTo(30, 120);
-  x.closePath();
-  x.fill();
-  const t = canvasTexture(c, true, 1);
-  return t;
-}
-
 // 빛무리 스프라이트 (방사형 그라데이션)
 export function haloTexture() {
   const [c, x] = canvas(128, 128);
@@ -113,4 +93,33 @@ export function puddleTexture(seed = 1) {
     x.fill();
   }
   return canvasTexture(c, false, 1);
+}
+
+// 불 켜진 창 위에 겹치는 실루엣: 창 텍스처와 같은 비율·창살 위치로 그려 창살이 사람 앞에 오게 한다
+export function figureWindowTexture() {
+  const W = 256;
+  const H = 336;
+  const [c, x] = canvas(W, H);
+  x.fillStyle = 'rgba(0,0,0,0.96)';
+  const cx = W * 0.3;
+  x.beginPath();
+  x.ellipse(cx, H * 0.27, 22, 27, 0, 0, Math.PI * 2);
+  x.fill();
+  x.beginPath();
+  x.moveTo(cx - 30, H * 0.36);
+  x.quadraticCurveTo(cx, H * 0.33, cx + 30, H * 0.36);
+  x.lineTo(cx + 48, H * 0.55);
+  x.lineTo(cx + 44, H);
+  x.lineTo(cx - 44, H);
+  x.lineTo(cx - 48, H * 0.55);
+  x.closePath();
+  x.fill();
+  x.fillStyle = '#e8ebee';
+  x.fillRect(0, 0, W, 10);
+  x.fillRect(0, H - 10, W, 10);
+  x.fillRect(0, 0, 10, H);
+  x.fillRect(W - 10, 0, 10, H);
+  x.fillRect(W / 2 - 5, 0, 10, H);
+  x.fillRect(0, H * 0.34, W, 9);
+  return canvasTexture(c, true, 4);
 }
