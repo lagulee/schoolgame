@@ -7,6 +7,7 @@ import { Flashlight } from './player/flashlight.js';
 import { buildWorld } from './world/world.js';
 import { buildFx } from './world/fx.js';
 import { Post } from './post/composer.js';
+import { AudioSystem } from './audio/audio.js';
 import { parseShotParams } from './debug/screenshot.js';
 
 const shot = parseShotParams();
@@ -40,6 +41,11 @@ const flashlight = new Flashlight(scene, camera);
 const fx = buildFx(scene, world.ctx, flashlight);
 const post = new Post(renderer, scene, camera);
 const lights = world.ctx.lights;
+const audio = new AudioSystem(camera, scene);
+audio.addLedBuzz(world.ctx.entrance.signPos);
+audio.addLedBuzz(world.ctx.sur.sign.group.position);
+for (const l of lights.yardLamps) audio.addLampBuzz(l);
+player.onStep = (surface, running) => audio.step(surface, running);
 
 const state = { quality: 'high', inspect: false, fog: FOG.density };
 
@@ -75,7 +81,10 @@ const onOff = (v) => (v ? '켜짐' : '꺼짐');
 
 // 조작 키
 const overlay = document.getElementById('overlay');
-overlay.addEventListener('click', () => player.controls.lock());
+overlay.addEventListener('click', () => {
+  audio.start();
+  player.controls.lock();
+});
 player.controls.addEventListener('lock', () => overlay.classList.add('hidden'));
 player.controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
 
@@ -92,6 +101,7 @@ addEventListener('keydown', (e) => {
     case 'Digit1': applyQuality('low'); toast('품질 Low'); break;
     case 'Digit2': applyQuality('mid'); toast('품질 Mid'); break;
     case 'Digit3': applyQuality('high'); toast('품질 High'); break;
+    case 'KeyM': toast(audio.toggleMute() ? '음소거' : '소리 켜짐'); break;
     case 'KeyH': toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`); break;
     default:
   }
@@ -113,6 +123,7 @@ function step(t, dt) {
   flashlight.update(dt);
   world.update(t, dt, camera);
   fx.update(camera);
+  audio.update();
   post.render(t);
 }
 
