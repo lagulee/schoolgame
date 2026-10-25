@@ -32,8 +32,8 @@ npm run preview    # 빌드 결과 확인
 
 ## 배포 (GitHub Pages)
 
-`.github/workflows/pages.yml` 이 `main` 또는 `ccr-9ecd15ef-idntk4` 브랜치에 푸시될 때마다 빌드해 배포합니다.
-최초 1회 설정: 저장소 **Settings → Pages → Source: GitHub Actions**, 그리고 **Settings → Environments → github-pages → Deployment branches** 에 위 브랜치 허용.
+`.github/workflows/pages.yml` 이 `main` 에 푸시될 때마다 `npm run build` 결과(`dist/`)를 배포합니다.
+설정: 저장소 **Settings → Pages → Source: GitHub Actions** (이미 설정됨). 다른 브랜치에서도 배포하려면 워크플로의 `branches` 에 추가하고 **Settings → Environments → github-pages → Deployment branches** 에서 그 브랜치를 허용해야 합니다.
 주소: `https://lagulee.github.io/schoolgame/`
 
 ## 조작
