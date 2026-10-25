@@ -104,7 +104,7 @@ export function createMaterials() {
     glass: std(0xffffff, 1, 0, { ...glassBase, map: windowTexture('dark') }),
     glassCurtain: std(0xffffff, 1, 0, { ...glassBase, map: windowTexture('curtain') }),
     glassLit: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
-      emissiveMap: windowTexture('lit'), emissiveIntensity: 2.4 }),
+      emissiveMap: windowTexture('lit'), emissiveIntensity: 1.5 }),
     door: new THREE.MeshStandardMaterial({ color: 0x0d1418, roughness: 0.08, metalness: 0.3,
       emissive: PALETTE.entranceLight, emissiveIntensity: 0.5, transparent: true, opacity: 0.92 }),
     black: std(0x070707, 0.6),

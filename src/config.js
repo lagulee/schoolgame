@@ -73,9 +73,9 @@ export const LIGHTS = {
   hemi: 0.2,
   lamp: { intensity: 26, distance: 18, decay: 2 },
   entrance: { intensity: 5, distance: 9 },
-  green: { intensity: 22, distance: 22 },
-  led: { intensity: 4.5, distance: 9 },
-  flashlight: { intensity: 38, angle: Math.PI / 7, penumbra: 0.5, decay: 2, distance: 25, shadowRes: 1024,
+  green: { intensity: 30, distance: 24 },
+  led: { intensity: 8, distance: 11 },
+  flashlight: { intensity: 26, angle: Math.PI / 7, penumbra: 0.5, decay: 2, distance: 25, shadowRes: 1024,
     offset: [0.22, -0.24, -0.15], lag: 9 },
   envIntensity: 0.2,
   inspectBoost: 6, // 점검 모드 hemi 배율
