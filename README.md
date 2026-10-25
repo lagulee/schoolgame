@@ -68,6 +68,10 @@ npm run touch                         # 모바일 에뮬레이션: 조이스틱�
 
 Playwright 브라우저가 없다면 `npx playwright install chromium` 을 먼저 실행하세요. headless Chromium 은 `--use-angle=swiftshader --ignore-gpu-blocklist` 플래그로 WebGL 을 켭니다.
 
+## 개발 규칙
+
+작업·푸시 규칙은 [`CLAUDE.md`](CLAUDE.md) 에 있다. 요약: 빌드·`smoke`·`touch` 검증을 통과하면 `main` 에 병합·푸시하고, 실험적인 수정은 먼저 묻는다.
+
 ## 구조
 
 ```
