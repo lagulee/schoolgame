@@ -9,7 +9,8 @@ import { buildFx } from './world/fx.js';
 import { Post } from './post/composer.js';
 import { AudioSystem } from './audio/audio.js';
 import { Director } from './events/director.js';
-import { parseShotParams } from './debug/screenshot.js';
+import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
+import { Hud } from './debug/hud.js';
 
 const shot = parseShotParams();
 
@@ -23,6 +24,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
+renderer.info.autoReset = false; // 후처리 패스까지 합산해 HUD 에 표시
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -53,6 +55,7 @@ const director = new Director({
   litInfo: world.ctx.bld.litInfo,
 });
 
+const hud = new Hud(renderer);
 const state = { quality: 'high', inspect: false, fog: FOG.density };
 
 function applyQuality(name) {
@@ -109,6 +112,8 @@ addEventListener('keydown', (e) => {
     case 'Digit3': applyQuality('high'); toast('품질 High'); break;
     case 'KeyE': director.force(); toast(`이벤트: ${director.status}`); break;
     case 'KeyM': toast(audio.toggleMute() ? '음소거' : '소리 켜짐'); break;
+    case 'Backquote': hud.toggle(); break;
+    case 'KeyP': requestScreenshot(); toast('스크린샷 저장'); break;
     case 'KeyH': toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`); break;
     default:
   }
@@ -125,6 +130,7 @@ applyQuality(shot ? shot.quality : 'high');
 setFog(FOG.density);
 
 function step(t, dt) {
+  renderer.info.reset();
   U.time.value = t;
   if (dt > 0) player.update(dt);
   flashlight.update(dt);
@@ -133,7 +139,16 @@ function step(t, dt) {
   fx.update(camera);
   audio.update();
   post.render(t);
+  captureIfRequested(renderer.domElement);
+  if (!shot) {
+    hud.update({
+      quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
+      fog: state.fog, bob: player.bob.level, flags: post.flags, flash: flashlight.on, inspect: state.inspect,
+      muted: audio.muted, events: director.log,
+    });
+  }
 }
+window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player };
 
 if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
