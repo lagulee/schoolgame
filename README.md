@@ -32,6 +32,8 @@ npm run preview    # 빌드 결과 확인
 
 ## 배포 (GitHub Pages)
 
+시작 화면 맨 아래에 **버전**이 표시된다: `v<커밋 해시> · <빌드 시각> KST`. 배포된 화면의 해시가 방금 푸시한 커밋(`git log --oneline -1`)과 같으면 새 배포가 반영된 것이다. 해시 끝의 `+` 는 저장 안 된 변경이 있는 로컬 빌드, 로컬 개발 서버는 `dev · <해시>` 로 표시된다. (`vite.config.js` 의 `define` 으로 빌드할 때 주입)
+
 `.github/workflows/pages.yml` 이 `main` 에 푸시될 때마다 `npm run build` 결과(`dist/`)를 배포합니다.
 설정: 저장소 **Settings → Pages → Source: GitHub Actions** (이미 설정됨). 다른 브랜치에서도 배포하려면 워크플로의 `branches` 에 추가하고 **Settings → Environments → github-pages → Deployment branches** 에서 그 브랜치를 허용해야 합니다.
 주소: `https://lagulee.github.io/schoolgame/`

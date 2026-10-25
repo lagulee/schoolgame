@@ -71,7 +71,8 @@ await dbg(() => window.__DEBUG.player.setView([0, 1.6, 12], 0, 0));
 const p0 = await dbg(() => window.__DEBUG.pos());
 await touch('touchStart', 2, c.x, c.y);
 await touch('touchMove', 2, c.x, c.y - c.R * 0.7);
-await page.waitForTimeout(5000);
+// 프레임이 느린 환경에서도 안정적이도록 고정 대기 대신 이동량을 폴링한다
+await page.waitForFunction((z0) => window.__DEBUG.pos()[2] < z0 - 0.3, p0[2], { timeout: 40000 }).catch(() => {});
 const st = await dbg(() => ({ run: window.__DEBUG.player.running, an: window.__DEBUG.player.analog, pos: window.__DEBUG.pos() }));
 check('반쯤 밀면 걷기 (달리기 아님)', st.an && !st.run, JSON.stringify(st.an));
 check('조이스틱 위로 → 북쪽(−z)으로 이동', st.pos[2] < p0[2] - 0.2, `(z ${p0[2]} → ${st.pos[2]})`);

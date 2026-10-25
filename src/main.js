@@ -13,6 +13,9 @@ import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/
 import { Hud } from './debug/hud.js';
 import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
 
+// 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
+document.getElementById('version').textContent = __APP_VERSION__;
+
 const shot = parseShotParams();
 
 // 렌더러
