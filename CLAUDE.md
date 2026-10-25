@@ -6,6 +6,7 @@
 ## 현재 상태 (요약)
 
 - 명세 S1~S14 구현 완료, 시각 검증 3회 수행. 상세 이력·결정 이유·한계·다음 후보는 [`PROGRESS.md`](PROGRESS.md).
+- 현재 버전 `v1.0` (시작 화면에 `v1.0` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리.
 - 추가 완료: GitHub Pages 배포(`main` 푸시 → `dist/`), 터치 조작(조이스틱·드래그·🔦·접이식 메뉴), 이 규칙 문서.
 - 테스트: `npm run build` / `smoke`(키보드·충돌) / `touch`(터치) / `shots`(스크린샷). 모두 통과 상태.
 - **미검증**: 실제 폰·GPU 에서의 FPS, 터치 감도, 소리. headless 환경에서는 측정할 수 없었다.
@@ -21,12 +22,13 @@
    - `npm run touch` (터치 조작)
    - 외관·조명을 바꿨다면 `npm run build && npm run shots` 로 스크린샷을 찍어 눈으로 확인한다.
 2. **커밋** — 의미 있는 단위로 한국어 메시지, 시스템이 지정한 attribution 줄을 붙인다.
-3. **main 병합** — 작업 브랜치에서 `main` 으로 병합한다.
+3. **버전 올리기** — `main` 에 반영할 때마다 시작 화면 버전(`v1.0`)을 올린다. `npm version minor --no-git-tag-version` (큰 기능 추가는 `major`). `package.json` 이 유일한 기준이고 `package-lock.json` 도 같이 바뀐다. 버전 변경은 그 커밋에 함께 넣는다. (작업 브랜치에만 푸시하는 중간 커밋에서는 올리지 않는다.)
+4. **main 병합** — 작업 브랜치에서 `main` 으로 병합한다.
    - `git fetch origin main` 후 `git merge origin/main` 으로 작업 브랜치에 먼저 합친다. rebase·amend·force-push 는 하지 않는다.
    - 충돌은 양쪽 의도를 보존해 해결한다. 같은 로직을 서로 다르게 바꾼 충돌은 임의로 고르지 말고 묻는다.
    - `main` 에서 새 변경이 들어왔다면 1번 검증을 다시 한다.
    - 그다음 `git push origin HEAD:main` (fast-forward) 과 `git push -u origin <작업 브랜치>` 를 한다.
-4. **보고** — 푸시한 커밋, 검증 결과, 공개 사이트(`https://lagulee.github.io/schoolgame/`)가 곧 갱신된다는 점, Actions 탭에서 배포 확인이 필요하다는 점을 알린다.
+5. **보고** — 푸시한 커밋, 새 버전 번호, 검증 결과, 공개 사이트(`https://lagulee.github.io/schoolgame/`)가 곧 갱신된다는 점, Actions 탭에서 배포 확인이 필요하다는 점을 알린다.
 
 ### 푸시 전에 먼저 물어보는 경우
 
