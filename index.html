@@ -1,18 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Game</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>밤 학교 3D 룩 데모</title>
   <style>
-    body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; background: #f4f6fb; }
-    main { text-align: center; }
+    html, body { margin: 0; height: 100%; background: #05070b; overflow: hidden; color: #cfd6e0;
+      font-family: system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; }
+    #app canvas { display: block; }
+    #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, rgba(10,14,22,0.82), rgba(2,3,6,0.96)); cursor: pointer; z-index: 10; }
+    #overlay.hidden { display: none; }
+    .card { max-width: 560px; padding: 28px 32px; text-align: center; }
+    .card h1 { font-weight: 600; letter-spacing: 0.08em; margin: 0 0 10px; font-size: 26px; color: #e6ebf2; }
+    .warn { color: #e0b98a; font-size: 15px; margin: 6px 0 18px; }
+    .start { font-size: 18px; color: #fff; margin: 16px 0; animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 0.45; } }
+    table.keys { margin: 0 auto; border-collapse: collapse; font-size: 13px; color: #9aa6b6; }
+    table.keys td { padding: 2px 10px; text-align: left; }
+    table.keys td:nth-child(odd) { color: #dfe5ee; font-family: ui-monospace, monospace; text-align: right; }
+    #loading { margin-top: 12px; font-size: 13px; color: #7f8a99; }
+    #hud { position: fixed; top: 8px; left: 8px; z-index: 5; font: 12px/1.45 ui-monospace, monospace;
+      color: #b8f0c0; background: rgba(0,0,0,0.55); padding: 6px 9px; border-radius: 4px; white-space: pre; display: none; }
+    #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 6; font-size: 13px;
+      color: #dfe5ee; background: rgba(0,0,0,0.55); padding: 5px 12px; border-radius: 4px; opacity: 0; transition: opacity 0.4s; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>School Game</h1>
-    <p>GitHub Pages 배포가 정상적으로 동작합니다.</p>
-  </main>
+  <div id="app"></div>
+  <div id="overlay">
+    <div class="card">
+      <h1>밤 학교 · 3D 룩 데모</h1>
+      <div class="warn">헤드폰 권장 · 어두운 장면 · 약한 깜빡임 포함</div>
+      <div class="start">클릭하여 시작</div>
+      <table class="keys">
+        <tr><td>WASD / Shift</td><td>이동 / 달리기</td><td>F</td><td>손전등</td></tr>
+        <tr><td>마우스</td><td>시점 (ESC 해제)</td><td>H</td><td>헤드밥 감소·끔</td></tr>
+        <tr><td>B / G / V</td><td>블룸 / 그레인 / 비네팅</td><td>M</td><td>음소거</td></tr>
+        <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>E</td><td>이벤트 강제 발동</td></tr>
+        <tr><td>[ ]</td><td>안개 밀도 − / +</td><td>L</td><td>점검 모드</td></tr>
+        <tr><td>P</td><td>스크린샷 저장</td><td>~</td><td>디버그 HUD</td></tr>
+      </table>
+      <div id="loading">텍스처 생성 중…</div>
+    </div>
+  </div>
+  <div id="hud"></div>
+  <div id="toast"></div>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
