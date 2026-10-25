@@ -70,7 +70,7 @@ Playwright 브라우저가 없다면 `npx playwright install chromium` 을 먼�
 
 ## 개발 규칙
 
-작업·푸시 규칙은 [`CLAUDE.md`](CLAUDE.md) 에 있다. 요약: 빌드·`smoke`·`touch` 검증을 통과하면 `main` 에 병합·푸시하고, 실험적인 수정은 먼저 묻는다.
+작업·푸시 규칙은 [`CLAUDE.md`](CLAUDE.md), 진행 기록은 [`PROGRESS.md`](PROGRESS.md) 에 있다. 요약: 빌드·`smoke`·`touch` 검증을 통과하면 `main` 에 병합·푸시하고, 실험적인 수정은 먼저 묻는다.
 
 ## 구조
 

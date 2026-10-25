@@ -92,7 +92,8 @@ await touch('touchMove', 2, c.x, c.y - c.R * 0.6);
 const yaw2 = await dbg(() => window.__DEBUG.player.camera.rotation.y);
 await touch('touchStart', 3, 600, 140);
 await touch('touchMove', 3, 680, 140);
-await page.waitForTimeout(1200); // SwiftShader 는 프레임이 느려 여유를 둔다
+// SwiftShader 는 메인 스레드가 오래 막혀 이벤트 처리가 늦을 수 있어, 고정 대기 대신 조건을 폴링한다
+await page.waitForFunction((y0) => Math.abs(window.__DEBUG.player.camera.rotation.y - y0) > 0.2, yaw2, { timeout: 30000 }).catch(() => {});
 const both = await dbg(() => ({ an: window.__DEBUG.player.analog, yaw: window.__DEBUG.player.camera.rotation.y }));
 check('멀티터치: 이동 중에도 시점 회전', both.an && Math.abs(both.yaw - yaw2) > 0.2, JSON.stringify({ ...both, yaw2 }));
 await touch('touchEnd');

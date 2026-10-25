@@ -3,6 +3,14 @@
 밤 학교 3D 룩 데모(Vite + Three.js). 설계는 `DEMO_SPEC.md`, 가정·한계는 `NOTES.md`, 실행법은 `README.md` 에 있다.
 `main` 에 푸시되면 GitHub Pages 가 자동 배포하므로 **`main` 은 곧 공개 사이트**다.
 
+## 현재 상태 (요약)
+
+- 명세 S1~S14 구현 완료, 시각 검증 3회 수행. 상세 이력·결정 이유·한계·다음 후보는 [`PROGRESS.md`](PROGRESS.md).
+- 추가 완료: GitHub Pages 배포(`main` 푸시 → `dist/`), 터치 조작(조이스틱·드래그·🔦·접이식 메뉴), 이 규칙 문서.
+- 테스트: `npm run build` / `smoke`(키보드·충돌) / `touch`(터치) / `shots`(스크린샷). 모두 통과 상태.
+- **미검증**: 실제 폰·GPU 에서의 FPS, 터치 감도, 소리. headless 환경에서는 측정할 수 없었다.
+- 작업을 마치면 `PROGRESS.md` 의 타임라인·한계·다음 후보를 갱신한다.
+
 ## main 자동 반영 규칙
 
 수정 요청을 마칠 때마다 아래 순서로 `main` 까지 반영한다. (소유자가 정한 상시 지침이다.)
