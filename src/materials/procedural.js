@@ -146,3 +146,20 @@ export function noiseMaps(kind, size = 512) {
   });
   return toMaps(gen, p.nstr);
 }
+
+// 나무껍질 512²: 세로로 갈라진 홈과 융기. 높이 → 법선, 홈은 더 거칠다.
+export function barkMaps(seed = 31, size = 512) {
+  const N = makeNoise(seed);
+  const gen = generate(size, (x, y, u, v, o) => {
+    const ridge = N.aniso(u, v, 12, 2) * 0.6 + N.aniso(u, v, 34, 5) * 0.4;
+    const f = N.fbm(u, v, 16, 3);
+    const crest = sstep(0.38, 0.6, ridge);
+    const k = 0.5 + crest * 0.55 + f * 0.3;
+    o.r = 0x4c * k;
+    o.g = 0x3b * k;
+    o.b = 0x2e * k;
+    o.h = 0.25 + crest * 0.6 + f * 0.12;
+    o.rough = 0.82 + (1 - crest) * 0.15;
+  });
+  return toMaps(gen, 3.2);
+}

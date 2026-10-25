@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EVENTS, FIGURE_WINDOW, DIM } from '../config.js';
+import { EVENTS, FIGURE_WINDOW, DIM, WINDOW_LOOK } from '../config.js';
 import { figureWindowTexture } from '../materials/windowTex.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -28,7 +28,7 @@ export class Director {
     // 3층 불 켜진 창의 실루엣
     const info = litInfo[FIGURE_WINDOW];
     const W = DIM.window;
-    const mat = new THREE.MeshBasicMaterial({ map: figureWindowTexture(), transparent: true, color: new THREE.Color(1.5, 1.5, 1.5), opacity: 1 });
+    const mat = new THREE.MeshBasicMaterial({ map: figureWindowTexture(), transparent: true, color: new THREE.Color().setScalar(WINDOW_LOOK.litEmissive), opacity: 1 });
     this.figure = new THREE.Mesh(new THREE.PlaneGeometry(W.w, W.h), mat);
     this.figure.position.copy(info.pos);
     this.figure.rotation.y = info.ry;

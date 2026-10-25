@@ -50,7 +50,7 @@ export function buildLighting(scene, ctx) {
   out.yardLamps = out.lamps.slice(0, ctx.props.lamps.length);
 
   // 필로티 너머 초록 (공원 쪽 보조광) → 붉은 전광판과 보색 대비
-  const g2 = new THREE.PointLight(PALETTE.parkGreen, L.green.intensity * 0.8, L.green.distance, 2);
+  const g2 = new THREE.PointLight(PALETTE.parkGreen, L.green.intensity * 1.0, L.green.distance, 2);
   g2.position.set(0.5, 3.2, -31.5);
   scene.add(g2);
 

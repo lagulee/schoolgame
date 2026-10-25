@@ -149,7 +149,7 @@ export class FacadeKit {
     add(box, M.granite, L.plinth);
     add(box, M.curb, L.coping);
     add(box, M.frame, L.frame);
-    add(box, M.curb, L.sill);
+    add(box, M.sill, L.sill);
     add(plane, M.glass, L.glass, false);
     add(plane, M.glassCurtain, L.curtain, false);
     this.litMesh = add(plane, M.glassLit, L.lit, false);

@@ -27,6 +27,17 @@ export const PALETTE = {
   exitSign: 0x2fe07a,
 };
 
+// 창문 밝기: 달빛에 하얗게 뜨던 창틀·창살을 낮은 회색조로, 불 켜진 창은 하얗게 날아가지 않게
+export const WINDOW_LOOK = {
+  frameColor: 0x8d9195, // 외벽 창틀 (기존 0xe9ecef)
+  mullion: '#8e949a', // 유리 안쪽 창살
+  litEmissive: 0.55, // 불 켜진 창 발광 세기 (기존 1.5)
+  litTop: '#c9dff0',
+  litBottom: '#7f9fbd',
+  glassEnv: 0.8, // 유리 환경 반사 (기존 1.6)
+  sill: 0x8f8b84,
+};
+
 export const DIM = {
   floorH: 3.6,
   floors: 5,
@@ -74,7 +85,7 @@ export const LIGHTS = {
   hemi: 0.26,
   lamp: { intensity: 26, distance: 18, decay: 2 },
   entrance: { intensity: 5, distance: 9 },
-  green: { intensity: 30, distance: 24 },
+  green: { intensity: 90, distance: 34 },
   led: { intensity: 8, distance: 11 },
   flashlight: { intensity: 26, angle: Math.PI / 7, penumbra: 0.5, decay: 2, distance: 25, shadowRes: 1024,
     offset: [0.22, -0.24, -0.15], lag: 9 },
@@ -137,6 +148,7 @@ export const SHOTS = [
   { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
   { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
   { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
+  { name: '08_park_trees', pos: [1, 1.6, -29.5], yaw: -22, pitch: 12 },
   { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
   { name: '06_flashlight_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, flash: 1 },
 ];

@@ -1,5 +1,6 @@
 import { canvasTexture } from './texgen.js';
 import { rng } from '../world/geom.js';
+import { WINDOW_LOOK } from '../config.js';
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -16,15 +17,15 @@ export function windowTexture(kind) {
   const R = rng(kind.length * 7);
   if (kind === 'lit') {
     const g = x.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#dff0ff');
-    g.addColorStop(1, '#9fc4e6');
+    g.addColorStop(0, WINDOW_LOOK.litTop);
+    g.addColorStop(1, WINDOW_LOOK.litBottom);
     x.fillStyle = g;
     x.fillRect(0, 0, W, H);
     // 블라인드 살
     x.fillStyle = 'rgba(40,60,80,0.35)';
     for (let y = 6; y < H * 0.55; y += 11) x.fillRect(0, y, W, 4);
     // 형광등 줄
-    x.fillStyle = 'rgba(255,255,255,0.5)';
+    x.fillStyle = 'rgba(235,245,255,0.38)';
     x.fillRect(W * 0.15, H * 0.62, W * 0.7, 6);
   } else {
     const g = x.createLinearGradient(0, 0, W * 0.4, H);
@@ -35,7 +36,7 @@ export function windowTexture(kind) {
     x.fillStyle = g;
     x.fillRect(0, 0, W, H);
     // 대각 반사 줄
-    x.fillStyle = 'rgba(160,180,210,0.06)';
+    x.fillStyle = 'rgba(160,180,210,0.04)';
     x.beginPath();
     x.moveTo(W * 0.1, H);
     x.lineTo(W * 0.35, H);
@@ -58,7 +59,7 @@ export function windowTexture(kind) {
     }
   }
   // 창살 (흰 프레임)
-  x.fillStyle = '#e8ebee';
+  x.fillStyle = WINDOW_LOOK.mullion;
   x.fillRect(0, 0, W, 10);
   x.fillRect(0, H - 10, W, 10);
   x.fillRect(0, 0, 10, H);
@@ -114,7 +115,7 @@ export function figureWindowTexture() {
   x.lineTo(cx - 48, H * 0.55);
   x.closePath();
   x.fill();
-  x.fillStyle = '#e8ebee';
+  x.fillStyle = WINDOW_LOOK.mullion;
   x.fillRect(0, 0, W, 10);
   x.fillRect(0, H - 10, W, 10);
   x.fillRect(0, 0, 10, H);

@@ -4,9 +4,9 @@ import { addBox, instanced, mat4, rng } from './geom.js';
 import { LedSign } from './ledSign.js';
 import { makeLamp } from './props.js';
 import { buildTrees, buildShrubs } from './trees.js';
+import { buildRealTrees } from './realTrees.js';
 
 const AUTUMN = [0x9a3e16, 0xb35a1d, 0x7d2a12, 0xb8862c, 0x8c4a1a, 0xa0301a];
-const PARK_GREEN = [0x3d6b23, 0x4c7d2a, 0x2f5a1d, 0x5a8a30];
 
 // 필로티 위 두 줄 LED, 공원(초록 조명·정자·나무), 가로수, 화단 관목, 상가 거리, 먼 아파트 실루엣
 export function buildSurroundings(root, M, col, ctx) {
@@ -25,7 +25,7 @@ export function buildSurroundings(root, M, col, ctx) {
   sign.group.position.set(0, 3 * H + 1.95, frontZ + 0.1);
   g.add(sign.group);
 
-  // 가로수(가을 잎) + 공원 나무(초록 발광)
+  // 가로수(가을 잎) + 공원 나무
   const street = buildTrees(g, [
     { x: -12.4, z: 12.6, h: 5.2 }, { x: -8.4, z: 13.0, h: 4.8 }, { x: 8.6, z: 13.0, h: 5.0 }, { x: 12.4, z: 12.5, h: 5.4 },
     { x: -14.1, z: -7.5, h: 5.6, r: 1.4 }, { x: -14.1, z: 0.5, h: 5.0, r: 1.4 },
@@ -36,7 +36,8 @@ export function buildSurroundings(root, M, col, ctx) {
   const R = rng(21);
   const spots = [[-7, -35], [6.8, -40.5], [-1.2, -47], [-12, -42], [11, -33], [-15, -31.5], [15, -44], [3, -52], [-9, -50]];
   for (const [x, z] of spots) parkTrees.push({ x, z, h: 4.6 + R() * 1.6, r: 1.6 + R() * 0.6 });
-  const park = buildTrees(g, parkTrees, { palette: PARK_GREEN, trunkMat: M.trunk, emissive: PALETTE.parkGreen, emissiveIntensity: 0.3 });
+  // 공원 나무: 줄기·가지·잎 카드로 만든 활엽수. 초록 발광은 잎에 아주 약하게만 남기고 조명(가로등·달)으로 보이게 한다
+  const park = buildRealTrees(g, parkTrees, { barkMat: M.bark, emissive: PALETTE.parkGreen, emissiveIntensity: 0.08 });
   for (const t of parkTrees) col.circle(t.x, t.z, 0.25);
 
   buildShrubs(g, ctx.yard.beds, M.shrub ?? M.hedge);

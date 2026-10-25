@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { PALETTE } from '../config.js';
-import { brickMaps, pavingMaps, noiseMaps } from './procedural.js';
+import { PALETTE, WINDOW_LOOK } from '../config.js';
+import { brickMaps, pavingMaps, noiseMaps, barkMaps } from './procedural.js';
 import { windowTexture, doorTexture } from './windowTex.js';
 
 const STAIN_GLSL = /* glsl */ `
@@ -73,7 +73,7 @@ export function createMaterials() {
   const painted = (color, rough = 0.6, metal = 0.15) =>
     std(color, 1, metal, { map: panel.map, roughnessMap: panel.roughnessMap, roughness: rough / 0.6 });
 
-  const glassBase = { roughness: 0.12, metalness: 0.45, envMapIntensity: 1.6 };
+  const glassBase = { roughness: 0.16, metalness: 0.4, envMapIntensity: WINDOW_LOOK.glassEnv };
 
   return {
     brick: addWorldStain(std(0xffffff, 1, 0, { ...brickA, ...nScale(1) })),
@@ -85,11 +85,12 @@ export function createMaterials() {
     gravel: std(0xffffff, 1, 0, { ...gravel }),
     soil: std(0x1e1611, 1),
     curb: std(0xb0aca4, 1, 0, { ...granite, roughness: 1.4 }),
+    sill: std(WINDOW_LOOK.sill, 1, 0, { ...granite, roughness: 1.4 }),
     redBand: painted(PALETTE.redBand, 0.7),
     bluePanel: painted(PALETTE.bluePanel, 0.5, 0.3),
     yellow: painted(PALETTE.yellow, 0.5),
     orange: painted(PALETTE.orange, 0.5),
-    frame: painted(PALETTE.frame, 0.45, 0.1),
+    frame: painted(WINDOW_LOOK.frameColor, 0.62, 0.05),
     canopy: painted(PALETTE.canopy, 0.55, 0.2),
     granite: std(0xffffff, 1, 0, { ...granite }),
     silver: std(PALETTE.silver, 0.3, 0.9, { envMapIntensity: 1.5 }),
@@ -104,13 +105,14 @@ export function createMaterials() {
     glass: std(0xffffff, 1, 0, { ...glassBase, map: windowTexture('dark') }),
     glassCurtain: std(0xffffff, 1, 0, { ...glassBase, map: windowTexture('curtain') }),
     glassLit: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
-      emissiveMap: windowTexture('lit'), emissiveIntensity: 1.5 }),
+      emissiveMap: windowTexture('lit'), emissiveIntensity: WINDOW_LOOK.litEmissive }),
     door: new THREE.MeshStandardMaterial({ color: 0x0d1418, roughness: 0.08, metalness: 0.3,
       emissive: 0xffffff, emissiveMap: doorTexture(), emissiveIntensity: 0.75 }),
     black: std(0x070707, 0.6),
     metalBox: std(0xbfc2c4, 1, 0.3, { map: panel.map, roughnessMap: panel.roughnessMap }),
     pipe: std(0x8f9497, 0.45, 0.6),
     trunk: std(0x2a1d15, 1),
+    bark: std(0xffffff, 1, 0, { ...withRepeat(barkMaps(), 2, 2), normalScale: new THREE.Vector2(1, 1) }),
     pavilion: std(0x1a120e, 0.9),
     roofTile: std(0x14161a, 0.8),
     farBuilding: std(0x07090c, 1),
