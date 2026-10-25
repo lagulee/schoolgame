@@ -17,6 +17,12 @@ npm run preview    # 빌드 결과 확인
 
 시작할 때 절차 텍스처를 만드느라 몇 초 걸립니다("텍스처 생성 중…"). 헤드폰을 권장합니다.
 
+## 배포 (GitHub Pages)
+
+`.github/workflows/pages.yml` 이 `main` 또는 `ccr-9ecd15ef-idntk4` 브랜치에 푸시될 때마다 빌드해 배포합니다.
+최초 1회 설정: 저장소 **Settings → Pages → Source: GitHub Actions**, 그리고 **Settings → Environments → github-pages → Deployment branches** 에 위 브랜치 허용.
+주소: `https://lagulee.github.io/schoolgame/`
+
 ## 조작
 
 | 키 | 기능 | 키 | 기능 |
