@@ -3,6 +3,8 @@ import { createMaterials } from '../materials/library.js';
 import { buildCourtyard } from './courtyard.js';
 import { buildBuildings } from './buildings.js';
 import { buildEntrance, buildWaveCorridor } from './entrance.js';
+import { buildProps } from './props.js';
+import { buildSurroundings } from './surroundings.js';
 
 // 월드 조립. 각 빌더는 (root, M, collision, ctx) 를 받고 필요한 핸들을 돌려준다.
 export function buildWorld(scene, col) {
@@ -15,8 +17,12 @@ export function buildWorld(scene, col) {
   ctx.bld = buildBuildings(root, M, col);
   ctx.entrance = buildEntrance(root, M, col);
   ctx.wave = buildWaveCorridor(root, M, col);
+  ctx.props = buildProps(root, M, col, ctx);
+  ctx.sur = buildSurroundings(root, M, col, ctx);
   const updaters = [];
   updaters.push((t) => ctx.entrance.sign.update(t));
+  updaters.push((t) => ctx.sur.sign.update(t));
+  updaters.push((t, dt, camera) => ctx.props.cams.update(dt, camera.position));
   return {
     M,
     ctx,
