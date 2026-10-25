@@ -17,6 +17,19 @@ npm run preview    # 빌드 결과 확인
 
 시작할 때 절차 텍스처를 만드느라 몇 초 걸립니다("텍스처 생성 중…"). 헤드폰을 권장합니다.
 
+## 터치 조작 (스마트폰·태블릿)
+
+주 입력이 터치인 기기에서는 자동으로 터치 모드가 켜지고(`?touch=1` / `?touch=0` 으로 강제 가능), 품질은 Mid 로 시작합니다.
+
+| 조작 | 기능 |
+|---|---|
+| 왼쪽 아래 조이스틱 | 이동 (살짝 밀면 느리게, **끝까지 밀면 달리기**) |
+| 화면 드래그 | 시점 회전 (이동과 동시에 가능) |
+| 오른쪽 아래 🔦 | 손전등 |
+| 오른쪽 위 ☰ | 접이식 메뉴: 이벤트, 음소거, 품질 순환, 헤드밥, 블룸·그레인·비네팅, 안개 ±, 점검 모드, HUD, 전체화면 |
+
+시작 화면을 터치하면 전체화면·가로 고정을 시도합니다(iPhone 은 지원하지 않아 무시). 세로로 들면 가로 모드 안내가 뜹니다.
+
 ## 배포 (GitHub Pages)
 
 `.github/workflows/pages.yml` 이 `main` 또는 `ccr-9ecd15ef-idntk4` 브랜치에 푸시될 때마다 빌드해 배포합니다.
@@ -50,6 +63,7 @@ npm run build
 npm run shots                         # config.js 의 SHOTS 시점을 screenshots/ 에 저장
 npm run shots -- --only=02 --extra="ev=led" --suffix=_ev_led
 npm run smoke                         # 클릭·키 입력·결정적 이동(충돌) 테스트, 콘솔 에러 수집
+npm run touch                         # 모바일 에뮬레이션: 조이스틱·시점 드래그·버튼·메뉴·멀티터치 테스트
 ```
 
 Playwright 브라우저가 없다면 `npx playwright install chromium` 을 먼저 실행하세요. headless Chromium 은 `--use-angle=swiftshader --ignore-gpu-blocklist` 플래그로 WebGL 을 켭니다.

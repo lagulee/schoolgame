@@ -11,6 +11,7 @@ import { AudioSystem } from './audio/audio.js';
 import { Director } from './events/director.js';
 import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
 import { Hud } from './debug/hud.js';
+import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
 
 const shot = parseShotParams();
 
@@ -88,36 +89,72 @@ function toast(msg) {
 }
 const onOff = (v) => (v ? '켜짐' : '꺼짐');
 
-// 조작 키
-const overlay = document.getElementById('overlay');
-overlay.addEventListener('click', () => {
-  audio.start();
-  player.controls.lock();
-});
-player.controls.addEventListener('lock', () => overlay.classList.add('hidden'));
-player.controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
-
+// 기능 (키보드와 터치 메뉴가 같이 쓴다)
+const act = {
+  flash: () => toast(`손전등 ${onOff(flashlight.toggle())}`),
+  bloom: () => toast(`블룸 ${onOff(post.toggle('bloom'))}`),
+  grain: () => toast(`그레인 ${onOff(post.toggle('grain'))}`),
+  vignette: () => toast(`비네팅 ${onOff(post.toggle('vignette'))}`),
+  fogLess: () => { setFog(state.fog - FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); },
+  fogMore: () => { setFog(state.fog + FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); },
+  inspect: () => { state.inspect = !state.inspect; lights.setInspect(state.inspect); toast(`점검 모드 ${onOff(state.inspect)}`); },
+  quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
+  event: () => { director.force(); toast(`이벤트: ${director.status}`); },
+  mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
+  hud: () => hud.toggle(),
+  shot: () => { requestScreenshot(); toast('스크린샷 저장'); },
+  bob: () => toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`),
+};
+const KEYS = {
+  KeyF: act.flash, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
+  KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
+  KeyE: act.event, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
+};
 addEventListener('keydown', (e) => {
-  if (e.repeat) return;
-  switch (e.code) {
-    case 'KeyF': toast(`손전등 ${onOff(flashlight.toggle())}`); break;
-    case 'KeyB': toast(`블룸 ${onOff(post.toggle('bloom'))}`); break;
-    case 'KeyG': toast(`그레인 ${onOff(post.toggle('grain'))}`); break;
-    case 'KeyV': toast(`비네팅 ${onOff(post.toggle('vignette'))}`); break;
-    case 'BracketLeft': setFog(state.fog - FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); break;
-    case 'BracketRight': setFog(state.fog + FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); break;
-    case 'KeyL': state.inspect = !state.inspect; lights.setInspect(state.inspect); toast(`점검 모드 ${onOff(state.inspect)}`); break;
-    case 'Digit1': applyQuality('low'); toast('품질 Low'); break;
-    case 'Digit2': applyQuality('mid'); toast('품질 Mid'); break;
-    case 'Digit3': applyQuality('high'); toast('품질 High'); break;
-    case 'KeyE': director.force(); toast(`이벤트: ${director.status}`); break;
-    case 'KeyM': toast(audio.toggleMute() ? '음소거' : '소리 켜짐'); break;
-    case 'Backquote': hud.toggle(); break;
-    case 'KeyP': requestScreenshot(); toast('스크린샷 저장'); break;
-    case 'KeyH': toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`); break;
-    default:
-  }
+  if (!e.repeat) KEYS[e.code]?.();
 });
+
+// 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
+const overlay = document.getElementById('overlay');
+const touchMode = isTouchDevice();
+if (touchMode) {
+  overlay.querySelector('.start').textContent = '화면을 터치하여 시작';
+  const nextQuality = { low: 'mid', mid: 'high', high: 'low' };
+  const qlabel = { low: 'Low', mid: 'Mid', high: 'High' };
+  const flag = (name, label) => ({ label: () => `${label} ${post.flags[name] ? '켜짐' : '꺼짐'}`, run: act[name] });
+  const touch = setupTouch({
+    player,
+    flashlight,
+    menuItems: [
+      { id: 'flash', run: act.flash },
+      { label: '이벤트 발동', run: act.event },
+      { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
+      { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
+      { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: act.bob },
+      flag('bloom', '블룸'),
+      flag('grain', '그레인'),
+      flag('vignette', '비네팅'),
+      { label: '안개 −', run: act.fogLess },
+      { label: '안개 +', run: act.fogMore },
+      { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: act.inspect },
+      { label: 'HUD', run: act.hud },
+      { label: '전체화면', run: enterImmersive },
+    ],
+  });
+  addEventListener('keydown', (e) => e.code === 'KeyF' && touch.syncFlash());
+  overlay.addEventListener('click', () => {
+    audio.start();
+    overlay.classList.add('hidden');
+    enterImmersive();
+  });
+} else {
+  overlay.addEventListener('click', () => {
+    audio.start();
+    player.controls.lock();
+  });
+  player.controls.addEventListener('lock', () => overlay.classList.add('hidden'));
+  player.controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
+}
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
@@ -126,7 +163,7 @@ addEventListener('resize', () => {
   post.setSize(innerWidth, innerHeight);
 });
 
-applyQuality(shot ? shot.quality : 'high');
+applyQuality(shot ? shot.quality : touchMode ? 'mid' : 'high'); // 터치 기기는 Mid 로 시작 (메뉴에서 변경)
 setFog(FOG.density);
 
 function step(t, dt) {

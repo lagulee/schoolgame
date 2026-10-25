@@ -57,6 +57,7 @@ export const PLAYER = {
   run: 3.6,
   accel: 8, // lerp 계수 (1/s)
   fov: 70,
+  touchLook: 0.0045, // 터치 드래그 감도 (rad/px)
   runFovAdd: 6,
   bob: {
     walk: { amp: 0.025, freq: 1.8 },

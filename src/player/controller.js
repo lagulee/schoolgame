@@ -4,6 +4,8 @@ import { PLAYER } from '../config.js';
 import { HeadBob } from './headbob.js';
 
 const DEG = Math.PI / 180;
+const RUN_ON = 0.96; // 조이스틱을 이 이상 밀면 달리기 시작
+const RUN_OFF = 0.86; // 이 아래로 돌아오면 걷기
 
 export class Player {
   constructor(camera, dom, collision) {
@@ -19,6 +21,8 @@ export class Player {
     this.fov = PLAYER.fov;
     this.onStep = null; // (surface, running) => void
     this.frozen = false;
+    this.analog = null;
+    this.touchRun = false;
     this.speed = 0;
     this.running = false;
     this._fwd = new THREE.Vector3();
@@ -36,19 +40,38 @@ export class Player {
     this.camera.position.set(pos[0], this.floorY + (pos[1] ?? PLAYER.eye), pos[2]);
   }
 
+  // 터치 드래그 시점 회전 (px → rad)
+  look(dx, dy) {
+    const r = this.camera.rotation;
+    r.y -= dx * PLAYER.touchLook;
+    r.x = Math.max(-1.5, Math.min(1.5, r.x - dy * PLAYER.touchLook));
+  }
+
   update(dt) {
     const k = this.keys;
     let ix = 0;
     let iz = 0;
-    if (!this.frozen) {
-      if (k.has('KeyW') || k.has('ArrowUp')) iz += 1;
-      if (k.has('KeyS') || k.has('ArrowDown')) iz -= 1;
-      if (k.has('KeyD') || k.has('ArrowRight')) ix += 1;
-      if (k.has('KeyA') || k.has('ArrowLeft')) ix -= 1;
+    const joy = this.analog; // 터치 조이스틱 {x, y} (y: 위가 +), 크기 0~1
+    const amag = !this.frozen && joy ? Math.hypot(joy.x, joy.y) : 0;
+    const analog = amag > 0.05;
+    if (analog) {
+      ix = joy.x;
+      iz = joy.y;
+      // 끝까지 밀면 달리기 (히스테리시스로 경계에서 떨리지 않게)
+      this.touchRun = amag > (this.touchRun ? RUN_OFF : RUN_ON);
+    } else {
+      this.touchRun = false;
+      if (!this.frozen) {
+        if (k.has('KeyW') || k.has('ArrowUp')) iz += 1;
+        if (k.has('KeyS') || k.has('ArrowDown')) iz -= 1;
+        if (k.has('KeyD') || k.has('ArrowRight')) ix += 1;
+        if (k.has('KeyA') || k.has('ArrowLeft')) ix -= 1;
+      }
     }
     const moving = ix !== 0 || iz !== 0;
-    this.running = moving && (k.has('ShiftLeft') || k.has('ShiftRight'));
-    const target = moving ? (this.running ? PLAYER.run : PLAYER.walk) : 0;
+    this.running = moving && (analog ? this.touchRun : k.has('ShiftLeft') || k.has('ShiftRight'));
+    const walkSpeed = analog ? PLAYER.walk * Math.min(1, amag / RUN_OFF) : PLAYER.walk;
+    const target = moving ? (this.running ? PLAYER.run : walkSpeed) : 0;
 
     // 시선의 수평 성분 기준 전/우 벡터
     this.camera.getWorldDirection(this._fwd);
