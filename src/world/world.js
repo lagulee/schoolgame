@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createMaterials } from '../materials/library.js';
 import { buildCourtyard } from './courtyard.js';
+import { buildBuildings } from './buildings.js';
 
 // 월드 조립. 각 빌더는 (root, M, collision, ctx) 를 받고 필요한 핸들을 돌려준다.
 export function buildWorld(scene, col) {
@@ -10,6 +11,7 @@ export function buildWorld(scene, col) {
   scene.add(root);
   const ctx = { M };
   ctx.yard = buildCourtyard(root, M, col);
+  ctx.bld = buildBuildings(root, M, col);
   const updaters = [];
   return {
     M,

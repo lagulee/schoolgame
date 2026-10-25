@@ -5,6 +5,7 @@ import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
 import { Flashlight } from './player/flashlight.js';
 import { buildWorld } from './world/world.js';
+import { parseShotParams } from './debug/screenshot.js';
 
 const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -42,9 +43,25 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-const clock = new THREE.Clock();
-renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05);
+const shot = parseShotParams();
+if (shot) {
+  overlay.classList.add('hidden');
+  if (shot.inspect) scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+  if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
+  flashlight.setOn(shot.flash);
+  flashlight.snap();
+  let n = 0;
+  renderer.setAnimationLoop(() => {
+    U.time.value = shot.time;
+    world.update(shot.time, 0, camera);
+    renderer.render(scene, camera);
+    if (++n === shot.frames) window.__READY = true;
+  });
+}
+const timer = new THREE.Timer();
+if (!shot) renderer.setAnimationLoop(() => {
+  timer.update();
+  const dt = Math.min(timer.getDelta(), 0.05);
   U.time.value += dt;
   player.update(dt);
   flashlight.update(dt);

@@ -29,7 +29,7 @@ export function buildCourtyard(root, M, col) {
 
   // 화단 (연석 + 흙), 관목은 props 에서 배치
   const beds = [
-    [-innerX, -12, -13.2, 6],
+    [-innerX, -12, -13.2, 4],
     [-13.2, frontZ, -6.8, -12.6],
     [6.8, frontZ, 11.6, -12.6],
     [13.2, 3.2, innerX, 7.5],

@@ -43,7 +43,7 @@ export const DIM = {
   piloti: { halfW: 5, h: 4.5, colR: 0.42, colZ: -15.2 },
   canopy: { z0: -4, z1: 2, x0: 11, colH: 4.4, colD: 0.7, thick: 0.45 },
   steps: { x0: 12.0, tread: 0.4, rise: 0.15, count: 3, z0: -3, z1: 1 },
-  wave: { x0: 12, x1: 15, z0: -13.6, z1: -4.4, h: 3.1, amp: 0.35, waves: 2.5 },
+  wave: { x0: 12, x1: 15, z0: -12.9, z1: -4.4, h: 3.1, amp: 0.35, waves: 2.5 },
   bay: 3.2, // 창 모듈 폭
   window: { w: 1.1, h: 1.45, sill: 0.95, inset: 0.06 },
   band: { h: 0.32, out: 0.1 },
