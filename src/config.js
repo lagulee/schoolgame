@@ -133,8 +133,8 @@ export const FIGURE_WINDOW = 0; // LIT_WINDOWS 중 실루엣이 설 창
 export const SHOTS = [
   { name: '01_front_overview', pos: [0, 1.6, 12], yaw: 0, pitch: 4 },
   { name: '02_entrance_canopy', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6 },
-  { name: '03_wave_corridor', pos: [7.5, 1.6, -1.5], yaw: -38, pitch: 4 },
+  { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
   { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
-  { name: '05_look_up', pos: [-4, 1.6, -9.5], yaw: 10, pitch: 52 },
+  { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
   { name: '06_flashlight_wall', pos: [-12.6, 1.6, -2], yaw: 90, pitch: -6, flash: 1 },
 ];
