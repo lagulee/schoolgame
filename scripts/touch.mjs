@@ -18,7 +18,7 @@ const check = (name, pass, info = '') => { ok.push(pass); console.log(`${pass ? 
 // CDP 는 touchStart/Move 마다 '현재 눌린 모든 점'을 받고, touchEnd 는 전부 뗀다
 const down = new Map();
 const touch = (type, id, x, y) => {
-  if (type === 'touchEnd') { down.clear(); return cdp.send('Input.dispatchTouchEvent', { type, touchPoints: [] }); }
+  if (type === 'touchEnd') { if (!down.size) return; down.clear(); return cdp.send('Input.dispatchTouchEvent', { type, touchPoints: [] }); }
   down.set(id, { x, y, id });
   return cdp.send('Input.dispatchTouchEvent', { type, touchPoints: [...down.values()] });
 };
@@ -47,6 +47,18 @@ check('품질 버튼 순환 → Low', (await page.$eval('.mbtn:nth-child(3)', (b
 await page.screenshot({ path: 'screenshots/touch_menu.png' });
 await page.tap('.menu-toggle');
 check('메뉴 닫힘', !(await dbg(() => document.querySelector('.menu-panel').classList.contains('open'))));
+
+// 전체화면 버튼 (⤢/⤡): 항상 보이고, 지원 환경에서만 표시. headless 에서는 API 지원 여부만 확인한다
+const fsInfo = await dbg(() => { const b = document.querySelector('.tbtn.fs'); return { has: !!b, shown: !!b && getComputedStyle(b).display !== 'none', sup: document.fullscreenEnabled, txt: b?.textContent }; });
+check('전체화면 버튼 존재 (미지원이면 숨김)', fsInfo.has && fsInfo.shown === !!fsInfo.sup && ['⤢', '⤡'].includes(fsInfo.txt), JSON.stringify(fsInfo));
+if (fsInfo.sup) {
+  // headless 의 전체화면 전환은 불안정해(Document not active) 버튼 표시가 상태와 같은지만 본다 (실제 해제는 실기기 확인)
+  const st = () => dbg(() => ({ fs: !!document.fullscreenElement, txt: document.querySelector('.tbtn.fs').textContent }));
+  await page.tap('.tbtn.fs');
+  await page.waitForTimeout(800);
+  const s1 = await st();
+  check('전체화면 버튼: 누르면 오류 없이 동작하고 표시(⤢/⤡)가 상태를 따름', s1.txt === (s1.fs ? '⤡' : '⤢'), JSON.stringify(s1));
+}
 
 // 핸드폰 버튼: 📱 화면 열기/닫기, 💡 라이트 (화면이 열려 있어도 동작)
 const tphone = () => dbg(() => ({ open: window.__DEBUG.phone.screenOpen, light: window.__DEBUG.phone.lightOn, bat: window.__DEBUG.phone.battery,
@@ -121,6 +133,25 @@ await touch('touchMove', 3, 680, 140);
 await page.waitForFunction((y0) => Math.abs(window.__DEBUG.player.camera.rotation.y - y0) > 0.2, yaw2, { timeout: 30000 }).catch(() => {});
 const both = await dbg(() => ({ an: window.__DEBUG.player.analog, yaw: window.__DEBUG.player.camera.rotation.y }));
 check('멀티터치: 이동 중에도 시점 회전', both.an && Math.abs(both.yaw - yaw2) > 0.2, JSON.stringify({ ...both, yaw2 }));
+await touch('touchEnd');
+
+// 조이스틱을 누른 채 다른 손가락으로 📱·💡·메뉴 버튼 (pointerdown 처리라 click 이 안 만들어져도 눌림)
+const btnPos = await page.$$eval('.tbtn.phone, .tbtn.light, .tbtn.menu-toggle', (bs) => Object.fromEntries(bs.map((b) => { const r = b.getBoundingClientRect(); return [b.className.split(' ')[1], { x: r.left + r.width / 2, y: r.top + r.height / 2 }]; })));
+await touch('touchStart', 2, c.x, c.y);
+await touch('touchMove', 2, c.x, c.y - c.R * 0.6);
+const holding = await dbg(() => !!window.__DEBUG.player.analog);
+const lit0 = await dbg(() => window.__DEBUG.phone.lightOn);
+await touch('touchStart', 5, btnPos.light.x, btnPos.light.y);
+await touch('touchEnd', 5);
+down.set(2, { x: c.x, y: c.y - c.R * 0.6, id: 2 });
+await page.waitForTimeout(300);
+check('조이스틱을 누른 채 💡 → 라이트 토글', holding && (await dbg(() => window.__DEBUG.phone.lightOn)) !== lit0);
+await touch('touchStart', 2, c.x, c.y);
+await touch('touchStart', 6, btnPos.phone.x, btnPos.phone.y);
+await touch('touchEnd', 6);
+await page.waitForTimeout(300);
+check('조이스틱을 누른 채 📱 → 화면 열림', await dbg(() => window.__DEBUG.phone.screenOpen));
+await dbg(() => { window.__DEBUG.phone.closeScreen(); window.__DEBUG.phone.setLight(false); });
 await touch('touchEnd');
 
 // 스토리: 메뉴의 '다음 사건' → 대화창 탭으로 넘기기 → 선택지 버튼 탭으로 플래그 변경

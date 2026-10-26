@@ -1,5 +1,6 @@
 // 자막·대화창·선택지 화면 (DOM). 진행 규칙은 runner.js 가 갖고, 여기서는 그리기와 입력 전달만 한다.
 // 키보드: E/Enter/Space 넘기기·결정, ↑↓·W/S 이동, 숫자키 바로 선택. 터치·클릭: 대화창 탭으로 넘기기, 선택지 버튼 탭.
+import { onTap } from '../ui/tap.js';
 
 function el(tag, cls, parent) {
   const e = document.createElement(tag);
@@ -35,10 +36,7 @@ export class StoryUI {
     this.buttons = [];
 
     for (const target of [this.dlg, this.sub]) {
-      target.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.onAdvance?.();
-      });
+      onTap(target, () => this.onAdvance?.());
     }
     this.hide();
   }
@@ -89,10 +87,7 @@ export class StoryUI {
       b.type = 'button';
       el('span', 'story-key', b).textContent = String(i + 1);
       el('span', 'story-label', b).textContent = label;
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.onPick?.(i);
-      });
+      onTap(b, () => this.onPick?.(i));
       return b;
     });
     this.timerBar.style.display = timeout ? '' : 'none';

@@ -1,3 +1,5 @@
+import { onTap } from '../ui/tap.js';
+
 // 터치 조작: 왼쪽 아래 가상 조이스틱(이동, 끝까지 밀면 달리기 — 스태미나·핸드폰 조건은 controller 가 판단), 화면 드래그(시점),
 // 핸드폰 📱(화면 열기/닫기)·💡(라이트) 버튼 상시 노출, 나머지 기능은 접이식 메뉴. 키보드·마우스와 같은 actions 를 호출한다.
 
@@ -99,11 +101,11 @@ export function setupTouch({ player, phone, menuItems }) {
     scr.classList.toggle('on', phone.state.screenOpen);
     lamp.classList.toggle('on', phone.state.lightOn);
   };
-  scr.addEventListener('click', () => {
+  onTap(scr, () => {
     phone.screen();
     sync();
   });
-  lamp.addEventListener('click', () => {
+  onTap(lamp, () => {
     phone.light();
     sync();
   });
@@ -117,7 +119,7 @@ export function setupTouch({ player, phone, menuItems }) {
   const refresh = () => entries.forEach(({ b, item }) => (b.textContent = typeof item.label === 'function' ? item.label() : item.label));
   for (const item of menuItems) {
     const b = el('button', 'mbtn');
-    b.addEventListener('click', () => {
+    onTap(b, () => {
       item.run();
       refresh();
     });
@@ -125,14 +127,27 @@ export function setupTouch({ player, phone, menuItems }) {
     panel.append(b);
   }
   refresh();
-  toggle.addEventListener('click', () => {
+  onTap(toggle, () => {
     const open = panel.classList.toggle('open');
     toggle.classList.toggle('on', open);
     toggle.textContent = open ? '✕' : '☰';
     refresh();
   });
 
-  root.append(look, zone, scr, lamp, toggle, panel);
+  // 전체화면 켜기/끄기 (항상 보임): 전체화면이면 ⤡(해제), 아니면 ⤢(진입). 미지원 기기(iPhone 등)는 숨김
+  const fsBtn = el('button', 'tbtn fs');
+  fsBtn.setAttribute('aria-label', '전체화면 켜기/끄기');
+  const fsSync = () => {
+    const on = !!document.fullscreenElement;
+    fsBtn.textContent = on ? '⤡' : '⤢';
+    fsBtn.classList.toggle('on', on);
+  };
+  onTap(fsBtn, () => toggleImmersive().then(fsSync));
+  document.addEventListener('fullscreenchange', fsSync);
+  if (!document.fullscreenEnabled) fsBtn.style.display = 'none';
+  fsSync();
+
+  root.append(look, zone, scr, lamp, fsBtn, toggle, panel);
   document.body.append(root);
 
   // 화면을 떠나거나 가려지면 입력이 남지 않게 정리
@@ -145,6 +160,21 @@ export function setupTouch({ player, phone, menuItems }) {
   document.addEventListener('visibilitychange', () => document.hidden && reset());
 
   return { sync };
+}
+
+// 전체화면 해제: 가로 고정도 함께 푼다
+export async function exitImmersive() {
+  try {
+    screen.orientation.unlock();
+  } catch { /* 미지원 */ }
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+  } catch { /* 미지원 */ }
+}
+
+export async function toggleImmersive() {
+  if (document.fullscreenElement) await exitImmersive();
+  else await enterImmersive();
 }
 
 // 첫 터치(시작): 전체화면 + 가로 고정을 시도한다. iPhone 등 미지원 환경은 조용히 무시.

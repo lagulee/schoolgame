@@ -10,7 +10,7 @@ import { AudioSystem } from './audio/audio.js';
 import { Director } from './events/director.js';
 import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
 import { Hud } from './debug/hud.js';
-import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
+import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
 import { StaminaBar } from './ui/staminaBar.js';
@@ -170,7 +170,7 @@ if (touchMode) {
       { label: '안개 +', run: act.fogMore },
       { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: act.inspect },
       { label: 'HUD', run: act.hud },
-      { label: '전체화면', run: enterImmersive },
+      { label: () => (document.fullscreenElement ? '전체화면 해제' : '전체화면'), run: toggleImmersive },
       { label: '다음 사건 (디버그)', run: act.storyNext },
       { label: '책 줍기 (디버그)', run: act.storyBook },
       { label: '보조배터리 놓기 (디버그)', run: act.bank },
