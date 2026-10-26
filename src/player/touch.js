@@ -1,5 +1,5 @@
 // 터치 조작: 왼쪽 아래 가상 조이스틱(이동, 끝까지 밀면 달리기), 화면 드래그(시점),
-// 손전등 버튼 상시 노출, 나머지 기능은 접이식 메뉴. 키보드·마우스와 같은 actions 를 호출한다.
+// 핸드폰 📱(화면 열기/닫기)·💡(라이트) 버튼 상시 노출, 나머지 기능은 접이식 메뉴. 키보드·마우스와 같은 actions 를 호출한다.
 
 // 주 입력이 손가락(pointer: coarse)이면 터치 기기. ?touch=1 / ?touch=0 으로 강제할 수 있다 (테스트용).
 export function isTouchDevice() {
@@ -19,7 +19,8 @@ function el(tag, cls, text) {
 }
 
 // menuItems: [{ label, run }] — run 은 버튼을 누를 때 호출. 라벨은 문자열 또는 () => 문자열
-export function setupTouch({ player, flashlight, menuItems }) {
+// phone: { screen, light, state } — 버튼 동작과 켜짐 표시용 Phone 상태
+export function setupTouch({ player, phone, menuItems }) {
   document.body.classList.add('touch');
   const root = el('div');
   root.id = 'touch';
@@ -88,15 +89,24 @@ export function setupTouch({ player, flashlight, menuItems }) {
   zone.addEventListener('pointerup', endStick);
   zone.addEventListener('pointercancel', endStick);
 
-  // 손전등 (상시)
-  const flash = el('button', 'tbtn flash', '🔦');
-  flash.setAttribute('aria-label', '손전등');
-  const syncFlash = () => flash.classList.toggle('on', flashlight.on);
-  flash.addEventListener('click', () => {
-    menuItems.find((m) => m.id === 'flash').run();
-    syncFlash();
+  // 핸드폰 (상시): 📱 화면 열기/닫기 (이전 손전등 자리), 💡 라이트
+  const scr = el('button', 'tbtn phone', '📱');
+  scr.setAttribute('aria-label', '핸드폰 화면');
+  const lamp = el('button', 'tbtn light', '💡');
+  lamp.setAttribute('aria-label', '핸드폰 라이트');
+  const sync = () => {
+    scr.classList.toggle('on', phone.state.screenOpen);
+    lamp.classList.toggle('on', phone.state.lightOn);
+  };
+  scr.addEventListener('click', () => {
+    phone.screen();
+    sync();
   });
-  syncFlash();
+  lamp.addEventListener('click', () => {
+    phone.light();
+    sync();
+  });
+  sync();
 
   // 접이식 메뉴
   const toggle = el('button', 'tbtn menu-toggle', '☰');
@@ -105,7 +115,6 @@ export function setupTouch({ player, flashlight, menuItems }) {
   const entries = [];
   const refresh = () => entries.forEach(({ b, item }) => (b.textContent = typeof item.label === 'function' ? item.label() : item.label));
   for (const item of menuItems) {
-    if (item.id === 'flash') continue;
     const b = el('button', 'mbtn');
     b.addEventListener('click', () => {
       item.run();
@@ -122,7 +131,7 @@ export function setupTouch({ player, flashlight, menuItems }) {
     refresh();
   });
 
-  root.append(look, zone, flash, toggle, panel);
+  root.append(look, zone, scr, lamp, toggle, panel);
   document.body.append(root);
 
   // 화면을 떠나거나 가려지면 입력이 남지 않게 정리
@@ -134,7 +143,7 @@ export function setupTouch({ player, flashlight, menuItems }) {
   addEventListener('blur', reset);
   document.addEventListener('visibilitychange', () => document.hidden && reset());
 
-  return { syncFlash };
+  return { sync };
 }
 
 // 첫 터치(시작): 전체화면 + 가로 고정을 시도한다. iPhone 등 미지원 환경은 조용히 무시.

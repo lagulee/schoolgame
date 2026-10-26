@@ -22,7 +22,7 @@ export function setupStory({ player, touch, toast }) {
   const runner = new StoryRunner({ story, characters, ui, timing: STORY });
   const interactions = new Interactions({ radius: STORY.interactRadius, touch });
   const endings = new EndingsSeen(STORY.endingsKey);
-  runner.repeat = endings.repeat; // 엔딩을 본 뒤의 판이면 2회차 목표 문구 (표시는 단계 0b 핸드폰)
+  runner.repeat = endings.repeat; // 엔딩을 본 뒤의 판이면 2회차 목표 문구 (핸드폰 화면에 표시)
   runner.allEndings = endings.allMain; // A·B·C 를 모두 본 판이면 E1 에서 hasRoofKey
   const log = []; // 최근 스토리 기록 (HUD)
   const note = (msg) => {
@@ -55,14 +55,11 @@ export function setupStory({ player, touch, toast }) {
     setPlayerName(name) {
       runner.setPlayerName(name);
     },
-    // 키 입력: 대화·선택지가 먼저, 그다음 E = 근처 대상 상호작용. 소비했으면 true
+    // 키 입력 우선순위: ① 대화·선택지 ② E = 근처(interactRadius) 대상 상호작용. 소비했으면 true
+    // 소비하지 않은 E 는 main.js 가 핸드폰 화면 열기/닫기로 쓴다 (③)
     key(code) {
       if (storyKey(runner, code)) return true;
-      if (code === 'KeyE') {
-        interactions.use();
-        return true;
-      }
-      return false;
+      return code === 'KeyE' && interactions.use();
     },
     // 디버그: 순서상 다음 사건 불러오기
     next() {

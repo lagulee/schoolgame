@@ -24,7 +24,7 @@
 |---|---|---|---|---|---|
 | 0 | 스토리 엔진 (v3 보정까지) | 🟡 | 🟨 | `claude/stage-0-story-engine-inofan` `1d55b5b` | 예 (0② 와 함께, v1.2) |
 | 0② | v6 보정 (데이터·플래그·이름 정책) | 🟢 | 🟨 | `main` | 예 (v1.2) |
-| 0b-1 | 핸드폰 (목표·위치·라이트·배터리·보조배터리), 손전등 제거 | 🟡 | ⬜ | | |
+| 0b-1 | 핸드폰 (목표·위치·라이트·배터리·보조배터리), 손전등 제거 — 사용자 번호 "단계 3" | 🟡 | 🟨 | `main` | 예 (v1.3) |
 | 0b-2 | 이동·스태미나 | 🟡 | ⬜ | | |
 | 0b-3 | 추격 엔진 (gap 모델·마지막 추격·자동 시뮬레이션) | 🟡 | ⬜ | | |
 | 0b-4 | 퍼즐 실행기 골격 | 🟢 | ⬜ | | |
@@ -52,7 +52,7 @@
 ## 2. 세션 시작 절차 (새 세션이 가장 먼저 할 일)
 
 0. **브랜치 확인**: `git fetch origin` 후 **"현재 통합 브랜치"**(아래 한 줄) 위에서 시작한다: `git checkout -B <내 작업 브랜치> origin/<현재 통합 브랜치>`. v6 작업은 브랜치를 따로 두지 않으므로(결정 D4 개정) 끝나면 `main` 에 fast-forward 로 푸시한다(`git push origin HEAD:main`, 세션이 정한 작업 브랜치도 같은 커밋으로 맞춰 둔다).
-   - **현재 통합 브랜치: `main`** (단계 0·0② 반영됨).
+   - **현재 통합 브랜치: `main`** (단계 0·0②·0b-1 반영됨).
    - 이 줄은 `main` 으로 유지한다. 사용자가 다시 브랜치 검사 방식을 지시할 때만 바꾼다.
 1. `CLAUDE.md` → 이 문서 → `STORY.md` → `PROGRESS.md` 순으로 읽는다.
 2. 1장 표에서 **다음 대기(⬜) 단계**를 찾고, 이전 단계가 ✅ 인지 확인한다. 아니면 사용자에게 묻는다.
@@ -140,7 +140,7 @@
 - 만들 것
   - `src/phone/phone.js`(상태 `{battery, lightOn, screenOpen}`, 규칙: 시작 86~92 랜덤, 확인 −2%, 라이트 20초당 −1%, 보조배터리 +15% 상한 100, 0% 처리, 20%·10% 경고), `src/phone/ui.js`(화면: 목표·위치·배터리), `src/phone/light.js`(기존 `Flashlight` 개조: angle π/6, penumbra 0.7, distance 10~12, 밝기 약 60%, 10% 이하 더 어둡게·깜빡임 3회/초 미만), `src/phone/bank.js`(보조배터리 줍기, 상호작용 등록기 사용).
   - 제거: `main.js` 의 `KeyF`, 터치 🔦 버튼·메뉴 항목, `config.js` 의 `LIGHTS.flashlight` → `PHONE` 상수군(`PHONE_START_MIN/MAX`, `CHECK_COST`, `LIGHT_COST_PER_SEC`, `BANK_GAIN`, `MINGEON_START`, 경고 임계값).
-  - 키: `Tab` 또는 `F` 대신 지정 (제안: `Q` 핸드폰 화면, `F` 라이트 — F 키 이름은 유지하되 의미만 바꿈). 터치: 핸드폰 버튼 + 라이트 버튼.
+  - 키 (사용자 지정): `E` 핸드폰 화면(대화·선택지 → 근처 상호작용 다음 순위), `R` 라이트. 터치: 📱 화면 버튼 + 💡 라이트 버튼.
   - 체크포인트: `runner.checkpoints.register('phone', …)` 로 배터리·주운 보조배터리 저장.
   - 목표·위치 표시: 사건의 `objective`·`place`, 2회차는 `objectiveRepeat`.
   - 태민 POV 에서는 핸드폰 값이 55% 로 바뀜 (`onPov`).
@@ -258,6 +258,7 @@
 
 | 날짜 | 단계 | 결과·남은 문제·다음 세션 주의 |
 |---|---|---|
+| 2026-10-26 | 0b-1 (단계 3, 핸드폰) | **구현**: `src/phone/` — `phone.js`(순수 상태 `{battery, lightOn, screenOpen}` + 시점별 핸드폰·주운 보조배터리·`flickerStep`), `light.js`(이전 `Flashlight` 개조 `PhoneLight`: angle π/6·penumbra 0.7·distance 11·세기 15.6 = 이전 26 의 60%, 배터리 10% 이하 ×0.6 + 2.5~6초마다 0.4초 ×0.5 흐려짐 → 상태 유지 ≥0.36초라 초당 3회 미만), `ui.js`(화면: 배터리·라이트 상태 줄, 해야 할 것 = `runner.objective()`(엔딩 본 판이면 `objectiveRepeat`), 위치 = 새 `runner.place()`(사건 `place`), 경고는 화면을 닫아도 위쪽 알림 3초), `bank.js`(`PowerBanks`: `place(id,pos)` 로 상호작용 등록, `from` 사건이 시작된 뒤에만 줍기, 주우면 제거), `setup.js`(E1 시작 → `phone.begin()` 배터리 확정, `onPov` → 태민 핸드폰 55%, `runner.checkpoints.register('phone')`). 문구 `data/phone.json`, 수치 `config.js` `PHONE`(`PHONE_START_MIN/MAX`·`CHECK_COST`·`LIGHT_COST_PER_SEC`·`BANK_GAIN`·`MINGEON_START`·`WARN_LEVELS`·`LOW_LEVEL`·`LIGHT`). **제거**: `src/player/flashlight.js`, F 키, 터치 🔦 버튼·메뉴 항목, `LIGHTS.flashlight`, HUD 손전등 줄 → 핸드폰 줄. **키**: `E` 우선순위 ① 대화창·선택지(`storyKey`) ② `interactRadius`(1.6 m) 안 상호작용 대상 ③ 핸드폰 화면 열기/닫기(`story.key` 가 false 를 돌려주면 `main.js` 가 처리). `R` 라이트(화면이 열려 있어도, 선택지 중에도 동작). 디버그 `U` = 다음 보조배터리를 1 m 앞에 놓기(터치 메뉴 "보조배터리 놓기"). 터치: 📱(이전 🔦 자리)·💡(그 왼쪽). 촬영 `light=1`(이전 `flash`)·`phone=1`·`battery=%`, 실행 `?light=1`(smoke 가 사용). 테스트 40 → 51개(`test/phone.test.mjs` 11개), smoke·touch 에 핸드폰 항목 추가. **하지 않음**: 화면 열림 중 이동 ×0.7·달리기 불가(단계 4 스태미나), 보조배터리 좌표·오브젝트(1d), 층 약도, 시작 흐름(0c). **E 우선순위의 어색한 점**: ① 상호작용 대상 1.6 m 안에서는 E 로 핸드폰을 열 수 없다(한 발 물러나야 함). ② 화면이 열린 채 대상 근처에 가면 E 가 닫기 대신 줍기가 된다. ③ 대화 중에는 E 로 화면을 닫을 수 없다(대화가 끝나야 함). 터치는 📱 버튼이 따로라 해당 없음. 필요하면 핸드폰 전용 키(예: Tab)를 하나 더 두는 안을 제안. **새 가정(STORY 에 없음, 확인 필요)**: ⓐ 라이트는 꺼진 채 시작한다(이전 손전등은 켜진 채 시작). ⓑ E1 전(자유 탐색, 0c)에도 핸드폰이 있고 임시 배터리(같은 86~92 랜덤)를 쓰며 E1 시작 때 다시 뽑는다. 라이트 켜짐 상태는 이어진다. ⓒ 20%·10% 경고는 핸드폰마다 한 번씩이고, 충전 뒤 다시 내려가도 반복하지 않는다. 0% 순간에는 "핸드폰이 꺼졌다" 알림. ⓓ 배터리는 소수로 저장하고 화면은 올림 정수(89.5 → 90%). ⓔ 1~2% 에서 화면을 열면 비용으로 0% 가 되어 열리지 않는다. ⓕ 태민 핸드폰은 처음 시점을 바꿀 때 55% 로 만들고, 주인공 시점으로 돌아오면 주인공 핸드폰(배터리·라이트)이 그대로 돌아온다. 체크포인트는 두 핸드폰을 모두 저장한다. ⓖ 위치 표시는 실내 맵 전이라 사건의 `place` 문구(예: "구관 1층 현관")이고, 사건 전이면 "-". ⓗ 스토리 초기화(K)는 핸드폰도 새 판으로(주운 보조배터리 비움). **다음 세션 주의**: 핸드폰 상태는 `window.__DEBUG.phone`(`Phone`), 화면 열림 여부 `phone.screenOpen` 을 단계 4 이동 속도에 쓴다. 맵 단계에서 보조배터리는 `banks.place('PB1', [x, z])`. |
 | 2026-10-26 | 0② (v6 보정) | **구현**: 플래그 `hasRoofKey`(5번째, `FLAG_NAMES`·`story.flags`) — `E1` 의 `grantRoofKey` 로 A·B·C 를 모두 본 판(`EndingsSeen.allMain`, `earnsRoofKey`)이면 E1 시작 때 켬, 루트 판정 무관. 엔딩 키 `ENDING_KEYS` A·B·C·D, `endingsSeen` 은 이 네 키만 기록하고 D 는 완주 판정에 영향 없음, `story.endings.D`(`route: null`, `hidden`). `{player}`: `text.js` `withPlayerName`·`runner.setPlayerName(name)`·setup 의 `setPlayerName`(빈 값이면 "나"). `src/story/names.js`(합치기 규칙)·`localData.js`(Vite `import.meta.glob`, 파일 없으면 빈 객체) — `data/characters.local.json`·`credits.local.json` 이 있을 때만 같은 id 의 이름을 덮어씀(주인공 제외), `.gitignore` 에 `data/*.local.json`. `data/credits.json`(개발자 클로드·{gyuha}, 아이디어 {mingeon}, 회사 진솔엔터테이먼트/jinsolentertainment). `story.json`: R3 E14(지후 먼저 → 혼자 도주)·E15(바로 뒤까지 따라붙은 채 도착 → 흔적 → 문 열기 전 쓰러짐)·R2 E14(당직 → 지후와 도주 → 주인공 입구 직전 붙잡힘 → 지후 탈출)·R1-c(당직 자기소개 도입)·R1-f(당직 처리 중 돌아섬)·R1-g(거의 따라잡힘) 대사, 메타 `deaths`(사건에서 죽는 인물 순서)·`finale`(`companion`·`fleeing`·`atExit`: escape/playerCaught/collapse), R3 E13 `deaths:["duty"]`, `undecided` a·b·e → `resolved` 로 옮김. `chases.json`: `ghostSpeed`·`startGap`·`pathLength`·`companionKillDelay`·`unlockTime`·`delays`(+ C3·C4 `final`), `src/story/chases.js` 검사(걷기 1.6 < 속도 < 달리기 3.6, 시작 때 setup 이 검사), `config.js` `CHASE`(잡힘 1.5·기본 속도 3.2·기본 gap 20), `exitMinGap`=4.9 m. 테스트 33 → 40개. 로컬 파일이 있을 때·없을 때 모두 빌드 확인(있을 때만 번들에 들어감). **하지 않음**: 핸드폰·옥상 열쇠 목표 문구(0b-1)·스태미나·추격 실행기·이름 입력 화면(0c)·크레딧 표시(8). **새 가정(확인 필요)**: ① C1·C2 의 `pathLength`·`delays` 는 STORY 에 값이 없어(설계 기준 40~60 m, C2 방화문 "몇 초"만 있음) `null`·`[]` + `undecided` 로 두었다 — 0b-3 전에 값을 정해 달라 ② C1·C2 `startGap` 은 STORY 14-3 의 기본 20 m [가정], `companionKillDelay`·`unlockTime` 은 해당 없음이라 0 ③ 재시도 gap 증가(+2 m, 최대 +8 m)는 0b-3 에서 넣는다 ④ 바뀐 대사는 전부 임시 ⑤ `{player}` 는 아직 어느 대사에도 쓰지 않았다(기본값 "나"로 부르면 어색, STORY "최소로" 제안) ⑥ 화면 밖 사망(서진 E2, 태민 R2·R3)은 `deaths` 메타에 넣지 않았다(테스트가 따로 셈). **규칙 변경**: 사용자 지시로 v6 작업은 `main` 직접 반영(D4 개정), 단계 0 코드도 함께 반영. 통합 브랜치 줄 = `main`. |
 | 2026-10-26 | 계획 구체화 | 3장을 단계별 만들 파일·데이터·테스트·완료 기준·위험으로 재작성하고 요약표(3-1)·위험 목록(3-3) 추가. 총 약 31~33세션 추정. 코드 변경 없음. 발견: 충돌이 2D(xz)+바닥 높이뿐이라 다층 건물 전에 `Collision` 에 층(level) 개념이 필요(1b-1). 사용자 선택: 계획에 세션 수·위험 포함, STAGES.md 에 기록, 기존 권장 순서 유지, 맵은 v6 그대로(본관 5층·신관 5층·운동장). |
 | 2026-10-26 | 계획 개정 | STORY v6 가명판 저장, 결정 D1(가명+로컬 덮어쓰기)·D2 개정(단일 월드)·D5~D7 추가, 단계표를 0②·0b-1~4·1a~1d·0c·2a/2b·4a/4b·6a/6b·8 로 세분화. 코드 변경 없음. 미해결: 1장 4-1 표의 본관 1층 반 개수(표는 반 2 + 행정실 + 상담실, 본문은 층당 반 4개) — 단계 1b 에서 확정. |

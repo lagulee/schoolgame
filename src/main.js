@@ -3,7 +3,6 @@ import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY } from './config.js';
 import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
-import { Flashlight } from './player/flashlight.js';
 import { buildWorld } from './world/world.js';
 import { buildFx } from './world/fx.js';
 import { Post } from './post/composer.js';
@@ -13,6 +12,7 @@ import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/
 import { Hud } from './debug/hud.js';
 import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
+import { setupPhone } from './phone/setup.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -50,8 +50,20 @@ await new Promise((r) => setTimeout(r, 30)); // 로딩 문구가 먼저 그려�
 const world = buildWorld(scene, collision, renderer);
 document.getElementById('loading').textContent = '';
 const player = new Player(camera, renderer.domElement, collision);
-const flashlight = new Flashlight(scene, camera);
-const fx = buildFx(scene, world.ctx, flashlight, collision);
+
+const toastEl = document.getElementById('toast');
+let toastTimer = 0;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.style.opacity = 1;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toastEl.style.opacity = 0), 1400);
+}
+const onOff = (v) => (v ? '켜짐' : '꺼짐');
+const touchMode = isTouchDevice();
+const story = setupStory({ player, touch: touchMode, toast });
+const phone = setupPhone({ scene, camera, story, touch: touchMode, toast }); // 손전등 대신 핸드폰 라이트 (결정 D6)
+const fx = buildFx(scene, world.ctx, phone.light, collision);
 const post = new Post(renderer, scene, camera);
 const lights = world.ctx.lights;
 const audio = new AudioSystem(camera, scene);
@@ -77,7 +89,7 @@ function applyQuality(name) {
   post.setQuality(q);
   post.setSize(innerWidth, innerHeight);
   lights.setShadows(q.shadows);
-  flashlight.spot.castShadow = q.shadows;
+  phone.light.spot.castShadow = q.shadows;
   fx.setLevel(q.fx);
   fx.setPixelRatio(pr);
 }
@@ -88,21 +100,11 @@ function setFog(d) {
   fx.setFogDensity(state.fog);
 }
 
-const toastEl = document.getElementById('toast');
-let toastTimer = 0;
-function toast(msg) {
-  toastEl.textContent = msg;
-  toastEl.style.opacity = 1;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toastEl.style.opacity = 0), 1400);
-}
-const onOff = (v) => (v ? '켜짐' : '꺼짐');
-const touchMode = isTouchDevice();
-const story = setupStory({ player, touch: touchMode, toast });
-
 // 기능 (키보드와 터치 메뉴가 같이 쓴다)
 const act = {
-  flash: () => toast(`손전등 ${onOff(flashlight.toggle())}`),
+  phone: () => phone.toggleScreen(),
+  light: () => phone.toggleLight(),
+  bank: () => phone.debugBank(player.pos, camera.getWorldDirection(new THREE.Vector3())),
   bloom: () => toast(`블룸 ${onOff(post.toggle('bloom'))}`),
   grain: () => toast(`그레인 ${onOff(post.toggle('grain'))}`),
   vignette: () => toast(`비네팅 ${onOff(post.toggle('vignette'))}`),
@@ -112,7 +114,7 @@ const act = {
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
-  storyReset: () => story.reset(),
+  storyReset: () => { story.reset(); phone.reset(); },
   storyBook: () => story.book(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
   hud: () => hud.toggle(),
@@ -120,11 +122,11 @@ const act = {
   bob: () => toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`),
 };
 const KEYS = {
-  KeyF: act.flash, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
+  KeyE: act.phone, KeyR: act.light, KeyU: act.bank, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
   KeyY: act.event, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
 };
-// 대화·선택지·상호작용(E)이 먼저 키를 받고, 소비하지 않은 키만 기존 단축키로 넘긴다
+// E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (story.key(e.code)) return;
@@ -133,6 +135,7 @@ addEventListener('keydown', (e) => {
 
 // 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
 const overlay = document.getElementById('overlay');
+let touchSync = null; // 터치 📱·💡 버튼 켜짐 표시
 if (touchMode) {
   overlay.querySelector('.start').textContent = '화면을 터치하여 시작';
   const nextQuality = { low: 'mid', mid: 'high', high: 'low' };
@@ -140,9 +143,8 @@ if (touchMode) {
   const flag = (name, label) => ({ label: () => `${label} ${post.flags[name] ? '켜짐' : '꺼짐'}`, run: act[name] });
   const touch = setupTouch({
     player,
-    flashlight,
+    phone: { screen: act.phone, light: act.light, state: phone.phone },
     menuItems: [
-      { id: 'flash', run: act.flash },
       { label: '이상 현상 발동', run: act.event },
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
@@ -157,10 +159,11 @@ if (touchMode) {
       { label: '전체화면', run: enterImmersive },
       { label: '다음 사건 (디버그)', run: act.storyNext },
       { label: '책 줍기 (디버그)', run: act.storyBook },
+      { label: '보조배터리 놓기 (디버그)', run: act.bank },
       { label: '스토리 초기화', run: act.storyReset },
     ],
   });
-  addEventListener('keydown', (e) => e.code === 'KeyF' && touch.syncFlash());
+  touchSync = touch.sync;
   overlay.addEventListener('click', () => {
     audio.start();
     overlay.classList.add('hidden');
@@ -189,9 +192,10 @@ function step(t, dt) {
   renderer.info.reset();
   U.time.value = t;
   if (dt > 0) player.update(dt);
-  flashlight.update(dt);
   if (!shot) director.update(t, dt);
   story.update(dt);
+  phone.update(dt);
+  touchSync?.();
   world.update(t, dt, camera);
   fx.update(camera);
   audio.update();
@@ -200,22 +204,22 @@ function step(t, dt) {
   if (!shot) {
     hud.update({
       quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
-      fog: state.fog, bob: player.bob.level, flags: post.flags, flash: flashlight.on, inspect: state.inspect,
+      fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }
 }
-window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner };
+window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner, phone: phone.phone, banks: phone.banks };
+// ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
+if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
 if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
   overlay.classList.add('hidden');
   lights.setInspect(shot.inspect);
-  if (shot.noShadow) { lights.setShadows(false); flashlight.spot.castShadow = false; }
+  if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
-  flashlight.setOn(shot.flash);
-  flashlight.snap();
   if (shot.event) {
     director.t = shot.time;
     director.trigger(shot.event);
@@ -225,6 +229,12 @@ if (shot) {
     if (shot.story === 'ending') story.runner.showEnding(shot.storyEnding);
     else story.runner.jump(shot.story, shot.storyLine, shot.storyFlags);
   }
+  // 핸드폰: 사건(E1 배터리 확정) 뒤에 적용
+  phone.phone.setLight(shot.light);
+  if (shot.phone) phone.phone.openScreen();
+  if (shot.battery !== null) phone.phone.s.battery = shot.battery;
+  phone.light.sync(phone.phone);
+  phone.light.snap();
   let n = 0;
   renderer.setAnimationLoop(() => {
     step(shot.time, 0);

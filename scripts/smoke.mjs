@@ -1,4 +1,5 @@
-// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
+// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
+// ?light=1 : 핸드폰 라이트를 켠 채 시작 (손전등이 없어진 뒤 화면이 어두워도 같은 조건으로 점검)
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 
@@ -10,7 +11,7 @@ const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 const errors = [];
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(String(e)));
-await page.goto(`http://localhost:${PORT}/`);
+await page.goto(`http://localhost:${PORT}/?light=1`);
 await page.waitForFunction(() => document.getElementById('loading').textContent === '', null, { timeout: 120000 });
 await page.click('#overlay');
 const press = async (k, ms = 300) => { await page.keyboard.down(k); await page.waitForTimeout(ms); await page.keyboard.up(k); };
@@ -21,7 +22,7 @@ await press('KeyW', 4000);
 const p1 = await page.evaluate(() => window.__DEBUG.pos());
 console.log('W 4초 이동:', p0, '→', p1);
 await press('KeyD', 1500);
-for (const k of ['KeyF', 'KeyF', 'KeyB', 'KeyG', 'KeyV', 'BracketRight', 'BracketLeft', 'KeyL', 'KeyL', 'KeyH', 'KeyM', 'KeyM', 'KeyY', 'KeyY', 'KeyY', 'Digit1', 'Digit2', 'Digit3', 'Backquote', 'KeyP']) await press(k, 150);
+for (const k of ['KeyR', 'KeyR', 'KeyB', 'KeyG', 'KeyV', 'BracketRight', 'BracketLeft', 'KeyL', 'KeyL', 'KeyH', 'KeyM', 'KeyM', 'KeyY', 'KeyY', 'KeyY', 'Digit1', 'Digit2', 'Digit3', 'Backquote', 'KeyP']) await press(k, 150);
 await page.keyboard.down('ShiftLeft');
 await press('KeyW', 3000);
 await page.keyboard.up('ShiftLeft');
@@ -53,8 +54,21 @@ const fails = [];
 const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
 const S = (fn, arg) => page.evaluate(fn, arg);
 const lastBefore = await S(() => window.__DEBUG.director.last);
+const ph = () => S(() => { const p = window.__DEBUG.phone; return { open: p.screenOpen, light: p.lightOn, bat: p.battery, lv: p.level, begun: p.begun, picked: [...p.picked] }; });
+const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
+check('?light=1 → 라이트 켜진 채 시작', (await ph()).light);
+const ph0 = await ph();
 await press('KeyE', 120);
 check('E 키는 더 이상 이상 현상을 발동하지 않음', (await S(() => window.__DEBUG.director.last)) === lastBefore);
+const ph1 = await ph();
+check('E(대화·대상 없음) → 핸드폰 화면 열림, −2%', ph1.open && Math.abs(ph0.bat - ph1.bat - 2) < 0.2, JSON.stringify([ph0.bat, ph1.bat]));
+check('핸드폰 화면 표시', await poll(() => document.getElementById('phone').style.display !== 'none'));
+await press('KeyR', 120);
+check('화면이 열린 채 R → 라이트 끔', (await ph()).open && !(await ph()).light);
+await press('KeyR', 120);
+check('R → 라이트 다시 켬', (await ph()).light);
+await press('KeyE', 120);
+check('E 한 번 더 → 화면 닫힘', !(await ph()).open && (await poll(() => document.getElementById('phone').style.display === 'none')));
 const finishEvent = async () => {
   for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
 };
@@ -68,7 +82,21 @@ for (let i = 0; i < 15; i++) {
   await press('KeyN', 120);
   const st = await S_();
   played.push(st.id);
-  if (i === 0) check('N → E1 자막 표시', st.id === 'E1' && st.vis.length === 1, JSON.stringify(st));
+  if (i === 0) {
+    check('N → E1 자막 표시', st.id === 'E1' && st.vis.length === 1, JSON.stringify(st));
+    const b = await ph();
+    check('E1 시작 때 배터리 확정 (표시 86~92%, 라이트가 켜져 있어 소수점만 줄어듦)', b.begun && b.lv >= 86 && b.lv <= 92 && b.bat > b.lv - 1, JSON.stringify(b));
+    await finishEvent();
+    check('대화 넘기기 E 는 핸드폰을 열지 않음', !(await ph()).open);
+    // 보조배터리: U(디버그)로 앞에 놓고 E 로 줍는다 → 상호작용이 핸드폰보다 먼저
+    await S(() => { window.__DEBUG.phone.s.battery = 50; });
+    await press('KeyU', 120);
+    check('U → 보조배터리 안내 표시', await poll(() => document.getElementById('interact').style.display !== 'none' && document.getElementById('interact').textContent.includes('보조배터리')));
+    await press('KeyE', 120);
+    const pb = await ph();
+    check('근처 대상이 있으면 E = 줍기 (화면 안 열림), +15%', pb.picked.includes('PB1') && !pb.open && Math.abs(pb.bat - 65) < 0.5, JSON.stringify(pb));
+    check('주운 뒤 안내 사라짐', await poll(() => document.getElementById('interact').style.display === 'none'));
+  }
   if (i === 1) {
     await press('KeyN', 120);
     check('사건 도중 N 은 무시 (진행 중)', (await S(() => window.__DEBUG.story.event?.id)) === 'E2');
@@ -76,6 +104,8 @@ for (let i = 0; i < 15; i++) {
   }
   if (st.id === 'R1-e') {
     check('R1-e 태민 시점 전환', st.pov === 'mingeon', JSON.stringify(st));
+    const mp = await S(() => ({ pov: window.__DEBUG.phone.pov, bat: window.__DEBUG.phone.battery }));
+    check('R1-e 태민 핸드폰 55% 에서 시작', mp.pov === 'mingeon' && mp.bat > 53 && mp.bat <= 55, JSON.stringify(mp));
     await press('KeyE', 120); // 타자 효과 끝내기
     await press('KeyE', 120); // 둘째 줄 = 태민 대사
     const nm = await S(() => ({ line: window.__DEBUG.story.lineIdx, who: window.__DEBUG.story.event.lines[window.__DEBUG.story.lineIdx].who, shown: getComputedStyle(document.querySelector('.story-name')).display !== 'none' }));
@@ -101,10 +131,10 @@ check('시점이 주인공으로 복귀', (await S(() => window.__DEBUG.story.po
 check('같은 사건 연속 발동 금지', await S(() => { const r = window.__DEBUG.story; r.close(); const ok = r.start('E3'); while (r.mode === 'line') r.advance(); return ok && !r.start('E3') && r.lastReason.includes('연속'); }));
 await press('KeyK', 120);
 check('K → 스토리 초기화', await S(() => !window.__DEBUG.story.flags.values.earlyBook && window.__DEBUG.story.registry.last === null));
+check('K → 핸드폰도 새 판 (주운 보조배터리 비움)', (await ph()).picked.length === 0 && !(await ph()).begun);
 // E12: W/S 선택지 이동, 선택 중 이동 정지, 시간 초과 기본값
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); });
 check('E12 선택지 + 제한 시간 막대', (await S(() => window.__DEBUG.story.mode)) === 'choice' && (await page.isVisible('.story-timer')));
-const poll = (fn) => page.waitForFunction(fn, null, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
 check('선택지 동안 이동 정지', await poll(() => window.__DEBUG.player.frozen));
 const q = await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1]);
 await press('Digit2', 120); // 숫자키 2 = 둘째 항목(남는다). 선택지가 떠 있으면 품질 단축키로 넘어가지 않는다

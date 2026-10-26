@@ -1,0 +1,28 @@
+{
+  "_comment": "핸드폰 화면·알림 문구 (STORY 8장). 수치는 src/config.js 의 PHONE. {n} = 배터리 %, {id} = 보조배터리 id, {event} = 사건 id.",
+  "ui": {
+    "title": "핸드폰",
+    "objective": "해야 할 것",
+    "place": "위치",
+    "battery": "배터리",
+    "light": "라이트",
+    "on": "켜짐",
+    "off": "꺼짐",
+    "none": "-",
+    "closeHintKey": "E 닫기 · R 라이트",
+    "closeHintTouch": "📱 닫기 · 💡 라이트"
+  },
+  "messages": {
+    "warn": "배터리 {n}% 남음",
+    "dead": "핸드폰이 꺼졌다 (배터리 0%)",
+    "deadTry": "배터리가 없다",
+    "lightOn": "라이트 켬",
+    "lightOff": "라이트 끔",
+    "bankLabel": "보조배터리 줍기",
+    "bankPicked": "보조배터리 +{n}% (배터리 {level}%)",
+    "bankPov": "지금은 보조배터리를 쓸 수 없다",
+    "bankTooEarly": "{id}: 아직 주울 수 없음 ({event} 이후)",
+    "bankNone": "남은 보조배터리 없음",
+    "bankPlaced": "{id} 놓음 (디버그) — 앞으로 가서 E"
+  }
+}

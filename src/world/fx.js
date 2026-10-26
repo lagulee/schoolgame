@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PALETTE } from '../config.js';
+import { PALETTE, PHONE } from '../config.js';
 import { U } from './shared.js';
 import { puddleTexture } from '../materials/windowTex.js';
 
@@ -87,7 +87,7 @@ function coneGeo(length, angle) {
   return g;
 }
 
-export function buildFx(scene, ctx, flashlight, collision) {
+export function buildFx(scene, ctx, phoneLight, collision) {
   const groups = { 0: new THREE.Group(), 1: new THREE.Group(), 2: new THREE.Group() };
   for (const g of Object.values(groups)) scene.add(g);
   const fogMats = [];
@@ -113,8 +113,8 @@ export function buildFx(scene, ctx, flashlight, collision) {
   addFog(1, 0, -38, 40, 30, 0.5, 0.36, 15, 1);
   addFog(2, 0, -38, 40, 30, 1.0, 0.24, 15, 0.8);
 
-  // 손전등 볼류메트릭 콘 (알파 ≈ 0.06)
-  const F = LIGHTS.flashlight;
+  // 핸드폰 라이트 볼류메트릭 콘 (알파 ≈ 0.06)
+  const F = PHONE.LIGHT;
   const coneLen = 9;
   const cone = new THREE.Mesh(coneGeo(coneLen, F.angle * 0.92), beamMaterial(0xfff0d6, 0.06, coneLen, 1.8));
   cone.renderOrder = 3;
@@ -238,11 +238,11 @@ export function buildFx(scene, ctx, flashlight, collision) {
       for (const s of shafts) s.bugMat.uniforms.uPx.value = pr;
     },
     update(camera) {
-      const on = flashlight.on;
+      const on = phoneLight.on;
       cone.visible = on;
       // 벽·바닥에 닿는 곳에서 원뿔이 0 으로 사라지도록 길이를 맞춘다 (딱딱한 단면 방지)
-      const sp = flashlight.spot.position;
-      const d = flashlight.dir;
+      const sp = phoneLight.spot.position;
+      const d = phoneLight.dir;
       const hz = Math.hypot(d.x, d.z);
       let len = coneLen;
       if (hz > 1e-3) len = Math.min(len, collision.rayDistance(sp.x, sp.z, d.x / hz, d.z / hz, coneLen * hz) / hz);
@@ -252,8 +252,8 @@ export function buildFx(scene, ctx, flashlight, collision) {
       cone.lookAt(tmp.copy(sp).add(d));
       const u = dustMat.uniforms;
       u.uCenter.value.copy(camera.position);
-      u.uSpotPos.value.copy(flashlight.spot.position);
-      u.uSpotDir.value.copy(flashlight.dir);
+      u.uSpotPos.value.copy(phoneLight.spot.position);
+      u.uSpotDir.value.copy(phoneLight.dir);
       u.uOn.value = on ? 1 : 0;
       for (const s of shafts) {
         s.shaft.material.uniforms.uAlpha.value = 0.035 * s.lamp.on;

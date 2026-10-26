@@ -1,4 +1,4 @@
-// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&flash=0|1][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A] 쿼리 모드와 P 키 스크린샷
+// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&light=0|1][&phone=1][&battery=%][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A] 쿼리 모드와 P 키 스크린샷
 export function parseShotParams() {
   const q = new URLSearchParams(location.search);
   if (!q.has('shot')) return null;
@@ -8,7 +8,9 @@ export function parseShotParams() {
     pos,
     yaw: num('yaw', 0),
     pitch: num('pitch', 0),
-    flash: q.get('flash') === '1',
+    light: q.get('light') === '1', // 핸드폰 라이트
+    phone: q.get('phone') === '1', // 핸드폰 화면 열기
+    battery: q.has('battery') ? parseFloat(q.get('battery')) : null, // 배터리 % 고정 (저전력 확인용)
     quality: q.get('q') || 'high',
     time: num('t', 12),
     inspect: q.get('inspect') === '1',

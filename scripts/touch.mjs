@@ -1,4 +1,4 @@
-// 터치 조작 테스트: 모바일 에뮬레이션(터치 이벤트)으로 조이스틱·시점 드래그·버튼·메뉴를 검증하고 화면을 저장한다.
+// 터치 조작 테스트: 모바일 에뮬레이션(터치 이벤트)으로 조이스틱·시점 드래그·핸드폰 버튼·메뉴를 검증하고 화면을 저장한다.
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 
@@ -48,11 +48,25 @@ await page.screenshot({ path: 'screenshots/touch_menu.png' });
 await page.tap('.menu-toggle');
 check('메뉴 닫힘', !(await dbg(() => document.querySelector('.menu-panel').classList.contains('open'))));
 
-// 손전등 버튼
-const flashOn0 = await dbg(() => document.querySelector('.tbtn.flash').classList.contains('on'));
-await page.tap('.tbtn.flash');
-const flashOn1 = await dbg(() => document.querySelector('.tbtn.flash').classList.contains('on'));
-check('손전등 버튼 토글', flashOn0 !== flashOn1, `(${flashOn0} → ${flashOn1})`);
+// 핸드폰 버튼: 📱 화면 열기/닫기, 💡 라이트 (화면이 열려 있어도 동작)
+const tphone = () => dbg(() => ({ open: window.__DEBUG.phone.screenOpen, light: window.__DEBUG.phone.lightOn, bat: window.__DEBUG.phone.battery,
+  scr: document.querySelector('.tbtn.phone').classList.contains('on'), lamp: document.querySelector('.tbtn.light').classList.contains('on'),
+  shown: document.getElementById('phone').style.display !== 'none' }));
+check('손전등 🔦 버튼 없음', !(await page.$('.tbtn.flash')));
+check('메뉴에 손전등 항목 없음', !labels.some((l) => l.includes('손전등')));
+const tp0 = await tphone();
+await page.tap('.tbtn.phone');
+await page.waitForFunction(() => document.getElementById('phone').style.display !== 'none', null, { timeout: 30000 }).catch(() => {});
+const tp1 = await tphone();
+check('📱 → 화면 열림, −2%', tp1.open && tp1.scr && tp1.shown && Math.abs(tp0.bat - tp1.bat - 2) < 0.2, JSON.stringify([tp0, tp1]));
+await page.tap('.tbtn.light');
+const tp2 = await tphone();
+check('화면이 열린 채 💡 → 라이트 토글', tp2.open && tp2.light !== tp1.light && tp2.lamp === tp2.light, JSON.stringify(tp2));
+await page.screenshot({ path: 'screenshots/touch_phone.png' });
+await page.tap('.tbtn.light');
+await page.tap('.tbtn.phone');
+const tp3 = await tphone();
+check('📱 한 번 더 → 화면 닫힘', !tp3.open && !tp3.scr, JSON.stringify(tp3));
 
 // 시점 드래그: 오른쪽 영역에서 오른쪽으로 120px → yaw 감소(우회전)
 const yaw0 = await dbg(() => window.__DEBUG.player.camera.rotation.y);

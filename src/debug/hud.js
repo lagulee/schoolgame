@@ -33,7 +33,8 @@ export class Hud {
       `위치 ${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)}   바닥 ${data.surface}`,
       `안개 ${data.fog.toFixed(4)}   헤드밥 ${Math.round(data.bob * 100)}%`,
       `블룸 ${data.flags.bloom ? 'on' : 'off'}  그레인 ${data.flags.grain ? 'on' : 'off'}  비네팅 ${data.flags.vignette ? 'on' : 'off'}`,
-      `손전등 ${data.flash ? 'on' : 'off'}   점검 ${data.inspect ? 'on' : 'off'}   음소거 ${data.muted ? 'on' : 'off'}`,
+      `점검 ${data.inspect ? 'on' : 'off'}   음소거 ${data.muted ? 'on' : 'off'}`,
+      data.phone,
       `이벤트: ${data.events.join(' / ') || '-'}`,
       ...(data.story ?? []),
     ].join('\n');

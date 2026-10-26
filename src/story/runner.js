@@ -25,7 +25,7 @@ export class StoryRunner {
     this.onEvent = null; // (id, phase: 'start'|'end') => void
     this.onChoice = null; // (eventId, optionId, timedOut) => void
     this.onEnding = null; // (endingKey, route) => void
-    this.onPov = null; // (pov) => void  시작 위치·카메라·핸드폰 전환은 단계 0b·6 에서 여기에 붙인다
+    this.onPov = null; // (pov) => void  핸드폰 전환은 src/phone/setup.js, 시작 위치·카메라는 단계 6 에서 붙인다
     this.onInteract = null; // (interactionId) => void
     this.checkpoints = new Checkpoints();
     this.checkpoints.register('flags', { save: () => this.flags.snapshot(), load: (v) => this.flags.restore(v) });
@@ -76,12 +76,24 @@ export class StoryRunner {
     this.onPov?.(pov);
   }
 
-  // 핸드폰 목표 문구 (진행 중인 사건, 없으면 직전 사건 기준). 엔딩을 본 판이면 objectiveRepeat 우선
+  // 핸드폰이 보여 주는 기준 사건: 진행 중인 사건, 없으면 직전 사건
+  phoneEvent() {
+    if (this.event?.kind === 'event') return this.event;
+    return this.registry.last ? this.registry.get(this.registry.last, this.route) : null;
+  }
+
+  // 핸드폰 목표 문구. 엔딩을 본 판이면 objectiveRepeat 우선
   objective() {
-    const ev = this.event?.kind === 'event' ? this.event : this.registry.last ? this.registry.get(this.registry.last, this.route) : null;
+    const ev = this.phoneEvent();
     const key = (this.repeat && ev?.objectiveRepeat) || ev?.objective;
     const text = key ? this.story.objectives?.[key] : null;
     return text ? this.text(text) : '';
+  }
+
+  // 핸드폰 위치 표시 (사건의 place). 실내 맵(단계 1d) 전에는 사건 기준 장소
+  place() {
+    const p = this.phoneEvent()?.place;
+    return p ? this.text(p) : '';
   }
 
   // 사건 시작. 성공하면 true, 막히면 { reason } 을 담아 false

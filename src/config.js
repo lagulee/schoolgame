@@ -87,8 +87,6 @@ export const LIGHTS = {
   entrance: { intensity: 5, distance: 9 },
   green: { intensity: 90, distance: 34 },
   led: { intensity: 8, distance: 11 },
-  flashlight: { intensity: 26, angle: Math.PI / 7, penumbra: 0.5, decay: 2, distance: 25, shadowRes: 1024,
-    offset: [0.22, -0.24, -0.15], lag: 9 },
   envIntensity: 0.2,
   inspectBoost: 6, // 점검 모드 hemi 배율
 };
@@ -150,8 +148,38 @@ export const SHOTS = [
   { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
   { name: '08_park_trees', pos: [1, 1.6, -29.5], yaw: -22, pitch: 12 },
   { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
-  { name: '06_flashlight_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, flash: 1 },
+  { name: '06_phone_light_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, light: 1 },
+  { name: '09_phone_screen', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, light: 1, phone: 1, story: 'E3' },
 ];
+
+// 핸드폰 (STORY 8장). 배터리 단위는 %. 단계 0b-1(단계 3)에서 손전등을 대체했다
+export const PHONE = {
+  PHONE_START_MIN: 86, // 판 시작 배터리 (정수 랜덤, BEGIN_EVENT 시작 때 확정)
+  PHONE_START_MAX: 92,
+  BEGIN_EVENT: 'E1',
+  CHECK_COST: 2, // 화면을 열 때마다 (열려 있는 동안은 추가 소모 없음)
+  LIGHT_COST_PER_SEC: 1 / 20, // 라이트 20초당 −1%
+  BANK_GAIN: 15, // 보조배터리 1개
+  BATTERY_MAX: 100,
+  MINGEON_START: 55, // 태민 시점(pov mingeon)의 핸드폰
+  WARN_LEVELS: [20, 10], // 이 값에 처음 닿을 때 한 번씩 알림
+  LOW_LEVEL: 10, // 이하이면 라이트가 더 어둡고 가끔 흐려짐
+  WARN_SHOW: 3, // 경고 알림 표시 시간 (초)
+  DEBUG_BANK_AHEAD: 1.0, // U 키(디버그) 보조배터리를 놓는 거리 (플레이어 앞, m)
+  // 라이트: 이전 손전등(π/7, 거리 25, 세기 26)보다 약하게
+  LIGHT: {
+    intensity: 15.6, // 이전 손전등의 60%
+    angle: Math.PI / 6,
+    penumbra: 0.7,
+    decay: 2,
+    distance: 11,
+    shadowRes: 1024,
+    offset: [0.18, -0.22, -0.2], // 카메라 기준 (손에 든 위치)
+    lag: 9,
+    lowDim: 0.6, // 배터리 LOW_LEVEL 이하 밝기 배율
+    flicker: { every: [2.5, 6], length: 0.4, dip: 0.5 }, // 저전력 흐려짐: 간격(초)·길이(초, 0.36 이상 → 초당 3회 미만)·밝기 배율
+  },
+};
 
 // 스토리 엔진 (src/story/). 대사·분기는 data/*.json, 여기에는 시간·크기만 둔다.
 // 추격 gap 모델 기준값 (STORY 14-3·14-4). 추격별 값은 data/chases.json, 실행기는 단계 0b-3
