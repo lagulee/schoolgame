@@ -4,14 +4,12 @@
     {
       "id": "C1", "name": "복도의 그것", "events": ["E2"], "place": "구관 1층 ㅁ자 순환 복도 → 방",
       "ghostSpeed": 2.6, "startGap": 20, "pathLength": 45, "companionKillDelay": 0, "unlockTime": 0,
-      "delays": [{ "at": 28, "seconds": 2, "what": "모퉁이를 꺾어 시야가 끊김" }],
-      "assumed": ["pathLength", "delays"]
+      "delays": [{ "at": 28, "seconds": 2, "what": "모퉁이를 꺾어 시야가 끊김" }]
     },
     {
       "id": "C2", "name": "{mingeon}(귀신)의 추격", "events": ["E10"], "place": "구관 현관 홀 → 계단",
       "ghostSpeed": 3.0, "startGap": 20, "pathLength": 60, "companionKillDelay": 0, "unlockTime": 0,
-      "delays": [{ "at": 22, "seconds": 3, "what": "방화문을 닫음 (문 두드림)" }, { "at": 42, "seconds": 1.5, "what": "계단참에서 시야가 끊김" }],
-      "assumed": ["pathLength", "delays"]
+      "delays": [{ "at": 22, "seconds": 3, "what": "방화문을 닫음 (문 두드림)" }, { "at": 42, "seconds": 1.5, "what": "계단참에서 시야가 끊김" }]
     },
     {
       "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관", "final": true,

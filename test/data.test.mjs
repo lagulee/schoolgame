@@ -315,5 +315,8 @@ test('v6 chases: 필드·값, 귀신 속도는 걷기 < 속도 < 달리기', () 
   assert.ok(bad({ triggerBeforeExit: 40 }).length, '트리거가 경로 밖');
   assert.ok(chaseErrors({ ...by.C1, triggerBeforeExit: 5 }, speeds).length, '일반 추격에는 트리거 없음');
   assert.ok(bad({ assumed: ['nope'] }).length);
-  assert.deepEqual(by.C1.assumed, ['pathLength', 'delays']);
+  // C1·C2 경로·지연은 사용자 확정값 (2026-10-26 추천안)
+  assert.deepEqual([by.C1.pathLength, by.C1.delays.map((d) => [d.at, d.seconds])], [45, [[28, 2]]]);
+  assert.deepEqual([by.C2.pathLength, by.C2.delays.map((d) => [d.at, d.seconds])], [60, [[22, 3], [42, 1.5]]]);
+  for (const c of chases) assert.ok(!c.assumed, `${c.id} 가정값 없음`);
 });
