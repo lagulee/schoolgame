@@ -17,6 +17,18 @@ export class Stamina {
     this.recovering = false;
   }
 
+  // 체크포인트 (추격 시작 지점의 값으로 되돌림, 단계 0b-3). 회복 대기는 저장하지 않고 되돌린 순간부터 바로 회복 가능
+  save() {
+    return { value: this.value, exhausted: this.exhausted };
+  }
+
+  load(v) {
+    this.reset();
+    if (!v) return;
+    this.value = Math.min(this.cfg.MAX, Math.max(0, v.value));
+    this.exhausted = !!v.exhausted && this.value < this.cfg.EXHAUST_CLEAR;
+  }
+
   // 지금 달릴 수 있는가 (탈진 아님 + 남은 양 > 0)
   get canRun() {
     return !this.exhausted && this.value > 0;

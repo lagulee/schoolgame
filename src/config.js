@@ -182,11 +182,24 @@ export const PHONE = {
 };
 
 // 스토리 엔진 (src/story/). 대사·분기는 data/*.json, 여기에는 시간·크기만 둔다.
-// 추격 gap 모델 기준값 (STORY 14-3·14-4). 추격별 값은 data/chases.json, 실행기는 단계 0b-3
+// 추격 gap 모델 (STORY 14-3·14-4, 단계 0b-3 src/chase/). 추격별 값(귀신 속도·경로·지연)은 data/chases.json
 export const CHASE = {
   catchDistance: 1.5, // gap 이 이 이하면 잡힘 (m)
   ghostSpeedDefault: 3.2, // chases.json 에 값이 없을 때의 귀신 속도 (m/s)
   startGapDefault: 20, // 일반 추격 시작 gap (m)
+  retryGapStep: 2, // 잡혀서 다시 할 때마다 시작 gap 에 더하는 값 (m)
+  retryGapMax: 8, // 그 합의 상한 (m)
+  // 자동 시뮬레이션 (src/chase/sim.js, test/chase.test.mjs). 플레이 유형은 STORY 14-4 검증 계산의 정의
+  SIM: {
+    dt: 1 / 60,
+    maxTime: 120, // 이 시간 안에 끝나지 않으면 timeout (s)
+    profiles: {
+      walkOnly: { kind: 'walk' }, // 걷기만
+      walkish: { kind: 'burst', runFor: 3 }, // 걷기 위주: 3초 달린 뒤 걷기
+      normal: { kind: 'pace', runFor: 6, pace: 2.0, band: 1.5 }, // 평범: 6초 달린 뒤 평균 2.0 m/s (뒤처지면 달림, ±band m)
+      optimal: { kind: 'sprint', runFor: 7.5 }, // 최적: 7.5초 달린 뒤 걷다가 남은 스태미나로 끝까지 질주 (평균 약 2.25 m/s)
+    },
+  },
 };
 
 export const STORY = {

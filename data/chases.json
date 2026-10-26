@@ -1,15 +1,17 @@
 {
-  "_comment": "추격전 C1~C4 (STORY.md v6 10장·14장). 단위 m·s. ghostSpeed: 귀신 속도(걷기 1.6 < 값 < 달리기 3.6, src/story/chases.js 가 검사). startGap: 시작 거리(마지막 추격은 일행 처리 시작 시점의 거리). pathLength: 출구·목적지까지 경로 길이. companionKillDelay: 일행을 처리하는 동안 귀신이 멈춰 있는 시간(마지막 추격만, 그 외 0). unlockTime: 출구 열기 연출(조작 불가, 마지막 추격만, 그 외 0). delays: 지형 지연 [{ at: 경로 위치 m, seconds }]. undecided: STORY 에 값이 없어 사용자 확인이 필요한 필드(값은 null 또는 빈 목록). 실행기는 단계 0b-3.",
+  "_comment": "추격전 C1~C4 (STORY.md v6 10장·14장). 단위 m·s. ghostSpeed: 귀신 속도(걷기 1.6 < 값 < 달리기 3.6, src/story/chases.js 가 검사). startGap: 시작 거리(마지막 추격은 일행 처리 시작 시점의 거리). pathLength: 출구·목적지까지 경로 길이. companionKillDelay: 일행을 처리하는 동안 귀신이 멈춰 있는 시간(마지막 추격만, 그 외 0). unlockTime: 출구 열기 연출(조작 불가, 마지막 추격만, 그 외 0). delays: 지형 지연 [{ at: 경로 위치 m, seconds }]. delays[].what: 지형 설명(연출용 메모). triggerBeforeExit: 출구 이 거리(m) 앞 트리거 지점 — 사건 finale.atExit 이 playerCaught 인 루트(R2)에서만, 잡히지 않고 닿으면 붙잡힘 연출로 전환. undecided: STORY 에 값이 없어 사용자 확인이 필요한 필드(값은 null 또는 빈 목록). assumed: 사용자 확인 전에 제안값을 가정으로 넣은 필드(STAGES.md 인계 기록). 실행기는 src/chase/ (단계 0b-3).",
   "chases": [
     {
       "id": "C1", "name": "복도의 그것", "events": ["E2"], "place": "구관 1층 ㅁ자 순환 복도 → 방",
-      "ghostSpeed": 2.6, "startGap": 20, "pathLength": null, "companionKillDelay": 0, "unlockTime": 0, "delays": [],
-      "undecided": ["pathLength", "delays"]
+      "ghostSpeed": 2.6, "startGap": 20, "pathLength": 45, "companionKillDelay": 0, "unlockTime": 0,
+      "delays": [{ "at": 28, "seconds": 2, "what": "모퉁이를 꺾어 시야가 끊김" }],
+      "assumed": ["pathLength", "delays"]
     },
     {
       "id": "C2", "name": "{mingeon}(귀신)의 추격", "events": ["E10"], "place": "구관 현관 홀 → 계단",
-      "ghostSpeed": 3.0, "startGap": 20, "pathLength": null, "companionKillDelay": 0, "unlockTime": 0, "delays": [],
-      "undecided": ["pathLength", "delays"]
+      "ghostSpeed": 3.0, "startGap": 20, "pathLength": 60, "companionKillDelay": 0, "unlockTime": 0,
+      "delays": [{ "at": 22, "seconds": 3, "what": "방화문을 닫음 (문 두드림)" }, { "at": 42, "seconds": 1.5, "what": "계단참에서 시야가 끊김" }],
+      "assumed": ["pathLength", "delays"]
     },
     {
       "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관", "final": true,
@@ -17,7 +19,7 @@
     },
     {
       "id": "C4", "name": "열쇠를 들고 현관으로", "events": ["E14"], "place": "교무실 → 복도 → 계단 → 현관 홀", "final": true,
-      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": []
+      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": [], "triggerBeforeExit": 5
     }
   ]
 }

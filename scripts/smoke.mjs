@@ -194,6 +194,26 @@ check('S 로 항목 이동(기본값 남는다 → 따라간다, 순환) → E �
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); r.update(10.5); });
 check('무응답 10초 → 기본값 남는다', await S(() => window.__DEBUG.story.mode === 'idle' && !window.__DEBUG.story.flags.values.dutyCompanion));
 await S(() => window.__DEBUG.story.reset());
+// 추격 엔진 (단계 0b-3): C(디버그) 시작/중지, HUD 줄, 잡히면 시작 지점·플래그로 되돌리고 다시, 출구 여는 1초 조작 불가
+await press('KeyC', 120);
+check('C → 추격 C1 시작 + HUD 추격 줄', await poll(() => window.__DEBUG.chase.chase?.def.id === 'C1' && document.getElementById('hud').textContent.includes('추격 C1')));
+const caught = await S(() => {
+  const s = window.__DEBUG.chase;
+  const P = window.__DEBUG.player;
+  const start = [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)];
+  window.__DEBUG.story.flags.set('earlyBook', true);
+  P.setView([start[0] + 5, 1.6, start[1] + 5], 0, 0);
+  P.speed = 0;
+  s.update(8); // 가만히 서 있으면 (20 − 1.5) / 2.6 ≈ 7.1초에 잡힌다
+  return { attempt: s.chase?.attempt, gap: s.chase?.startGap, book: window.__DEBUG.story.flags.values.earlyBook, back: [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)], start };
+});
+check('잡힘 → 시작 지점·플래그 복원, 시도 2 (시작 거리 +2 m)', caught.attempt === 1 && caught.gap === 22 && !caught.book && caught.back.join() === caught.start.join(), JSON.stringify(caught));
+await press('KeyC', 120);
+check('C → 추격 중지', await poll(() => !window.__DEBUG.chase.active && document.getElementById('hud').textContent.includes('추격: 없음')));
+await S(() => { const s = window.__DEBUG.chase; s.start('C4', { atExit: 'collapse' }); Object.assign(s.chase, { phase: 'unlock', stall: 0, unlockLeft: 1, passed: true, arrivalGap: 5, gap: 5 }); });
+check('출구 여는 동안 조작 불가', await poll(() => window.__DEBUG.player.frozen && window.__DEBUG.chase.locked));
+await S(() => window.__DEBUG.chase.update(1.05)); // SwiftShader 는 프레임이 느려 1초를 직접 진행
+check('1초 뒤 통과 → collapse, 조작 복귀', await poll(() => !window.__DEBUG.chase.active && window.__DEBUG.chase.last?.finale === 'collapse' && !window.__DEBUG.player.frozen));
 const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent, pos: window.__DEBUG?.pos?.() }));
 console.log(info);
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');
