@@ -194,6 +194,21 @@ check('S 로 항목 이동(기본값 남는다 → 따라간다, 순환) → E �
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); r.update(10.5); });
 check('무응답 10초 → 기본값 남는다', await S(() => window.__DEBUG.story.mode === 'idle' && !window.__DEBUG.story.flags.values.dutyCompanion));
 await S(() => window.__DEBUG.story.reset());
+// 퍼즐 실행기 (단계 0b-4): I 시작/중지, O 단서(중복 무시), Z 정답, X 오답 3번 → 시작 지점·플래그 복원 후 다시
+await press('KeyI', 120);
+check('I → 시험 퍼즐 시작 + HUD 퍼즐 줄', await poll(() => window.__DEBUG.puzzle.puzzle?.id === 'T0' && document.getElementById('hud').textContent.includes('퍼즐 T0')));
+await press('KeyO', 120);
+await press('KeyO', 120);
+check('O → 단서 얻기 (2/3)', await poll(() => window.__DEBUG.puzzle.puzzle?.got.length === 2));
+await S(() => window.__DEBUG.puzzle.gather('a'));
+check('같은 단서는 한 번만 센다', await S(() => window.__DEBUG.puzzle.puzzle.got.length === 2));
+await S(() => window.__DEBUG.story.flags.set('earlyBook', true));
+await press('KeyX', 120);
+await press('KeyX', 120);
+await press('KeyX', 120);
+check('X 3번 → 실패, 시작 지점 복원 (단서 0·틀림 0·플래그 원복·시도 2)', await poll(() => { const s = window.__DEBUG.puzzle; return s.puzzle?.got.length === 0 && s.puzzle.wrong === 0 && s.attemptOf('T0') === 1 && !window.__DEBUG.story.flags.values.earlyBook; }));
+await press('KeyZ', 120);
+check('Z → 정답 → 성공 후 종료', await poll(() => !window.__DEBUG.puzzle.active && window.__DEBUG.puzzle.last?.outcome === 'solved' && document.getElementById('hud').textContent.includes('퍼즐: 없음')));
 // 추격 엔진 (단계 0b-3): C(디버그) 시작/중지, HUD 줄, 잡히면 시작 지점·플래그로 되돌리고 다시, 출구 여는 1초 조작 불가
 await press('KeyC', 120);
 check('C → 추격 C1 시작 + HUD 추격 줄', await poll(() => window.__DEBUG.chase.chase?.def.id === 'C1' && document.getElementById('hud').textContent.includes('추격 C1')));

@@ -202,6 +202,13 @@ export const CHASE = {
   },
 };
 
+// 퍼즐 실행기 (단계 0b-4 src/puzzle/). 퍼즐별 값(단서·정답·연출 훅)은 data/puzzles.json
+export const PUZZLE = {
+  wrongLimit: 3, // puzzles.json 에 wrongLimit 이 없을 때의 틀린 시도 한도 (STORY 9장 P4: 3번 틀리면 잡힌다)
+  debugId: 'T0', // 디버그 키(I·O·Z·X)로 도는 시험 퍼즐 (data/puzzles.json debugPuzzles)
+  debugWrongInput: 0, // 디버그 오답 입력값 (시험 퍼즐 정답과 다르게)
+};
+
 export const STORY = {
   typeSpeed: 38, // 대화창 타자 효과 (초당 글자 수)
   subtitleBase: 1.8, // 자막·문자 자동 넘김 시간 = base + 글자 수 × perChar (초)

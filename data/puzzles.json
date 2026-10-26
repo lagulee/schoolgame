@@ -1,9 +1,51 @@
 {
-  "_comment": "귀신이 등장하는 퍼즐 P1~P4 빈 뼈대 (STORY.md v3 9장). id·시점(events: 이 퍼즐이 들어가는 사건)·장소·이름만. 내용·실행기는 단계 0b(골격)·2~6(내용)에서.",
+  "_comment": "귀신이 등장하는 퍼즐 P1~P4 (STORY.md v6 9장). 단계 0b-4 에서 실행기 스키마(clues·answer·wrongLimit·ghostHooks)를 붙였다. 실제 내용(단서 위치·정답 N·연출)은 단계 2~6 에서 채운다: pending 이 true 인 퍼즐은 answer 가 아직 없다. debugPuzzles 는 테스트·디버그 전용이며 사건과 연결되지 않는다.",
+  "_schema": {
+    "clues": "[{ id, name, where }] 단서 목록 (이름·얻는 곳). 비어 있을 수 있음(단서 없는 퍼즐)",
+    "answer": "정답 (번호 N 등, 문자열·숫자). pending 이면 null",
+    "wrongLimit": "틀린 시도 한도. 닿으면 실패 (기본 3)",
+    "ghostHooks": "이 퍼즐이 쓰는 귀신 연출 훅 이름 (src/puzzle/hooks.js 의 HOOK_NAMES). 연출 구현은 단계 12 이후"
+  },
   "puzzles": [
-    { "id": "P1", "name": "{gyuha:과} 함께 숨기", "events": ["E2"], "place": "구관 1층 복도·교실" },
-    { "id": "P2", "name": "당직실 단서 모으기", "events": ["E11", "R1-c"], "place": "구관 4층 당직실" },
-    { "id": "P3", "name": "흩어진 일행 찾기", "events": ["E8", "R1-b"], "place": "신관 2층 인근 교실 4개" },
-    { "id": "P4", "name": "교무실 열쇠 찾기", "events": ["E13", "R1-e"], "place": "구관 2층 교무실" }
-  ]
+    { "id": "P1", "name": "{gyuha:과} 함께 숨기", "events": ["E2"], "place": "구관 1층 복도·교실",
+      "pending": true, "clues": [], "answer": null, "wrongLimit": 3, "ghostHooks": ["onStart"] },
+    { "id": "P2", "name": "당직실 단서 모으기", "events": ["E11", "R1-c"], "place": "구관 4층 당직실",
+      "pending": true,
+      "clues": [
+        { "id": "log", "name": "당직 일지", "where": "구관 4층 당직실" },
+        { "id": "calendar", "name": "달력", "where": "구관 4층 당직실" },
+        { "id": "blackboard", "name": "칠판", "where": "구관 4층 당직실" }
+      ],
+      "answer": null, "wrongLimit": 3, "ghostHooks": ["onClue", "onComplete"] },
+    { "id": "P3", "name": "흩어진 일행 찾기", "events": ["E8", "R1-b"], "place": "신관 2층 인근 교실 4개",
+      "pending": true,
+      "clues": [
+        { "id": "belongings", "name": "소지품", "where": "신관 교실" },
+        { "id": "footprints", "name": "젖은 발자국", "where": "신관 복도" },
+        { "id": "knock", "name": "문 두드리는 소리", "where": "신관 교실" }
+      ],
+      "answer": null, "wrongLimit": 3, "ghostHooks": ["onWrong"] },
+    { "id": "P4", "name": "교무실 열쇠 찾기", "events": ["E13", "R1-e"], "place": "구관 2층 교무실",
+      "pending": true, "clues": [], "answer": null, "wrongLimit": 3, "ghostHooks": ["onWrong", "onFail"] }
+  ],
+  "debugPuzzles": [
+    { "id": "T0", "name": "시험 퍼즐 (디버그)", "place": "어디서나 (디버그 키)",
+      "clues": [
+        { "id": "a", "name": "시험 단서 가", "where": "디버그 키 O" },
+        { "id": "b", "name": "시험 단서 나", "where": "디버그 키 O" },
+        { "id": "c", "name": "시험 단서 다", "where": "디버그 키 O" }
+      ],
+      "answer": 7, "wrongLimit": 3, "ghostHooks": ["onStart", "onClue", "onComplete", "onWrong", "onSuccess", "onFail"] }
+  ],
+  "messages": {
+    "start": "퍼즐 시작: {name} (단서 {total}개)",
+    "clue": "단서 얻음: {clue} ({n}/{total})",
+    "clueDup": "이미 얻은 단서: {clue}",
+    "complete": "단서를 모두 모았다 — 번호를 입력하자",
+    "wrong": "틀림 ({wrong}/{limit})",
+    "success": "퍼즐 성공: {name}",
+    "fail": "틀린 시도 {limit}회 — 퍼즐 시작 지점에서 다시 (시도 {attempt})",
+    "stop": "퍼즐 중지",
+    "none": "진행 중인 퍼즐 없음"
+  }
 }

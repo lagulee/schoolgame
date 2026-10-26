@@ -37,6 +37,7 @@ export class Hud {
       data.phone,
       data.stamina,
       data.chase,
+      data.puzzle,
       `이벤트: ${data.events.join(' / ') || '-'}`,
       ...(data.story ?? []),
     ].join('\n');
