@@ -310,4 +310,10 @@ test('v6 chases: 필드·값, 귀신 속도는 걷기 < 속도 < 달리기', () 
   assert.ok(bad({ delays: [{ at: 5, seconds: 0 }] }).length);
   assert.deepEqual(bad({ delays: [{ at: 5, seconds: 2 }] }), []);
   assert.throws(() => loadChases({ chases: [{ ...by.C1, ghostSpeed: 3.6 }] }, speeds), /범위 밖/);
+  // 단계 0b-3: R2 트리거 지점(마지막 추격만, 경로 안), 가정값 표시(assumed)
+  assert.equal(by.C4.triggerBeforeExit, 5);
+  assert.ok(bad({ triggerBeforeExit: 40 }).length, '트리거가 경로 밖');
+  assert.ok(chaseErrors({ ...by.C1, triggerBeforeExit: 5 }, speeds).length, '일반 추격에는 트리거 없음');
+  assert.ok(bad({ assumed: ['nope'] }).length);
+  assert.deepEqual(by.C1.assumed, ['pathLength', 'delays']);
 });

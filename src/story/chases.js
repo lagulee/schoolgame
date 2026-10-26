@@ -1,5 +1,5 @@
 // 추격 데이터(data/chases.json) 검사. 귀신 속도는 걷기 < ghostSpeed < 달리기 범위만 허용한다 (STORY 14-1).
-// 실행기(gap 모델 진행)는 단계 0b-3. 여기서는 값의 형식과 범위만 본다.
+// 실행기(gap 모델 진행)는 src/chase/chase.js. 여기서는 값의 형식과 범위만 본다.
 
 const NUMBER_FIELDS = ['ghostSpeed', 'startGap', 'pathLength', 'companionKillDelay', 'unlockTime'];
 export const CHASE_FIELDS = [...NUMBER_FIELDS, 'delays'];
@@ -12,6 +12,7 @@ export function chaseErrors(chase, { walk, run }) {
   const err = [];
   const open = new Set(chase.undecided ?? []);
   for (const f of open) if (!CHASE_FIELDS.includes(f)) err.push(`${chase.id}: undecided 에 모르는 필드 ${f}`);
+  for (const f of chase.assumed ?? []) if (!CHASE_FIELDS.includes(f) || open.has(f)) err.push(`${chase.id}: assumed 필드 ${f}`);
   for (const f of NUMBER_FIELDS) {
     const v = chase[f];
     if (v === null && open.has(f) && f !== 'ghostSpeed') continue;
@@ -27,6 +28,11 @@ export function chaseErrors(chase, { walk, run }) {
       if (!isNum(d?.at) || !isNum(d?.seconds) || d.at < 0 || d.seconds <= 0) err.push(`${chase.id}: delays 항목 ${JSON.stringify(d)}`);
       else if (isNum(chase.pathLength) && d.at > chase.pathLength) err.push(`${chase.id}: delays.at ${d.at} 가 경로 밖`);
     }
+  }
+  if (chase.triggerBeforeExit !== undefined) {
+    const t = chase.triggerBeforeExit;
+    if (!chase.final) err.push(`${chase.id}: triggerBeforeExit 는 마지막 추격만`);
+    if (!isNum(t) || t <= 0 || (isNum(chase.pathLength) && t >= chase.pathLength)) err.push(`${chase.id}: triggerBeforeExit ${t}`);
   }
   return err;
 }

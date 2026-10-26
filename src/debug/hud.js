@@ -36,6 +36,7 @@ export class Hud {
       `점검 ${data.inspect ? 'on' : 'off'}   음소거 ${data.muted ? 'on' : 'off'}`,
       data.phone,
       data.stamina,
+      data.chase,
       `이벤트: ${data.events.join(' / ') || '-'}`,
       ...(data.story ?? []),
     ].join('\n');

@@ -14,6 +14,7 @@ import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './pl
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
 import { StaminaBar } from './ui/staminaBar.js';
+import { setupChase } from './chase/setup.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -66,8 +67,9 @@ const story = setupStory({ player, touch: touchMode, toast });
 const phone = setupPhone({ scene, camera, story, touch: touchMode, toast }); // 손전등 대신 핸드폰 라이트 (결정 D6)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
-// 스태미나는 체크포인트에 저장하지 않는다: 잡혀서 다시 시작할 때는 늘 가득 찬 채로 (인계 기록 참고)
-story.runner.checkpoints.register('stamina', { save: () => null, load: () => player.stamina.reset() });
+// 스태미나는 체크포인트 시점의 값으로 되돌린다 (단계 0b-3: 추격에서 잡히면 추격 시작 때의 값. 마지막 추격은 시작 때 가득)
+story.runner.checkpoints.register('stamina', { save: () => player.stamina.save(), load: (v) => player.stamina.load(v) });
+const chase = setupChase({ story, player, toast }); // 추격 gap 모델 (디버그: C 키로 시작/중지, HUD 줄)
 const fx = buildFx(scene, world.ctx, phone.light, collision);
 const post = new Post(renderer, scene, camera);
 const lights = world.ctx.lights;
@@ -119,7 +121,8 @@ const act = {
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
-  storyReset: () => { story.reset(); phone.reset(); player.stamina.reset(); },
+  storyReset: () => { chase.reset(); story.reset(); phone.reset(); player.stamina.reset(); },
+  chase: () => chase.debugToggle(),
   storyBook: () => story.book(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
   hud: () => hud.toggle(),
@@ -129,7 +132,7 @@ const act = {
 const KEYS = {
   KeyE: act.phone, KeyR: act.light, KeyU: act.bank, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
-  KeyY: act.event, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
+  KeyY: act.event, KeyC: act.chase, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
 };
 // E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
@@ -165,6 +168,7 @@ if (touchMode) {
       { label: '다음 사건 (디버그)', run: act.storyNext },
       { label: '책 줍기 (디버그)', run: act.storyBook },
       { label: '보조배터리 놓기 (디버그)', run: act.bank },
+      { label: () => (chase.session.active ? '추격 중지 (디버그)' : '추격 시작 (디버그)'), run: act.chase },
       { label: '스토리 초기화', run: act.storyReset },
     ],
   });
@@ -204,6 +208,7 @@ function step(t, dt) {
   if (dt > 0) player.update(dt);
   if (!shot) director.update(t, dt);
   story.update(dt);
+  chase.update(dt);
   phone.update(dt);
   staminaBar.update(dt, player.stamina);
   audio.setBreath(audio.muted ? 0 : player.tired);
@@ -216,12 +221,12 @@ function step(t, dt) {
   if (!shot) {
     hud.update({
       quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
-      fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), inspect: state.inspect,
+      fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), chase: chase.hudLine(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }
 }
-window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner, phone: phone.phone, banks: phone.banks };
+window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
