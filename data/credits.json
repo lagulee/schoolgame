@@ -1,0 +1,8 @@
+{
+  "_comment": "옥상 수영장(엔딩 D) 간판 크레딧 (STORY 16장). 인물은 {id} 자리표시자(가명)로만 쓴다. 실명이 필요한 개인 빌드는 .gitignore 한 credits.local.json 에서 같은 id 의 names 를 덮어쓴다. 표시 방식(입간판·네온·풀 바닥 타일)은 단계 8.",
+  "entries": [
+    { "id": "developer", "label": "개발자", "names": ["클로드", "{gyuha}"] },
+    { "id": "idea", "label": "아이디어", "names": ["{mingeon}"] },
+    { "id": "company", "label": "회사", "names": ["진솔엔터테이먼트", "jinsolentertainment"] }
+  ]
+}

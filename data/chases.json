@@ -1,9 +1,23 @@
 {
-  "_comment": "추격전 C1~C4 빈 뼈대 (STORY.md v3 10장). id·시점(events)·장소·이름만. 스크립트 시간표·지형 요소·실행기는 단계 0b(골격)·2~6(내용)에서.",
+  "_comment": "추격전 C1~C4 (STORY.md v6 10장·14장). 단위 m·s. ghostSpeed: 귀신 속도(걷기 1.6 < 값 < 달리기 3.6, src/story/chases.js 가 검사). startGap: 시작 거리(마지막 추격은 일행 처리 시작 시점의 거리). pathLength: 출구·목적지까지 경로 길이. companionKillDelay: 일행을 처리하는 동안 귀신이 멈춰 있는 시간(마지막 추격만, 그 외 0). unlockTime: 출구 열기 연출(조작 불가, 마지막 추격만, 그 외 0). delays: 지형 지연 [{ at: 경로 위치 m, seconds }]. undecided: STORY 에 값이 없어 사용자 확인이 필요한 필드(값은 null 또는 빈 목록). 실행기는 단계 0b-3.",
   "chases": [
-    { "id": "C1", "name": "복도의 그것", "events": ["E2"], "place": "구관 1층 긴 복도 → 교실" },
-    { "id": "C2", "name": "{mingeon}(귀신)의 추격", "events": ["E10"], "place": "구관 현관 홀 → 계단" },
-    { "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관" },
-    { "id": "C4", "name": "열쇠를 들고 현관으로", "events": ["E14"], "place": "교무실 → 복도 → 계단 → 현관 홀" }
+    {
+      "id": "C1", "name": "복도의 그것", "events": ["E2"], "place": "구관 1층 ㅁ자 순환 복도 → 방",
+      "ghostSpeed": 2.6, "startGap": 20, "pathLength": null, "companionKillDelay": 0, "unlockTime": 0, "delays": [],
+      "undecided": ["pathLength", "delays"]
+    },
+    {
+      "id": "C2", "name": "{mingeon}(귀신)의 추격", "events": ["E10"], "place": "구관 현관 홀 → 계단",
+      "ghostSpeed": 3.0, "startGap": 20, "pathLength": null, "companionKillDelay": 0, "unlockTime": 0, "delays": [],
+      "undecided": ["pathLength", "delays"]
+    },
+    {
+      "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관", "final": true,
+      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": []
+    },
+    {
+      "id": "C4", "name": "열쇠를 들고 현관으로", "events": ["E14"], "place": "교무실 → 복도 → 계단 → 현관 홀", "final": true,
+      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": []
+    }
   ]
 }

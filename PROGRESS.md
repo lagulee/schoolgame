@@ -38,6 +38,7 @@
 | 외관 사실감 수정 | (1) 창문 밝기 낮춤: 창틀 흰색→회색조, 유리 창살·반사·불 켜진 창 발광 감소 (`config.js` 의 `WINDOW_LOOK`). (2) 공원 나무를 잎 카드 방식 활엽수로 교체 (`world/realTrees.js`, `materials/leaves.js`, 나무껍질 `barkMaps`) | 작업 브랜치에만 푸시, 사용자 확인 후 main (4-a) |
 | 스토리 단계 0: 스토리 엔진 | `data/characters.json`(가명)·`data/story.json`(E1~E15 뼈대·임시 대사·선택지), 자리표시자 치환(받침 조사 포함), 플래그 4개·루트 판정, 사건 등록기, 자막·대화창·선택지 UI(제한 시간·무응답 기본값·키보드·터치), `E` 상호작용 키, 디버그 키 `Y`(이상 현상)·`N`(다음 사건)·`K`(초기화), `npm test` | `src/story/`, `test/`. 작업 브랜치에만 푸시, 사용자 검사 대기 ([`docs/story/STAGES.md`](docs/story/STAGES.md)) |
 | 스토리 단계 0 v3 보정 | STORY.md v3(가명판) 채택. E1 문자·E5 선택지 삭제 → 4층 책 상호작용 사건(`earlyBook`, 디버그 `J`), R1-a~R1-h, E13·E14 루트별 변형, 사건 메타(`objective`·`pov`·`puzzle`·`chase`·`jumpscare`), 퍼즐·추격·보조배터리 빈 뼈대, 엔딩 갱신, 시점(`pov`) 상태, 체크포인트 `snapshot/restore`, `endingsSeen`(localStorage) | `data/puzzles.json`·`chases.json`·`powerbanks.json`, `src/story/checkpoint.js`·`endingsSeen.js`. 작업 브랜치에만 푸시, 사용자 검사 대기. 미해결 (a)(b)(e)는 STAGES 인계 기록 |
+| 스토리 단계 0② v6 보정 + main 반영 | `hasRoofKey`(A·B·C 본 판의 E1), 엔딩 D 구분 기록, `{player}` 이름 주입 지점, `data/*.local.json` 이름·크레딧 덮어쓰기(.gitignore), `data/credits.json`, 마지막 추격(14-4) 구조 대사·메타(`deaths`·`finale`), `chases.json` 수치 + 귀신 속도 범위 검사, 테스트 40개 | 사용자 지시로 v6 작업은 `main` 직접 반영(STAGES D4 개정). 단계 0 코드도 이때 함께 반영, v1.2 |
 
 ## 2. 주요 결정과 이유
 

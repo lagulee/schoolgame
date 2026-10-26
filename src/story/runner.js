@@ -4,7 +4,7 @@
 import { Flags, endingForRoute } from './flags.js';
 import { EventRegistry } from './registry.js';
 import { Checkpoints } from './checkpoint.js';
-import { fillText } from './text.js';
+import { fillText, withPlayerName } from './text.js';
 
 export const POVS = ['player', 'mingeon'];
 
@@ -21,6 +21,7 @@ export class StoryRunner {
     this.used = new Set(); // 이미 쓴 상호작용 사건 ID
     this.pov = 'player';
     this.repeat = false; // 엔딩을 본 뒤의 판이면 true → objectiveRepeat 를 쓴다 (setup 이 endingsSeen 으로 정함)
+    this.allEndings = false; // A·B·C 를 모두 본 뒤의 판이면 true → grantRoofKey 사건(E1)에서 hasRoofKey (setup 이 정함)
     this.onEvent = null; // (id, phase: 'start'|'end') => void
     this.onChoice = null; // (eventId, optionId, timedOut) => void
     this.onEnding = null; // (endingKey, route) => void
@@ -51,6 +52,11 @@ export class StoryRunner {
     this.lineIdx = 0;
     this.lineLeft = Infinity; // 자막 자동 넘김까지 남은 시간
     this.choice = null; // { def, selected, left }
+  }
+
+  // 주인공 이름 주입 ({player}). 빈 값이면 "나"
+  setPlayerName(name) {
+    this.characters = withPlayerName(this.characters, name);
   }
 
   text(s) {
@@ -89,6 +95,7 @@ export class StoryRunner {
     this.event = { kind: 'event', ...this.registry.begin(id, this.route) };
     this.lineIdx = -1;
     this.setPov(this.event.pov ?? 'player');
+    if (this.event.grantRoofKey && this.allEndings) this.flags.set('hasRoofKey', true);
     this.onEvent?.(id, 'start');
     this.nextLine();
     return true;

@@ -49,3 +49,12 @@ export function fillText(text, characters) {
 export function placeholderIds(text) {
   return [...String(text).matchAll(/\{([a-z][a-zA-Z0-9]*)(?::[^}]+)?\}/g)].map((m) => m[1]);
 }
+
+// 주인공 이름 주입 지점. 대사의 {player} 는 플레이어가 입력한 이름으로 바뀐다 (입력 화면은 단계 0c).
+// 값이 없거나 공백뿐이면 "나". characters 는 바꾸지 않고 새 객체를 돌려준다.
+export const PLAYER_DEFAULT_NAME = '나';
+
+export function withPlayerName(characters, name) {
+  const v = typeof name === 'string' ? name.trim() : '';
+  return { ...characters, player: { ...characters.player, name: v || PLAYER_DEFAULT_NAME } };
+}

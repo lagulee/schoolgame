@@ -1,6 +1,15 @@
 // 스토리 플래그와 루트 판정. 플래그 이름과 판정 규칙은 docs/story/STORY.md 6장·9장 그대로.
 
-export const FLAG_NAMES = ['hasConnectorKey', 'earlyBook', 'dutyCompanion', 'hasExitKey'];
+export const FLAG_NAMES = ['hasConnectorKey', 'earlyBook', 'dutyCompanion', 'hasExitKey', 'hasRoofKey'];
+
+// 엔딩 키. A·B·C 는 루트 엔딩, D 는 A·B·C 를 모두 본 뒤에만 가는 숨겨진 엔딩 (STORY 16장)
+export const MAIN_ENDINGS = ['A', 'B', 'C'];
+export const ENDING_KEYS = [...MAIN_ENDINGS, 'D'];
+
+// 새 판 E1 에서 옥상 열쇠(hasRoofKey)를 주는가: 본 엔딩에 A·B·C 가 모두 있으면 (D 는 따지지 않음)
+export function earnsRoofKey(seen) {
+  return MAIN_ENDINGS.every((k) => seen.includes(k));
+}
 
 // STORY.md 6장 의사코드:
 //   if earlyBook          -> R1  (E7 이전에 결정)

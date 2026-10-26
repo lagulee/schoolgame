@@ -6,6 +6,7 @@ export const loadSkeletons = () => ({
   puzzles: read('data/puzzles.json').puzzles,
   chases: read('data/chases.json').chases,
   powerbanks: read('data/powerbanks.json').powerbanks,
+  credits: read('data/credits.json'),
 });
 
 // localStorage 대신 쓰는 메모리 저장소. fail 이면 모든 접근이 예외

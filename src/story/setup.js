@@ -1,12 +1,21 @@
 // 스토리 엔진 조립: 데이터(data/*.json) + 진행기 + 화면 + 상호작용 키를 묶어 main.js 에 넘긴다.
 import story from '../../data/story.json';
-import characters from '../../data/characters.json';
-import { STORY } from '../config.js';
+import baseCharacters from '../../data/characters.json';
+import baseCredits from '../../data/credits.json';
+import chaseData from '../../data/chases.json';
+import { STORY, PLAYER } from '../config.js';
 import { StoryRunner } from './runner.js';
 import { StoryUI, storyKey } from './ui.js';
 import { Interactions } from './interact.js';
 import { FLAG_NAMES } from './flags.js';
 import { EndingsSeen } from './endingsSeen.js';
+import { applyLocal } from './names.js';
+import { localFiles } from './localData.js';
+import { loadChases } from './chases.js';
+
+// 가명 + (있으면) data/*.local.json 덮어쓰기 (결정 D1)
+const { characters, credits } = applyLocal({ characters: baseCharacters, credits: baseCredits }, localFiles);
+loadChases(chaseData, { walk: PLAYER.walk, run: PLAYER.run }); // 귀신 속도 범위 검사 (어긋나면 시작할 때 오류)
 
 export function setupStory({ player, touch, toast }) {
   const ui = new StoryUI({ typeSpeed: STORY.typeSpeed, timerWarn: STORY.timerWarn, touch });
@@ -14,6 +23,7 @@ export function setupStory({ player, touch, toast }) {
   const interactions = new Interactions({ radius: STORY.interactRadius, touch });
   const endings = new EndingsSeen(STORY.endingsKey);
   runner.repeat = endings.repeat; // 엔딩을 본 뒤의 판이면 2회차 목표 문구 (표시는 단계 0b 핸드폰)
+  runner.allEndings = endings.allMain; // A·B·C 를 모두 본 판이면 E1 에서 hasRoofKey
   const log = []; // 최근 스토리 기록 (HUD)
   const note = (msg) => {
     log.unshift(msg);
@@ -40,6 +50,11 @@ export function setupStory({ player, touch, toast }) {
     runner,
     ui,
     interactions,
+    credits, // 옥상 수영장 간판 크레딧 (표시는 단계 8)
+    // 주인공 이름 주입 지점 (입력 화면은 단계 0c). 빈 값이면 "나"
+    setPlayerName(name) {
+      runner.setPlayerName(name);
+    },
     // 키 입력: 대화·선택지가 먼저, 그다음 E = 근처 대상 상호작용. 소비했으면 true
     key(code) {
       if (storyKey(runner, code)) return true;
@@ -60,6 +75,8 @@ export function setupStory({ player, touch, toast }) {
     },
     reset() {
       runner.reset();
+      runner.repeat = endings.repeat;
+      runner.allEndings = endings.allMain;
       log.length = 0;
       toast('스토리 초기화');
     },

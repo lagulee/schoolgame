@@ -154,6 +154,13 @@ export const SHOTS = [
 ];
 
 // 스토리 엔진 (src/story/). 대사·분기는 data/*.json, 여기에는 시간·크기만 둔다.
+// 추격 gap 모델 기준값 (STORY 14-3·14-4). 추격별 값은 data/chases.json, 실행기는 단계 0b-3
+export const CHASE = {
+  catchDistance: 1.5, // gap 이 이 이하면 잡힘 (m)
+  ghostSpeedDefault: 3.2, // chases.json 에 값이 없을 때의 귀신 속도 (m/s)
+  startGapDefault: 20, // 일반 추격 시작 gap (m)
+};
+
 export const STORY = {
   typeSpeed: 38, // 대화창 타자 효과 (초당 글자 수)
   subtitleBase: 1.8, // 자막·문자 자동 넘김 시간 = base + 글자 수 × perChar (초)
