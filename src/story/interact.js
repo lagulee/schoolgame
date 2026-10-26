@@ -1,6 +1,7 @@
 // E 키 상호작용: 플레이어 근처의 대상(문·열쇠·책 등)을 등록해 두고, 가장 가까운 대상에 안내를 띄운다.
 // 단계 0 에서는 등록된 대상이 없다. 실내 맵(단계 1~) 에서 add() 로 대상을 붙인다.
 // 터치 기기에서는 안내 자체가 누를 수 있는 버튼이 된다.
+import { onTap } from '../ui/tap.js';
 
 export class Interactions {
   // opts: { radius (기본 반경 m), touch }
@@ -13,10 +14,7 @@ export class Interactions {
     this.prompt.type = 'button';
     this.prompt.id = 'interact';
     this.prompt.style.display = 'none';
-    this.prompt.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.use();
-    });
+    onTap(this.prompt, () => this.use());
     document.body.append(this.prompt);
   }
 
