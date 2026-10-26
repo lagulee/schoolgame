@@ -97,6 +97,16 @@ await page.waitForTimeout(2500);
 const rs = await dbg(() => ({ run: window.__DEBUG.player.running, tr: window.__DEBUG.player.touchRun, an: window.__DEBUG.player.analog, sp: window.__DEBUG.player.speed }));
 check('끝까지 밀면 달리기', rs.run, JSON.stringify(rs));
 await page.screenshot({ path: 'screenshots/touch_running.png' });
+check('달리는 동안 조이스틱 달리기 표시', await dbg(() => document.querySelector('.joy-base').classList.contains('run')));
+// 탈진: 끝까지 밀고 있어도 달리지 못하고 조이스틱이 붉게, 스태미나 막대 표시
+await dbg(() => { const s = window.__DEBUG.player.stamina; s.value = 0; s.exhausted = true; s.sinceRun = 0; });
+await page.waitForFunction(() => document.querySelector('.joy-base').classList.contains('tired'), null, { timeout: 30000 }).catch(() => {});
+const ts = await dbg(() => ({ run: window.__DEBUG.player.running, want: window.__DEBUG.player.wantRun, ex: window.__DEBUG.player.stamina.exhausted,
+  tired: document.querySelector('.joy-base').classList.contains('tired'), runCls: document.querySelector('.joy-base').classList.contains('run'),
+  bar: document.getElementById('stamina').classList.contains('show') && document.getElementById('stamina').classList.contains('low') }));
+check('탈진 중 끝까지 밀어도 달리기 안 됨 + 조이스틱 붉게 + 막대 붉게', ts.want && !ts.run && ts.ex && ts.tired && !ts.runCls && ts.bar, JSON.stringify(ts));
+await page.screenshot({ path: 'screenshots/touch_exhausted.png' });
+await dbg(() => window.__DEBUG.player.stamina.reset());
 await touch('touchEnd', 2);
 await page.waitForTimeout(500);
 check('손을 떼면 입력 해제', (await dbg(() => window.__DEBUG.player.analog)) === null);

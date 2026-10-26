@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY } from './config.js';
+import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA } from './config.js';
 import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
@@ -13,6 +13,7 @@ import { Hud } from './debug/hud.js';
 import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
+import { StaminaBar } from './ui/staminaBar.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -63,6 +64,10 @@ const onOff = (v) => (v ? '켜짐' : '꺼짐');
 const touchMode = isTouchDevice();
 const story = setupStory({ player, touch: touchMode, toast });
 const phone = setupPhone({ scene, camera, story, touch: touchMode, toast }); // 손전등 대신 핸드폰 라이트 (결정 D6)
+player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
+const staminaBar = new StaminaBar(STAMINA);
+// 스태미나는 체크포인트에 저장하지 않는다: 잡혀서 다시 시작할 때는 늘 가득 찬 채로 (인계 기록 참고)
+story.runner.checkpoints.register('stamina', { save: () => null, load: () => player.stamina.reset() });
 const fx = buildFx(scene, world.ctx, phone.light, collision);
 const post = new Post(renderer, scene, camera);
 const lights = world.ctx.lights;
@@ -114,7 +119,7 @@ const act = {
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
-  storyReset: () => { story.reset(); phone.reset(); },
+  storyReset: () => { story.reset(); phone.reset(); player.stamina.reset(); },
   storyBook: () => story.book(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
   hud: () => hud.toggle(),
@@ -188,6 +193,11 @@ addEventListener('resize', () => {
 applyQuality(shot ? shot.quality : touchMode ? 'mid' : 'high'); // 터치 기기는 Mid 로 시작 (메뉴에서 변경)
 setFog(FOG.density);
 
+const staminaHud = () => {
+  const s = player.stamina;
+  return `스태미나 ${s.value.toFixed(1)}${s.exhausted ? ' 탈진' : ''}${s.draining ? ' 소모' : s.recovering ? ' 회복' : ''}  속도 ${player.speed.toFixed(2)}${player.running ? ' 달리기' : ''}`;
+};
+
 function step(t, dt) {
   renderer.info.reset();
   U.time.value = t;
@@ -195,6 +205,8 @@ function step(t, dt) {
   if (!shot) director.update(t, dt);
   story.update(dt);
   phone.update(dt);
+  staminaBar.update(dt, player.stamina);
+  audio.setBreath(audio.muted ? 0 : player.tired);
   touchSync?.();
   world.update(t, dt, camera);
   fx.update(camera);
@@ -204,7 +216,7 @@ function step(t, dt) {
   if (!shot) {
     hud.update({
       quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
-      fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), inspect: state.inspect,
+      fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }

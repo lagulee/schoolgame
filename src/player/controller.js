@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { PLAYER } from '../config.js';
+import { PLAYER, STAMINA } from '../config.js';
 import { HeadBob } from './headbob.js';
+import { Stamina } from './stamina.js';
 
 const DEG = Math.PI / 180;
 const RUN_ON = 0.96; // 조이스틱을 이 이상 밀면 달리기 시작
@@ -25,6 +26,12 @@ export class Player {
     this.touchRun = false;
     this.speed = 0;
     this.running = false;
+    this.wantRun = false; // 달리기 입력 (Shift·조이스틱 끝까지) — 실제 달리기는 스태미나·핸드폰 조건을 거친다
+    this.stamina = new Stamina(STAMINA);
+    this.hidden = false; // 숨는 중 (숨기 퍼즐 단계에서 켬) → 회복이 가장 빠름
+    this.phoneOpen = () => false; // 핸드폰 화면 열림 여부 (main.js 가 연결)
+    this.tired = 0; // 탈진 효과 0~1 (숨소리·흔들림, 부드럽게 켜지고 꺼짐)
+    this.tiredT = 0;
     this._fwd = new THREE.Vector3();
     this._right = new THREE.Vector3();
 
@@ -69,9 +76,15 @@ export class Player {
       }
     }
     const moving = ix !== 0 || iz !== 0;
-    this.running = moving && (analog ? this.touchRun : k.has('ShiftLeft') || k.has('ShiftRight'));
-    const walkSpeed = analog ? PLAYER.walk * Math.min(1, amag / RUN_OFF) : PLAYER.walk;
-    const target = moving ? (this.running ? PLAYER.run : walkSpeed) : 0;
+    const st = this.stamina;
+    const phoneOpen = this.phoneOpen();
+    this.wantRun = moving && (analog ? this.touchRun : k.has('ShiftLeft') || k.has('ShiftRight'));
+    // 탈진 중·핸드폰 화면이 열린 동안은 달리기 불가 (STORY 14-2)
+    this.running = this.wantRun && st.canRun && !phoneOpen;
+    const walkBase = st.exhausted ? STAMINA.EXHAUSTED_SPEED : PLAYER.walk;
+    const walkSpeed = analog ? walkBase * Math.min(1, amag / RUN_OFF) : walkBase;
+    const scale = phoneOpen ? STAMINA.PHONE_MOVE_SCALE : 1;
+    const target = moving ? (this.running ? PLAYER.run : walkSpeed) * scale : 0;
 
     // 시선의 수평 성분 기준 전/우 벡터
     this.camera.getWorldDirection(this._fwd);
@@ -85,6 +98,9 @@ export class Player {
     this.vel.x += (wx - this.vel.x) * a;
     this.vel.y += (wz - this.vel.y) * a;
     this.speed = this.vel.length();
+    const mode = this.hidden ? 'hidden' : this.running ? 'run' : moving || this.speed > STAMINA.STILL_SPEED ? 'walk' : 'still';
+    st.update(dt, mode);
+    this.tired += ((st.exhausted ? 1 : 0) - this.tired) * (1 - Math.exp(-STAMINA.TIRED_EASE * dt));
 
     this.collision.move(this.pos, this.vel.x * dt, this.vel.y * dt, PLAYER.radius);
 
@@ -98,10 +114,16 @@ export class Player {
       this.onStep(this.collision.surfaceAt(this.pos.x, this.pos.z), this.running);
     }
 
+    // 탈진: 느린 사인 두 개를 섞은 약한 흔들림 (위치만, 밝기 변화 없음)
+    this.tiredT += dt;
+    const sh = STAMINA.SHAKE;
+    const tw = this.tired * sh.amp;
+    const sx = tw * Math.sin(2 * Math.PI * sh.freq[0] * this.tiredT) * 0.6;
+    const sy = tw * Math.sin(2 * Math.PI * sh.freq[1] * this.tiredT + 1.3);
     this.camera.position.set(
-      this.pos.x + this._right.x * b.x,
-      this.floorY + PLAYER.eye + b.y,
-      this.pos.z + this._right.z * b.x,
+      this.pos.x + this._right.x * (b.x + sx),
+      this.floorY + PLAYER.eye + b.y + sy,
+      this.pos.z + this._right.z * (b.x + sx),
     );
 
     const fovTarget = PLAYER.fov + (this.running && this.speed > PLAYER.walk + 0.4 ? PLAYER.runFovAdd : 0);
