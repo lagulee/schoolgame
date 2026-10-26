@@ -199,3 +199,22 @@ export const STORY = {
   endingsKey: 'schoolgame.endingsSeen', // 본 엔딩 기록 localStorage 키 (2회차 안내 조건)
   debugBook: 'dohyeonBook', // J 키(디버그)로 실행하는 상호작용 사건 — 맵 배치 전 earlyBook 확인용
 };
+
+// 스태미나 (STORY 14-2, 단계 0b-2). 값은 STORY 의 [제안] 그대로
+export const STAMINA = {
+  MAX: 100,
+  RUN_COST: 12.5, // 달리는 동안 초당 소모 (가득 → 0 약 8초)
+  RECOVER_DELAY: 1, // 달리기를 멈추고 이 시간(초)이 지나야 회복 시작
+  RECOVER_WALK: 6, // 걷는 중 초당 회복
+  RECOVER_STILL: 12, // 멈춰 있을 때
+  RECOVER_HIDDEN: 15, // 숨는 중
+  EXHAUST_CLEAR: 30, // 0 이 되면 탈진, 이 값 이상 회복해야 해제 (짧게 달렸다 멈추는 꼼수 방지)
+  EXHAUSTED_SPEED: 1.3, // 탈진 중 이동 속도 (m/s, 걷기 1.6 의 약 80%)
+  PHONE_MOVE_SCALE: 0.7, // 핸드폰 화면이 열려 있는 동안 이동 배율 (달리기 불가)
+  STILL_SPEED: 0.3, // 실제 속도가 이 아래면 '멈춤' 회복으로 본다 (m/s)
+  LOW: 0.3, // 막대가 붉어지는 비율 (30% 이하)
+  BAR_HIDE_DELAY: 0.8, // 가득 찬 뒤 막대를 숨기기까지 (초)
+  TIRED_EASE: 1.5, // 탈진 효과(숨소리·흔들림) 켜짐/꺼짐 속도 (1/s)
+  SHAKE: { amp: 0.012, freq: [1.3, 2.1] }, // 탈진 화면 흔들림: 진폭(m)·느린 사인 두 개(Hz) — 밝기 변화 없는 위치 흔들림
+  BREATH: { volume: 0.22, rate: 1.1 }, // 헐떡이는 숨소리: 음량·초당 호흡 수
+};

@@ -33,6 +33,7 @@ const sim = await page.evaluate(() => {
   const run = (pos, yaw, keys, sec) => {
     P.setView(pos, yaw, 0);
     P.vel.set(0, 0);
+    P.stamina.reset();
     P.keys.clear();
     keys.forEach((k) => P.keys.add(k));
     for (let i = 0; i < sec * 60; i++) P.update(1 / 60);
@@ -49,13 +50,59 @@ const sim = await page.evaluate(() => {
 });
 console.log('이동 시뮬레이션', sim);
 
-// 스토리 엔진: N(다음 사건)으로 E1~ 을 차례로 불러 E(넘기기)로 진행하고, J(4층 책 줍기)로 R1 에 들어가 플래그·시점 변화를 확인한다
 const fails = [];
 const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
 const S = (fn, arg) => page.evaluate(fn, arg);
 const lastBefore = await S(() => window.__DEBUG.director.last);
 const ph = () => S(() => { const p = window.__DEBUG.phone; return { open: p.screenOpen, light: p.lightOn, bat: p.battery, lv: p.level, begun: p.begun, picked: [...p.picked] }; });
 const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
+// 스태미나 (단계 0b-2): 마당 한가운데서 player.update 를 직접 돌려 속도·탈진·핸드폰 감속·막대를 확인한다
+const stam = await page.evaluate(() => {
+  const P = window.__DEBUG.player;
+  const ph = window.__DEBUG.phone;
+  const go = (keys, sec) => {
+    P.keys.clear();
+    keys.forEach((k) => P.keys.add(k));
+    for (let i = 0; i < sec * 60; i++) P.update(1 / 60);
+    return { v: +P.speed.toFixed(2), run: P.running, st: +P.stamina.value.toFixed(1), ex: P.stamina.exhausted };
+  };
+  const out = {};
+  P.setView([0, 1.6, 12], 90, 0); // 서쪽(마당 가로)으로 — 담장·건물까지 여유
+  P.vel.set(0, 0);
+  P.stamina.reset();
+  out.walk = go(['KeyW'], 1.5);
+  out.run3 = go(['KeyW', 'ShiftLeft'], 3);
+  P.setView([12, 1.6, 12], 90, 0);
+  out.runOut = go(['KeyW', 'ShiftLeft'], 6); // 누적 9초 → 탈진
+  out.tiredWalk = go(['KeyW', 'ShiftLeft'], 1.5); // 탈진 중 Shift → 1.3
+  out.rest = go([], 4); // 멈춤 4초 → 대기 1 + 12×3 = 36 → 해제
+  P.setView([0, 1.6, 12], 90, 0);
+  P.vel.set(0, 0);
+  P.stamina.reset();
+  ph.s.battery = 80;
+  ph.openScreen();
+  out.phoneRun = go(['KeyW', 'ShiftLeft'], 2); // 화면 열림: 달리기 불가, 1.6 × 0.7
+  ph.closeScreen();
+  out.afterPhone = go(['KeyW', 'ShiftLeft'], 1.5);
+  P.keys.clear();
+  return out;
+});
+console.log('스태미나', stam);
+const near = (a, b, e = 0.05) => Math.abs(a - b) <= e;
+check('걷기 1.6 m/s 그대로', near(stam.walk.v, 1.6) && !stam.walk.run && stam.walk.st === 100, JSON.stringify(stam.walk));
+check('달리기 3.6 m/s, 3초에 −37.5', near(stam.run3.v, 3.6) && stam.run3.run && near(stam.run3.st, 62.5, 0.3), JSON.stringify(stam.run3));
+check('8초 넘게 달리면 탈진 → 달리기 해제', stam.runOut.ex && !stam.runOut.run && stam.runOut.st === 0, JSON.stringify(stam.runOut));
+check('탈진 중 Shift 를 눌러도 1.3 m/s', stam.tiredWalk.ex && !stam.tiredWalk.run && near(stam.tiredWalk.v, 1.3), JSON.stringify(stam.tiredWalk));
+check('멈춰 쉬면 회복 → 30 넘어 탈진 해제', !stam.rest.ex && stam.rest.st >= 30, JSON.stringify(stam.rest));
+check('핸드폰 화면 열림: 달리기 불가, 이동 ×0.7 (1.12 m/s), 스태미나 소모 없음', !stam.phoneRun.run && near(stam.phoneRun.v, 1.12) && stam.phoneRun.st === 100, JSON.stringify(stam.phoneRun));
+check('화면을 닫으면 다시 달리기', stam.afterPhone.run && near(stam.afterPhone.v, 3.6, 0.15), JSON.stringify(stam.afterPhone));
+// 막대: 소모 중 표시·30% 이하 붉게, 가득 차면 숨김
+await S(() => { const s = window.__DEBUG.player.stamina; s.value = 20; s.sinceRun = 0; });
+check('스태미나 막대: 회복 중 표시 + 30% 이하 붉게', await poll(() => { const b = document.getElementById('stamina'); return b.classList.contains('show') && b.classList.contains('low'); }));
+await S(() => window.__DEBUG.player.stamina.reset());
+check('스태미나 막대: 가득 차면 숨김', await poll(() => !document.getElementById('stamina').classList.contains('show')));
+
+// 스토리 엔진: N(다음 사건)으로 E1~ 을 차례로 불러 E(넘기기)로 진행하고, J(4층 책 줍기)로 R1 에 들어가 플래그·시점 변화를 확인한다
 check('?light=1 → 라이트 켜진 채 시작', (await ph()).light);
 const ph0 = await ph();
 await press('KeyE', 120);

@@ -111,6 +111,13 @@
     #phone-warn.show { opacity: 1; }
     body.touch #phone { right: calc(184px + env(safe-area-inset-right)); top: auto; bottom: calc(24px + env(safe-area-inset-bottom)); transform: none; }
     body.touch #phone-warn { top: calc(52px + env(safe-area-inset-top)); }
+    #stamina { position: fixed; left: 50%; bottom: calc(8px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 7; width: min(220px, 40vw); height: 4px;
+      border-radius: 2px; background: rgba(10,14,20,0.55); box-shadow: 0 0 0 1px rgba(160,175,200,0.18); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+    #stamina.show { opacity: 0.85; }
+    #stamina .st-fill { height: 100%; width: 100%; border-radius: 2px; background: #c9d4e2; transition: background 0.3s; }
+    #stamina.low .st-fill { background: #c4473a; }
+    #stamina.out { box-shadow: 0 0 0 1px rgba(196,71,58,0.55); }
+    .joy-base.tired { border-color: rgba(196,71,58,0.6); }
     #interact { position: fixed; left: 50%; top: 58%; transform: translateX(-50%); z-index: 9; padding: 6px 14px; border-radius: 6px;
       border: 1px solid rgba(200,215,235,0.35); background: rgba(0,0,0,0.55); color: #eef2f7; font-size: 15px; pointer-events: none; }
     body.touch #interact { pointer-events: auto; min-height: 48px; top: auto; bottom: calc(120px + env(safe-area-inset-bottom)); left: auto; right: calc(20px + env(safe-area-inset-right)); transform: none; }
@@ -128,9 +135,9 @@
       <h1>밤 학교 · 3D 룩 데모</h1>
       <div class="warn">헤드폰 권장 · 어두운 장면 · 약한 깜빡임 포함</div>
       <div class="start">클릭하여 시작</div>
-      <div class="touchhelp">왼쪽 아래 조이스틱: 이동 (끝까지 밀면 달리기)<br />화면 드래그: 시점 · 오른쪽 아래 📱: 핸드폰 화면 · 💡: 라이트 · 오른쪽 위 ☰: 메뉴<br />가로 모드를 권장합니다</div>
+      <div class="touchhelp">왼쪽 아래 조이스틱: 이동 (끝까지 밀면 달리기, 아래쪽 막대 = 스태미나)<br />화면 드래그: 시점 · 오른쪽 아래 📱: 핸드폰 화면 · 💡: 라이트 · 오른쪽 위 ☰: 메뉴<br />가로 모드를 권장합니다</div>
       <table class="keys">
-        <tr><td>WASD / Shift</td><td>이동 / 달리기</td><td>E / R</td><td>핸드폰 화면 / 라이트</td></tr>
+        <tr><td>WASD / Shift</td><td>이동 / 달리기 (스태미나 소모)</td><td>E / R</td><td>핸드폰 화면 / 라이트</td></tr>
         <tr><td>마우스</td><td>시점 (ESC 해제)</td><td>H</td><td>헤드밥 감소·끔</td></tr>
         <tr><td>B / G / V</td><td>블룸 / 그레인 / 비네팅</td><td>M</td><td>음소거</td></tr>
         <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>E</td><td>(대화 중) 넘기기 · (근처) 상호작용</td></tr>

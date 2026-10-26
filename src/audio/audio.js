@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { AUDIO } from '../config.js';
+import { AUDIO, STAMINA } from '../config.js';
 import { Footsteps } from './footsteps.js';
+import { Breath } from './breath.js';
 
 // Web Audio 로만 만드는 소리 (파일 없음). 첫 클릭(사용자 제스처) 후 시작한다.
 export function noiseBuffer(ctx, seconds, type = 'white') {
@@ -92,6 +93,7 @@ export class AudioSystem {
     city.connect(clp).connect(cg).connect(this.bus);
 
     this.footsteps = new Footsteps(ctx, this.out);
+    this.breath = new Breath(ctx, this.out, STAMINA.BREATH);
     this.noise = noiseBuffer(ctx, 2, 'white');
     for (const fn of this.pending ?? []) fn();
     this.pending = null;
@@ -277,6 +279,15 @@ export class AudioSystem {
 
   step(surface, running) {
     if (this.started && !this.muted) this.footsteps.play(surface, running);
+  }
+
+  // 탈진 숨소리 세기 (0~1, 플레이어의 tired)
+  setBreath(level) {
+    if (!this.started) return;
+    const v = level < 0.01 ? 0 : level;
+    if (v === this.breathLevel) return;
+    this.breathLevel = v;
+    this.breath.setLevel(v);
   }
 
   update() {

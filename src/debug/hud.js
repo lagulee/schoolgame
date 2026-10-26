@@ -35,6 +35,7 @@ export class Hud {
       `블룸 ${data.flags.bloom ? 'on' : 'off'}  그레인 ${data.flags.grain ? 'on' : 'off'}  비네팅 ${data.flags.vignette ? 'on' : 'off'}`,
       `점검 ${data.inspect ? 'on' : 'off'}   음소거 ${data.muted ? 'on' : 'off'}`,
       data.phone,
+      data.stamina,
       `이벤트: ${data.events.join(' / ') || '-'}`,
       ...(data.story ?? []),
     ].join('\n');

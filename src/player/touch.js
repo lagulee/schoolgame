@@ -1,4 +1,4 @@
-// 터치 조작: 왼쪽 아래 가상 조이스틱(이동, 끝까지 밀면 달리기), 화면 드래그(시점),
+// 터치 조작: 왼쪽 아래 가상 조이스틱(이동, 끝까지 밀면 달리기 — 스태미나·핸드폰 조건은 controller 가 판단), 화면 드래그(시점),
 // 핸드폰 📱(화면 열기/닫기)·💡(라이트) 버튼 상시 노출, 나머지 기능은 접이식 메뉴. 키보드·마우스와 같은 actions 를 호출한다.
 
 // 주 입력이 손가락(pointer: coarse)이면 터치 기기. ?touch=1 / ?touch=0 으로 강제할 수 있다 (테스트용).
@@ -70,14 +70,12 @@ export function setupTouch({ player, phone, menuItems }) {
     knob.style.transform = `translate(${dx * R * 0.62}px, ${dy * R * 0.62}px)`;
     const mag = Math.min(1, m);
     player.analog = mag < DEAD ? null : { x: dx, y: -dy };
-    base.classList.toggle('run', mag > 0.96);
   };
   const endStick = (e) => {
     if (e.pointerId !== moveId) return;
     moveId = null;
     player.analog = null;
     knob.style.transform = '';
-    base.classList.remove('run');
   };
   zone.addEventListener('pointerdown', (e) => {
     if (moveId !== null) return;
@@ -95,6 +93,9 @@ export function setupTouch({ player, phone, menuItems }) {
   const lamp = el('button', 'tbtn light', '💡');
   lamp.setAttribute('aria-label', '핸드폰 라이트');
   const sync = () => {
+    // 조이스틱 테두리: 실제로 달리는 중이면 달리기 표시, 끝까지 밀었는데 탈진으로 못 달리면 붉게
+    base.classList.toggle('run', player.running && player.touchRun);
+    base.classList.toggle('tired', player.stamina.exhausted);
     scr.classList.toggle('on', phone.state.screenOpen);
     lamp.classList.toggle('on', phone.state.lightOn);
   };
