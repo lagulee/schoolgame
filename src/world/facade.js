@@ -10,14 +10,15 @@ export class FacadeKit {
     this.lists = {
       frame: [], glass: [], curtain: [], lit: [], sill: [],
       band: [], blue: [], yellow: [], orange: [], coping: [], plinth: [],
-      pipe: [], pipeHead: [], ac: [],
+      pipe: [], pipeHead: [], ac: [], yaja: [], leak: [],
     };
     this.cctv = []; // {pos: Vector3, ry}
     this.litInfo = []; // {pos, normal, ry, id}
     this.rand = rng(7);
   }
 
-  // f: {id, origin:[x,z], normal:[nx,nz], length, openings:[{u0,u1,v0,v1}], blueEvery, cctv, ac, pipes, noWindows}
+  // f: {id, origin:[x,z], normal:[nx,nz], length, openings:[{u0,u1,v0,v1}], blueEvery, cctv, ac, pipes, noWindows,
+  //     lit:[{floor, u0, u1, kind: 'yaja'|'leak'}] (켜진 교실·복도로 새는 빛, 깜빡이지 않음)}
   add(f) {
     const [ox, oz] = f.origin;
     const [nx, nz] = f.normal;
@@ -98,7 +99,10 @@ export class FacadeKit {
             put(L.frame, u, v, 0.03, W.w + 0.14, W.h + 0.14, 0.1);
             put(L.sill, u, v - W.h / 2 - 0.1, 0.07, W.w + 0.26, 0.06, 0.16);
             const lit = LIT_WINDOWS.findIndex((lw) => lw.facade === f.id && lw.floor === fl && lw.index === idx);
-            if (lit >= 0) {
+            const room = f.lit?.find((r) => r.floor === fl && u >= r.u0 && u <= r.u1);
+            if (room) {
+              put(L[room.kind], u, v, 0.082, W.w, W.h, 1);
+            } else if (lit >= 0) {
               put(L.lit, u, v, 0.082, W.w, W.h, 1);
               const [x, y, z] = P(u, v, 0.09);
               this.litInfo[lit] = { pos: new THREE.Vector3(x, y, z), normal: new THREE.Vector3(nx, 0, nz), ry };
@@ -153,6 +157,8 @@ export class FacadeKit {
     add(plane, M.glass, L.glass, false);
     add(plane, M.glassCurtain, L.curtain, false);
     this.litMesh = add(plane, M.glassLit, L.lit, false);
+    add(plane, M.glassYaja ?? M.glassLit, L.yaja, false);
+    add(plane, M.glassLeak ?? M.glassLit, L.leak, false);
     add(pipe, M.pipe, L.pipe);
     add(box, M.pipe, L.pipeHead);
     add(box, M.metalBox, L.ac);

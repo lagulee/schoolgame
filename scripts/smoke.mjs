@@ -89,6 +89,36 @@ const stam = await page.evaluate(() => {
 });
 console.log('스태미나', stam);
 const near = (a, b, e = 0.05) => Math.abs(a - b) <= e;
+// 단계 7 외부 확장: 실제 충돌(소품 포함)로 마당 → 옆길 → 운동장, 운동장 경계, 필로티 유리문
+const ext = await page.evaluate(() => {
+  const P = window.__DEBUG.player;
+  const run = (pos, yaw, sec) => {
+    P.setView(pos, yaw, 0);
+    P.vel.set(0, 0);
+    P.stamina.reset();
+    P.keys.clear();
+    P.keys.add('KeyW');
+    for (let i = 0; i < sec * 60; i++) P.update(1 / 60);
+    P.keys.clear();
+    return [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2), P.collision.surfaceAt(P.pos.x, P.pos.z)];
+  };
+  return {
+    toField: run([0, 1.6, 11], -90, 26),
+    fieldWest: run([60, 1.6, -52.5], 90, 20),
+    fieldNorth: run([82, 1.6, -60], 0, 25),
+    fieldEast: run([90, 1.6, -30], -90, 10),
+    piloti: run([0.8, 1.6, -12], 0, 8),
+    pathNorth: run([31, 1.6, 12], 0, 5),
+  };
+});
+console.log('외부 확장 이동', ext);
+check('마당에서 동쪽으로 걸어 옆길을 지나 운동장 도달', ext.toField[0] > 36, JSON.stringify(ext.toField));
+check('운동장 바닥 발소리 = 마사토(dirt)', ext.fieldNorth[2] === 'dirt', JSON.stringify(ext.fieldNorth));
+check('운동장 서쪽 울타리에서 멈춤 (건물 쪽으로 못 감)', near(ext.fieldWest[0], 33.4, 0.1), JSON.stringify(ext.fieldWest));
+check('운동장 북쪽 그물에서 멈춤', near(ext.fieldNorth[1], -95.7, 0.1), JSON.stringify(ext.fieldNorth));
+check('운동장 동쪽 그물에서 멈춤', near(ext.fieldEast[0], 101.7, 0.1), JSON.stringify(ext.fieldEast));
+check('필로티는 유리문에서 멈춤 (얕은 입구)', near(ext.piloti[1], -19.7, 0.1), JSON.stringify(ext.piloti));
+check('옆길 북쪽(동쪽 날개 옆 틈)은 막힘', near(ext.pathNorth[1], 8.4, 0.1), JSON.stringify(ext.pathNorth));
 check('걷기 1.6 m/s 그대로', near(stam.walk.v, 1.6) && !stam.walk.run && stam.walk.st === 100, JSON.stringify(stam.walk));
 check('달리기 3.6 m/s, 3초에 −37.5', near(stam.run3.v, 3.6) && stam.run3.run && near(stam.run3.st, 62.5, 0.3), JSON.stringify(stam.run3));
 check('8초 넘게 달리면 탈진 → 달리기 해제', stam.runOut.ex && !stam.runOut.run && stam.runOut.st === 0, JSON.stringify(stam.runOut));

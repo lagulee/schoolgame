@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { LIGHTS, PALETTE } from '../config.js';
+import { LIGHTS, PALETTE, YAJA_LIGHT } from '../config.js';
+import { pilotiBackZ } from './layout.js';
 import { haloTexture } from '../materials/windowTex.js';
 
 // 조명 배치. 그림자를 만드는 광원은 달과 손전등 2개뿐이다.
@@ -27,7 +28,7 @@ export function buildLighting(scene, ctx) {
 
   // 가로등: PointLight + 발광 렌즈 + 빛무리 Sprite
   const halo = haloTexture();
-  const lampList = [...ctx.props.lamps, ...ctx.sur.parkLamps];
+  const lampList = [...ctx.props.lamps, ...ctx.field.lamps];
   for (const lamp of lampList) {
     const green = lamp.color.g > lamp.color.r;
     const p = new THREE.PointLight(lamp.color, green ? L.green.intensity : L.lamp.intensity,
@@ -49,10 +50,16 @@ export function buildLighting(scene, ctx) {
   }
   out.yardLamps = out.lamps.slice(0, ctx.props.lamps.length);
 
-  // 필로티 너머 초록 (공원 쪽 보조광) → 붉은 전광판과 보색 대비
-  const g2 = new THREE.PointLight(PALETTE.parkGreen, L.green.intensity * 1.0, L.green.distance, 2);
-  g2.position.set(0.5, 3.2, -31.5);
+  // 필로티 막힌 끝 유리문 안쪽 초록 유도등 번짐 → 붉은 전광판과 보색 대비 (단계 7: 공원 대신)
+  const g2 = new THREE.PointLight(PALETTE.parkGreen, L.pilotiGreen.intensity, L.pilotiGreen.distance, 2);
+  g2.position.set(0, L.pilotiGreen.y, pilotiBackZ() - L.pilotiGreen.behind);
   scene.add(g2);
+
+  // 신관 2층 야자 교실 창 밖 번짐 (깜빡이지 않음)
+  const yaja = new THREE.PointLight(YAJA_LIGHT.color, YAJA_LIGHT.intensity, YAJA_LIGHT.distance, 2);
+  yaja.position.copy(ctx.annex.yajaLightPos);
+  scene.add(yaja);
+  out.yaja = yaja;
 
   // 현관 실내광 (청백색, 약하게)
   const ent = new THREE.PointLight(PALETTE.entranceLight, L.entrance.intensity, L.entrance.distance, 2);

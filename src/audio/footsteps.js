@@ -7,6 +7,7 @@ const SURF = {
   stone: { type: 'bandpass', f: 2900, q: 1.8, dec: 0.055, thump: 0.25, gain: 1.15 },
   concrete: { type: 'bandpass', f: 850, q: 1.1, dec: 0.1, thump: 0.45, gain: 1, echo: 0.32 },
   grass: { type: 'lowpass', f: 650, q: 0.5, dec: 0.17, thump: 0.15, gain: 0.7 },
+  dirt: { type: 'bandpass', f: 1500, q: 0.7, dec: 0.07, thump: 0.25, gain: 0.8, grains: 2 }, // 운동장 마사토
   gravel: { type: 'bandpass', f: 2200, q: 0.6, dec: 0.05, thump: 0.2, gain: 0.85, grains: 4 },
 };
 

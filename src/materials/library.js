@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PALETTE, WINDOW_LOOK } from '../config.js';
+import { PALETTE, WINDOW_LOOK, YAJA_LIGHT } from '../config.js';
 import { brickMaps, pavingMaps, noiseMaps, barkMaps } from './procedural.js';
 import { windowTexture, doorTexture } from './windowTex.js';
 
@@ -64,6 +64,7 @@ export function createMaterials() {
   const asphalt = withRepeat(noiseMaps('asphalt'));
   const grass = noiseMaps('grass');
   const gravel = noiseMaps('gravel');
+  const dirt = noiseMaps('dirt');
   const granite = noiseMaps('granite');
   const hedge = noiseMaps('hedge');
   const panel = noiseMaps('panel', 256);
@@ -106,6 +107,14 @@ export function createMaterials() {
     glassCurtain: std(0xffffff, 1, 0, { ...glassBase, map: windowTexture('curtain') }),
     glassLit: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
       emissiveMap: windowTexture('lit'), emissiveIntensity: WINDOW_LOOK.litEmissive }),
+    glassYaja: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
+      emissiveMap: windowTexture('yaja'), emissiveIntensity: YAJA_LIGHT.emissive }),
+    glassLeak: new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.2, emissive: 0xffffff,
+      emissiveMap: windowTexture('yaja'), emissiveIntensity: YAJA_LIGHT.leak }),
+    dirt: std(0xffffff, 1, 0, { ...dirt }),
+    lineWhite: std(0xd9d6cc, 0.95),
+    goalWhite: std(0xe4e6e8, 0.5, 0.2),
+    net: std(0x1c2024, 0.8, 0.3, { transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
     door: new THREE.MeshStandardMaterial({ color: 0x0d1418, roughness: 0.08, metalness: 0.3,
       emissive: 0xffffff, emissiveMap: doorTexture(), emissiveIntensity: 0.75 }),
     black: std(0x070707, 0.6),

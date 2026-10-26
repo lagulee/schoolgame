@@ -43,15 +43,14 @@ export const DIM = {
   floors: 5,
   parapet: 0.6,
   frontZ: -14, // 중앙 블록 남쪽 면
-  backZ: -28, // 중앙 블록 북쪽 면 (공원 쪽)
+  backZ: -28, // 중앙 블록 북쪽 면 (단계 7부터 본관 중정 쪽, SCHOOL.main)
   outerX: 29, // 건물 바깥 x 경계 (날개 폭 14m)
   innerX: 15, // 마당 쪽 날개 면
   wingSouthZ: 8,
   fenceZ: 15,
   gateHalf: 3,
   streetMaxZ: 19,
-  park: { minX: -20, maxX: 20, minZ: -46 },
-  piloti: { halfW: 5, h: 4.5, colR: 0.42, colZ: -15.2 },
+  piloti: { halfW: 5, h: 4.5, colR: 0.42, colZ: -15.2, depth: 6 }, // depth: 정면에서 유리문까지 (K3, 2026-10-26 사용자 선택: 얕은 입구)
   canopy: { z0: -4, z1: 2, x0: 11, colH: 4.4, colD: 0.7, thick: 0.45 },
   steps: { x0: 12.0, tread: 0.4, rise: 0.15, count: 3, z0: -3, z1: 1 },
   wave: { x0: 12, x1: 15, z0: -12.9, z1: -4.4, h: 3.1, amp: 0.35, waves: 2.5 },
@@ -85,7 +84,8 @@ export const LIGHTS = {
   hemi: 0.26,
   lamp: { intensity: 26, distance: 18, decay: 2 },
   entrance: { intensity: 5, distance: 9 },
-  green: { intensity: 90, distance: 34 },
+  green: { intensity: 90, distance: 34 }, // 초록 가로등 (단계 7에서 공원과 함께 없어져 지금은 쓰지 않음)
+  pilotiGreen: { intensity: 14, distance: 14, y: 2.4, behind: -1.2 }, // 필로티 유리문 앞 초록 번짐 (behind < 0 이면 유리 앞쪽)
   led: { intensity: 8, distance: 11 },
   envIntensity: 0.2,
   inspectBoost: 6, // 점검 모드 hemi 배율
@@ -139,6 +139,41 @@ export const LIT_WINDOWS = [
 ];
 export const FIGURE_WINDOW = 0; // LIT_WINDOWS 중 실루엣이 설 창
 
+// 학교 외부 확장 (단계 7 = 옛 1a, STORY 4-0·4-1). 치수 단위 m. 본관 앞부분(ㄷ자, DIM)은 그대로 두고
+// 그 뒤에 중정형 뒷부분, 다시 그 뒤에 신관, 오른쪽(+x)에 운동장을 둔다. 세부 치수는 STORY 17장 #23 [가정]
+export const SCHOOL = {
+  shellWall: 0.35, // 속이 빈 셸 벽 두께 (실내는 단계 8~)
+  main: {
+    outerX: 27, // 뒷부분 바깥 면 (앞부분 x ±29 보다 2 m 안쪽 → 앞쪽 좌우가 살짝 튀어나온 모양)
+    backZ: -62, // 뒷면
+    ring: 12, // 중정을 두른 동의 깊이 → 중정 x ±15, z −50~−28 (천장 막힘)
+  },
+  annex: {
+    wallColor: 0xb4b2ab, // 본관(벽돌)과 구분되는 밝은 패널 벽, 달빛에 하얗게 뜨지 않게 낮춤
+    x0: -18, x1: 24, z0: -94, z1: -83, // 신관 편복도형: 남쪽 면 = 교실 창, 북쪽 면 = 복도 창
+    classes: [[-12, -3], [-3, 6], [6, 15]], // 층당 반 3개 (x 범위), 양끝 x −18~−12·18~24 는 계단
+    yaja: { floor: 1, cls: 2 }, // 2층(index 1) 동쪽 끝 반 = 야자 교실 (운동장에서 보임)
+  },
+  bridge: { x0: 17, x1: 20, floor: 2, h: 3.3, pillarZ: -72.5, pillarR: 0.32 }, // 3층(index 2) 본관 뒷면 ↔ 신관 남쪽 면
+  path: { x0: 15, x1: 33, z0: 8, z1: 15 }, // 마당 → 운동장 옆길 (동쪽 날개 남쪽)
+  field: {
+    x0: 33, x1: 102, z0: -96, z1: 15, // 이동 가능 범위 (서쪽 x0 에 낮은 울타리, 남쪽은 앞 담장 연장)
+    track: { cx: 68, cz: -41, straight: 50, r: 15, w: 5, lanes: 4, line: 0.1 }, // 200 m 트랙 (긴 축 = z)
+    goalZ: 33, // 트랙 중심에서 골대까지 (z)
+    goal: { w: 5, h: 2.1, d: 1.6 },
+    stands: [[-80, -55], [-30, -6]], // 서쪽 스탠드 z 범위 (x0 + 1 부터 깊이 standD)
+    standD: 5.2, standSteps: 4, standRise: 0.38,
+    podium: { z0: -46, z1: -36, d: 6, h: 1.2, roofH: 4.2 }, // 구령대
+    netH: 6, // 동쪽·북쪽 공 막이 그물 높이
+    lamps: [[25, 11.6, -Math.PI / 2], [34.2, -33, Math.PI], [34.2, -84, Math.PI]], // 옆길 1 + 스탠드 옆 2 (x, z, 팔 방향). 운동장 가운데는 가로등 없이 어둡게 (STORY 15-3)
+  },
+  farZ: -230, // 먼 아파트 실루엣 (신관 뒤, 운동장에서 보여 단계 7에서 멀리 옮김)
+  farWestX: -150, // 먼 아파트 실루엣 (본관 서쪽, 건물 사이로 보이는 지평선을 가림)
+};
+
+// 신관 2층 야자 교실 창 불빛 (STORY 15장 "유일하게 밝은 곳"). 깜빡이지 않는다
+export const YAJA_LIGHT = { color: 0xe6f2ff, emissive: 1.25, leak: 0.3, intensity: 14, distance: 13, out: 1.6 };
+
 // 시각 검증용 시점 (7장)
 export const SHOTS = [
   { name: '01_front_overview', pos: [0, 1.6, 12], yaw: 0, pitch: 4 },
@@ -146,9 +181,13 @@ export const SHOTS = [
   { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
   { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
   { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
-  { name: '08_park_trees', pos: [1, 1.6, -29.5], yaw: -22, pitch: 12 },
+  { name: '08_field_track', pos: [70, 1.6, 9], yaw: 20, pitch: 6 }, // 단계 7: 공원(필로티 너머)이 없어져 운동장 시점으로 바꿈
   { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
   { name: '06_phone_light_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, light: 1 },
+  { name: '10_side_path', pos: [6, 1.6, 10.6], yaw: -82, pitch: 4 },
+  { name: '11_field_buildings', pos: [62, 1.6, -18], yaw: 58, pitch: 9 },
+  { name: '12_annex_yaja', pos: [46, 1.6, -52], yaw: 50, pitch: 8 },
+  { name: '13_bridge', pos: [44, 1.6, -71], yaw: 92, pitch: 12 },
   { name: '09_phone_screen', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, light: 1, phone: 1, story: 'E3' },
 ];
 

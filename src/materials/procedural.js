@@ -107,6 +107,7 @@ export function noiseMaps(kind, size = 512) {
     asphalt: { c: [0x26, 0x27, 0x29], var: 0.35, base: 32, rough: [0.65, 0.9], nstr: 2.2, speck: 0.12 },
     grass: { c: [0x24, 0x33, 0x1a], var: 0.5, base: 32, rough: [0.9, 1], nstr: 3 },
     gravel: { c: [0x5e, 0x59, 0x52], var: 0.45, base: 64, rough: [0.85, 1], nstr: 3.5, speck: 0.3 },
+    dirt: { c: [0x6e, 0x5c, 0x48], var: 0.4, base: 24, rough: [0.9, 1], nstr: 1.6, speck: 0.35 }, // 운동장 마사토
     granite: { c: [0x92, 0x92, 0x90], var: 0.25, base: 64, rough: [0.35, 0.55], nstr: 0.6, speck: 0.25 },
     hedge: { c: [0x1d, 0x30, 0x18], var: 0.7, base: 24, rough: [0.85, 1], nstr: 4 },
     panel: { c: [0xff, 0xff, 0xff], var: 0.18, base: 4, rough: [0.45, 0.7], nstr: 0.3, streak: true },

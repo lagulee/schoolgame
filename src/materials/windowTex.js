@@ -15,7 +15,20 @@ export function windowTexture(kind) {
   const H = 336;
   const [c, x] = canvas(W, H);
   const R = rng(kind.length * 7);
-  if (kind === 'lit') {
+  if (kind === 'yaja') {
+    // 야자 교실: 형광등이 켜진 밝은 교실 (블라인드 없음), 아래쪽에 책걸상 실루엣 띠
+    const g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#f4fbff');
+    g.addColorStop(0.6, '#cfe3f2');
+    g.addColorStop(1, '#8fa9bf');
+    x.fillStyle = g;
+    x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(255,255,255,0.7)';
+    for (const fy of [0.08, 0.2]) x.fillRect(W * 0.08, H * fy, W * 0.84, 7);
+    x.fillStyle = 'rgba(40,55,70,0.45)';
+    x.fillRect(0, H * 0.74, W, H * 0.26);
+    for (let i = 0; i < 4; i++) x.fillRect(W * (0.08 + i * 0.24), H * 0.6, W * 0.14, H * 0.16);
+  } else if (kind === 'lit') {
     const g = x.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, WINDOW_LOOK.litTop);
     g.addColorStop(1, WINDOW_LOOK.litBottom);
@@ -66,6 +79,26 @@ export function windowTexture(kind) {
   x.fillRect(W - 10, 0, 10, H);
   x.fillRect(W / 2 - 5, 0, 10, H);
   x.fillRect(0, H * 0.34, W, 9);
+  return canvasTexture(c, true, 4);
+}
+
+// 필로티 막힌 끝 유리문 너머: 어두운 1층 홀, 바닥 쪽 초록 유도등 번짐 (K3: 얕은 입구)
+export function pilotiGlassTexture() {
+  const W = 512;
+  const H = 256;
+  const [c, x] = canvas(W, H);
+  x.fillStyle = '#020403';
+  x.fillRect(0, 0, W, H);
+  const g = x.createRadialGradient(W * 0.5, H * 0.95, 4, W * 0.5, H * 0.95, W * 0.45);
+  g.addColorStop(0, 'rgba(70,200,110,0.55)');
+  g.addColorStop(0.5, 'rgba(30,110,60,0.22)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g;
+  x.fillRect(0, 0, W, H);
+  // 안쪽 먼 유도등 두 개
+  x.fillStyle = 'rgba(80,255,140,0.9)';
+  x.fillRect(W * 0.2, H * 0.36, 22, 9);
+  x.fillRect(W * 0.74, H * 0.36, 22, 9);
   return canvasTexture(c, true, 4);
 }
 

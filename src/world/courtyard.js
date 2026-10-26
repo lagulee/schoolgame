@@ -1,31 +1,32 @@
 import * as THREE from 'three';
-import { DIM } from '../config.js';
+import { DIM, SCHOOL } from '../config.js';
 import { addBlock, addPlane, addBox, instanced, mat4 } from './geom.js';
+import { fenceRuns, pilotiBackZ } from './layout.js';
 
-// 앞마당 바닥, 바깥 도로, 공원 바닥, 화단, 철제 담장 + 생울타리, 이동 경계
+// 앞마당 바닥, 운동장 옆길, 바깥 도로, 건물 뒤 바닥, 화단, 철제 담장 + 생울타리. 이동 경계는 layout.js
 export function buildCourtyard(root, M, col) {
   const g = new THREE.Group();
   g.name = 'courtyard';
   root.add(g);
-  const { innerX, frontZ, backZ, fenceZ, streetMaxZ, park } = DIM;
+  const { innerX, frontZ, fenceZ } = DIM;
+  const pz = pilotiBackZ();
+  const P = SCHOOL.path;
+  const A = SCHOOL.annex;
 
   // 바닥
   addPlane(g, M.paving, innerX * 2, fenceZ - frontZ, 0, 0, (fenceZ + frontZ) / 2, 4);
-  addPlane(g, M.concrete, DIM.piloti.halfW * 2, frontZ - backZ, 0, 0.002, (frontZ + backZ) / 2, 2);
-  addPlane(g, M.concrete, 70, 4, 0, 0.0, fenceZ + 2.4, 2); // 보도
-  addPlane(g, M.asphalt, 160, 9, 0, -0.01, fenceZ + 8.9, 6); // 도로
-  addPlane(g, M.concrete, 160, 5, 0, 0.0, fenceZ + 15.9, 2); // 건너편 보도
-  addPlane(g, M.grass, 90, 50, 0, -0.005, backZ - 25, 4); // 공원 잔디
-  addPlane(g, M.gravel, 4, 18, 0, 0.003, backZ - 9, 3); // 공원 산책로
-  addPlane(g, M.gravel, 34, 3, 0, 0.004, backZ - 11, 3);
+  addPlane(g, M.paving, P.x1 - P.x0, P.z1 - P.z0, (P.x0 + P.x1) / 2, 0.001, (P.z0 + P.z1) / 2, 4, { u0: 0.37 }); // 옆길
+  addPlane(g, M.concrete, DIM.piloti.halfW * 2, frontZ - pz, 0, 0.002, (frontZ + pz) / 2, 2);
+  addPlane(g, M.concrete, 150, 4, 30, 0.0, fenceZ + 2.4, 2); // 보도
+  addPlane(g, M.asphalt, 220, 9, 30, -0.01, fenceZ + 8.9, 6); // 도로
+  addPlane(g, M.concrete, 220, 5, 30, 0.0, fenceZ + 15.9, 2); // 건너편 보도
+  addPlane(g, M.grass, 90, 60, -10, -0.005, SCHOOL.main.backZ - 25, 4); // 건물 뒤 잔디 (들어갈 수 없음)
+  addPlane(g, M.concrete, A.x1 - A.x0 + 8, SCHOOL.main.backZ - A.z1, (A.x0 + A.x1) / 2, 0.002, (A.z1 + SCHOOL.main.backZ) / 2, 3); // 본관–신관 사이
   addPlane(g, M.asphalt, 400, 400, 0, -0.03, 0, 8, {}); // 바깥 먼 바닥
 
   // 발소리 재질 영역
-  col.surface(-80, fenceZ, 80, 80, 'concrete');
-  col.surface(-DIM.piloti.halfW, backZ, DIM.piloti.halfW, frontZ, 'concrete');
-  col.surface(-80, -120, 80, backZ, 'grass');
-  col.surface(-2, backZ - 18, 2, backZ, 'gravel');
-  col.surface(-17, backZ - 12.5, 17, backZ - 9.5, 'gravel');
+  col.surface(-80, fenceZ, 140, 80, 'concrete');
+  col.surface(-DIM.piloti.halfW, pz, DIM.piloti.halfW, frontZ, 'concrete');
 
   // 화단 (연석 + 흙), 관목은 props 에서 배치
   const beds = [
@@ -45,28 +46,15 @@ export function buildCourtyard(root, M, col) {
   }
   const bedList = beds.map(([x0, z0, x1, z1]) => ({ x0, z0, x1, z1 }));
 
-  buildFence(g, M, col);
-
-  // 이동 경계 (보이지 않는 벽)
-  col.box(-80, streetMaxZ, 80, streetMaxZ + 2);
-  col.box(-32, fenceZ, -30, streetMaxZ);
-  col.box(30, fenceZ, 32, streetMaxZ);
-  col.box(park.minX - 2, park.minZ - 2, park.maxX + 2, park.minZ);
-  col.box(park.minX - 2, park.minZ, park.minX, backZ);
-  col.box(park.maxX, park.minZ, park.maxX + 2, backZ);
+  buildFence(g, M);
 
   return { beds: bedList };
 }
 
-// 검은 철제 펜스: 기둥 + 상하 레일 + 살 + 파도 곡선 장식 + 원형 장식, 뒤쪽 생울타리
-function buildFence(g, M, col) {
-  const { innerX, wingSouthZ, fenceZ, gateHalf } = DIM;
-  const runs = [
-    [[-innerX, fenceZ], [-gateHalf - 0.4, fenceZ], [0, 1]],
-    [[gateHalf + 0.4, fenceZ], [innerX, fenceZ], [0, 1]],
-    [[-innerX, wingSouthZ], [-innerX, fenceZ], [-1, 0]],
-    [[innerX, wingSouthZ], [innerX, fenceZ], [1, 0]],
-  ];
+// 검은 철제 펜스: 기둥 + 상하 레일 + 살 + 파도 곡선 장식 + 원형 장식, 뒤쪽 생울타리 (충돌은 layout.js)
+function buildFence(g, M) {
+  const { fenceZ, gateHalf } = DIM;
+  const runs = fenceRuns();
   const posts = [];
   const pickets = [];
   const rings = [];
@@ -104,7 +92,6 @@ function buildFence(g, M, col) {
     const hx = a[0] + ux * len / 2 + out[0] * 0.75;
     const hz = a[1] + uz * len / 2 + out[1] * 0.75;
     addBox(g, M.hedge, Math.abs(ux) * len + Math.abs(out[0]) * 0.9, 1.35, Math.abs(uz) * len + Math.abs(out[1]) * 0.9, hx, 0, hz, { tile: 1.5 });
-    col.box(a[0] - 0.1 * Math.abs(uz), a[1] - 0.1 * Math.abs(ux), b[0] + 0.1 * Math.abs(uz), b[1] + 0.1 * Math.abs(ux));
   }
   g.add(instanced(new THREE.BoxGeometry(0.09, 1.9, 0.09), M.iron, posts));
   g.add(instanced(new THREE.BoxGeometry(0.022, 1.6, 0.022), M.iron, pickets));
@@ -115,6 +102,5 @@ function buildFence(g, M, col) {
   for (const s of [-1, 1]) {
     addBox(g, M.brick, 0.7, 2.1, 0.7, s * (gateHalf + 0.05), 0, fenceZ, { tile: 2 });
     addBox(g, M.curb, 0.82, 0.12, 0.82, s * (gateHalf + 0.05), 2.1, fenceZ);
-    col.box(s * (gateHalf + 0.05) - 0.35, fenceZ - 0.35, s * (gateHalf + 0.05) + 0.35, fenceZ + 0.35);
   }
 }

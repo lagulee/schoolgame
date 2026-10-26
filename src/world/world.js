@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { createMaterials } from '../materials/library.js';
 import { buildCourtyard } from './courtyard.js';
 import { buildBuildings } from './buildings.js';
+import { buildAnnex } from './annex.js';
+import { buildBridge } from './bridge.js';
+import { buildField } from './field.js';
+import { addSchoolCollision } from './layout.js';
 import { buildEntrance, buildWaveCorridor } from './entrance.js';
 import { buildProps } from './props.js';
 import { buildSurroundings } from './surroundings.js';
@@ -17,7 +21,11 @@ export function buildWorld(scene, col, renderer) {
   scene.add(root);
   const ctx = { M };
   ctx.yard = buildCourtyard(root, M, col);
+  addSchoolCollision(col); // 건물·담장·이동 경계 (단계 7)
   ctx.bld = buildBuildings(root, M, col);
+  ctx.annex = buildAnnex(root, M);
+  ctx.bridge = buildBridge(root, M);
+  ctx.field = buildField(root, M, col);
   ctx.entrance = buildEntrance(root, M, col);
   ctx.wave = buildWaveCorridor(root, M, col);
   ctx.props = buildProps(root, M, col, ctx);

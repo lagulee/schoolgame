@@ -1,19 +1,17 @@
 import * as THREE from 'three';
-import { DIM, PALETTE, SCHOOL_NAME } from '../config.js';
-import { addBox, instanced, mat4, rng } from './geom.js';
+import { DIM, SCHOOL, SCHOOL_NAME } from '../config.js';
+import { addBox, rng } from './geom.js';
 import { LedSign } from './ledSign.js';
-import { makeLamp } from './props.js';
 import { buildTrees, buildShrubs } from './trees.js';
-import { buildRealTrees } from './realTrees.js';
 
 const AUTUMN = [0x9a3e16, 0xb35a1d, 0x7d2a12, 0xb8862c, 0x8c4a1a, 0xa0301a];
 
-// 필로티 위 두 줄 LED, 공원(초록 조명·정자·나무), 가로수, 화단 관목, 상가 거리, 먼 아파트 실루엣
+// 필로티 위 두 줄 LED, 가로수, 화단 관목, 상가 거리, 먼 아파트 실루엣 (단계 7: 필로티 너머 공원은 본관 뒷부분이 되어 없앰)
 export function buildSurroundings(root, M, col, ctx) {
   const g = new THREE.Group();
   g.name = 'surroundings';
   root.add(g);
-  const { frontZ, backZ, fenceZ } = DIM;
+  const { frontZ, fenceZ } = DIM;
   const H = DIM.floorH;
 
   // 필로티 개구부 위 4층 부근 두 줄 전광판
@@ -25,69 +23,19 @@ export function buildSurroundings(root, M, col, ctx) {
   sign.group.position.set(0, 3 * H + 1.95, frontZ + 0.1);
   g.add(sign.group);
 
-  // 가로수(가을 잎) + 공원 나무
+  // 가로수(가을 잎)
   const street = buildTrees(g, [
     { x: -12.4, z: 12.6, h: 5.2 }, { x: -8.4, z: 13.0, h: 4.8 }, { x: 8.6, z: 13.0, h: 5.0 }, { x: 12.4, z: 12.5, h: 5.4 },
     { x: -14.1, z: -7.5, h: 5.6, r: 1.4 }, { x: -14.1, z: 0.5, h: 5.0, r: 1.4 },
   ], { palette: AUTUMN, trunkMat: M.trunk });
   for (const [x, z] of [[-12.4, 12.6], [-8.4, 13.0], [8.6, 13.0], [12.4, 12.5]]) col.circle(x, z, 0.25);
 
-  const parkTrees = [];
-  const R = rng(21);
-  const spots = [[-7, -35], [6.8, -40.5], [-1.2, -47], [-12, -42], [11, -33], [-15, -31.5], [15, -44], [3, -52], [-9, -50]];
-  for (const [x, z] of spots) parkTrees.push({ x, z, h: 4.6 + R() * 1.6, r: 1.6 + R() * 0.6 });
-  // 공원 나무: 줄기·가지·잎 카드로 만든 활엽수. 초록 발광은 잎에 아주 약하게만 남기고 조명(가로등·달)으로 보이게 한다
-  const park = buildRealTrees(g, parkTrees, { barkMat: M.bark, emissive: PALETTE.parkGreen, emissiveIntensity: 0.08 });
-  for (const t of parkTrees) col.circle(t.x, t.z, 0.25);
-
   buildShrubs(g, ctx.yard.beds, M.shrub ?? M.hedge);
 
-  // 공원 가로등 (초록 빛)
-  const parkLamps = [
-    makeLamp(g, M, 3.2, -33.5, { color: PALETTE.parkGreen, height: 4.2, ry: Math.PI }),
-    makeLamp(g, M, -9.5, -40.5, { color: PALETTE.parkGreen, height: 4.2, ry: 0.4 }),
-  ];
-  for (const l of parkLamps) col.circle(l.group.position.x, l.group.position.z, 0.2);
-
-  // 정자 실루엣
-  buildPavilion(g, M, -4.6, -39.5);
-  col.box(-4.6 - 2, -39.5 - 2, -4.6 + 2, -39.5 + 2);
-
   buildShops(g, M, fenceZ);
-  buildApartments(g, M, backZ);
+  buildApartments(g, M, SCHOOL.farZ);
 
-  return { sign, street, park, parkLamps };
-}
-
-function buildPavilion(g, M, x, z) {
-  const p = new THREE.Group();
-  const posts = [];
-  for (const [dx, dz] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) posts.push(mat4(dx, 1.35, dz));
-  p.add(instanced(new THREE.CylinderGeometry(0.12, 0.13, 2.7, 10), M.pavilion ?? M.trunk, posts));
-  addBox(p, M.pavilion ?? M.trunk, 3.8, 0.4, 0.2, 0, 0.35, -1.7);
-  addBox(p, M.pavilion ?? M.trunk, 3.7, 0.25, 3.7, 0, 0, 0);
-  // 겹처마 지붕: 납작한 사각뿔 2단, 처마 끝을 살짝 들어 올림
-  const roofGeo = new THREE.ConeGeometry(3.4, 1.2, 4, 3, false);
-  const pos = roofGeo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const y = pos.getY(i);
-    if (y < -0.55) {
-      const r = Math.hypot(pos.getX(i), pos.getZ(i));
-      pos.setY(i, y + Math.max(0, r - 2.6) * 0.5);
-    }
-  }
-  roofGeo.computeVertexNormals();
-  const roof = new THREE.Mesh(roofGeo, M.roofTile ?? M.black);
-  roof.position.y = 3.3;
-  roof.rotation.y = Math.PI / 4;
-  roof.castShadow = true;
-  const cap = new THREE.Mesh(new THREE.ConeGeometry(1.2, 0.8, 4), M.roofTile ?? M.black);
-  cap.position.y = 4.1;
-  cap.rotation.y = Math.PI / 4;
-  p.add(roof, cap);
-  p.position.set(x, 0, z);
-  p.rotation.y = 0.25;
-  g.add(p);
+  return { sign, street };
 }
 
 // 담장 바깥 상가 거리 실루엣: 박스 + 네온 발광 띠, 간판은 의미 없는 모양
@@ -161,11 +109,15 @@ function glyphTexture() {
   return t;
 }
 
-function buildApartments(g, M, backZ) {
+function buildApartments(g, M, farZ) {
   const R = rng(13);
   for (let i = 0; i < 7; i++) {
-    const x = -60 + i * 20 + R() * 6;
-    const h = 28 + R() * 18;
-    addBox(g, M.farBuilding ?? M.black, 14, h, 10, x, 0, backZ - 52 - R() * 14, { cast: false, receive: false });
+    const x = -90 + i * 36 + R() * 8;
+    const h = 18 + R() * 12;
+    addBox(g, M.farBuilding ?? M.black, 14, h, 10, x, 0, farZ - R() * 14, { cast: false, receive: false });
+  }
+  for (let i = 0; i < 6; i++) {
+    const h = 18 + R() * 12;
+    addBox(g, M.farBuilding ?? M.black, 10, h, 14, SCHOOL.farWestX - R() * 12, 0, -20 - i * 34, { cast: false, receive: false });
   }
 }

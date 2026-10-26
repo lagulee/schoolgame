@@ -59,15 +59,11 @@ export function buildProps(root, M, col, ctx) {
   g.add(makeBike(M, DIM.steps.x0 - 0.9, 2.7, 0.35));
   col.circle(DIM.steps.x0 - 0.9, 2.7, 0.5);
 
-  // 벤치 (공원)
-  for (const [x, z, ry] of [[-6, -33, 0.3], [5, -37, -0.4], [-1.5, -43, 0]]) g.add(makeBench(M, x, z, ry));
-
   // 지상 에어컨 실외기 + 초록 비상구 표지
-  for (const [x, z, ry] of [[-14.4, 6.6, Math.PI / 2], [14.5, -3.6 - 1.1, -Math.PI / 2], [-28, -27.4, Math.PI], [24, -28.5, Math.PI]]) {
+  for (const [x, z, ry] of [[-14.4, 6.6, Math.PI / 2], [14.5, -3.6 - 1.1, -Math.PI / 2], [29.3, -6, Math.PI / 2], [27.3, -40, Math.PI / 2]]) {
     addBox(g, M.metalBox, 0.9, 0.75, 0.38, x, 0, z, { ry });
   }
   addBox(g, M.exitSign, 0.46, 0.18, 0.05, -4.2, DIM.piloti.h - 0.45, DIM.frontZ - 0.08, { cast: false });
-  addBox(g, M.exitSign, 0.46, 0.18, 0.05, 4.2, DIM.piloti.h - 0.45, DIM.backZ + 0.08, { cast: false });
 
   // CCTV 돔 (상시: 천천히 플레이어 쪽으로 회전)
   const cams = buildCctv(g, M, ctx.bld.cctv);
@@ -102,16 +98,6 @@ function makeBike(M, x, z, ry) {
   g.add(seat);
   g.position.set(x, 0, z);
   g.rotation.set(0, ry, 0.04);
-  return g;
-}
-
-function makeBench(M, x, z, ry) {
-  const g = new THREE.Group();
-  addBox(g, M.trunk, 1.6, 0.05, 0.42, 0, 0.42, 0);
-  addBox(g, M.trunk, 1.6, 0.35, 0.05, 0, 0.5, -0.2);
-  for (const dx of [-0.7, 0.7]) addBox(g, M.iron, 0.05, 0.45, 0.42, dx, 0, 0);
-  g.position.set(x, 0, z);
-  g.rotation.y = ry;
   return g;
 }
 
