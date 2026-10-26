@@ -152,3 +152,13 @@ export const SHOTS = [
   { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
   { name: '06_flashlight_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, flash: 1 },
 ];
+
+// 스토리 엔진 (src/story/). 대사·분기는 data/*.json, 여기에는 시간·크기만 둔다.
+export const STORY = {
+  typeSpeed: 38, // 대화창 타자 효과 (초당 글자 수)
+  subtitleBase: 1.8, // 자막·문자 자동 넘김 시간 = base + 글자 수 × perChar (초)
+  subtitlePerChar: 0.07,
+  timerWarn: 3, // 선택지 남은 시간이 이 이하(초)면 타이머 막대를 붉게
+  interactRadius: 1.6, // E 상호작용 기본 반경 (m)
+  hudLog: 4, // HUD 에 보이는 최근 스토리 기록 수
+};

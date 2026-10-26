@@ -1,0 +1,145 @@
+{
+  "_comment": "사건 E1~E15 뼈대. 기준 문서는 docs/story/STORY.md. 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계.",
+  "draft": true,
+  "flags": {
+    "hasConnectorKey": false,
+    "earlyBook": false,
+    "dutyCompanion": false,
+    "hasExitKey": false
+  },
+  "events": [
+    {
+      "id": "E1", "title": "진입", "place": "구관 1층 현관", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "style": "subtitle", "text": "두고 온 책을 찾으러, 밤의 학교에 몰래 들어왔다." },
+        { "who": "gyuha", "text": "빨리 챙기고 나가자. 신관엔 아직 야자하는 애들 있대." },
+        { "style": "sms", "who": "dohyeon", "text": "내 책도 4층 내 책상에 있음" }
+      ]
+    },
+    {
+      "id": "E2", "title": "{gyuha}의 퇴장", "place": "구관 복도", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "who": "gyuha", "text": "방금… 저기 뭐 있었어. 봤어?" },
+        { "who": "gyuha", "text": "나 도저히 못 가겠다. 밖에서 기다릴게. 내 책도 좀 부탁해." },
+        { "style": "subtitle", "text": "{gyuha:이} 왔던 길로 돌아간다. 발소리가 멀어진다." }
+      ]
+    },
+    {
+      "id": "E3", "title": "잠긴 연결문", "place": "구관↔신관 연결문", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." }
+      ]
+    },
+    {
+      "id": "E4", "title": "교무실 열쇠", "place": "구관 2층 교무실", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "style": "subtitle", "text": "복도 끝에 무언가 서 있다. …움직이지 않는다." },
+        { "style": "subtitle", "text": "연결문 열쇠를 챙겼다." }
+      ],
+      "set": { "hasConnectorKey": true }
+    },
+    {
+      "id": "E5", "title": "신관 4층을 지나며", "place": "연결문→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어왔다. 계단은 4층을 지나 5층으로 이어진다." }
+      ],
+      "choice": {
+        "prompt": "4층이다. {dohyeon}의 책상이 이 층에 있다.",
+        "timeout": null,
+        "default": "pass",
+        "options": [
+          { "id": "take", "label": "{dohyeon}의 책을 미리 챙긴다", "set": { "earlyBook": true } },
+          { "id": "pass", "label": "그냥 5층으로 올라간다" }
+        ]
+      }
+    },
+    {
+      "id": "E6", "title": "5층, 돌아온 {gyuha}", "place": "신관 5층", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "lines": [
+        { "style": "subtitle", "text": "내 책을 챙겼다." },
+        { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
+        { "style": "subtitle", "text": "어디선가, 아래층에서 소리가 난다." }
+      ]
+    },
+    {
+      "id": "E7", "title": "정전", "place": "신관 2층", "routes": ["R1", "R2", "R3"], "stage": 3,
+      "lines": [
+        { "who": "mingeon", "text": "너네 이 시간에 여기서 뭐 해?" },
+        { "style": "subtitle", "text": "불이 딱 꺼진다." },
+        { "who": "dohyeon", "text": "배전반 쪽으로 가 보자." },
+        { "style": "subtitle", "text": "어둠 속에서 무언가가 나타났다. 일행이 흩어진다." }
+      ]
+    },
+    {
+      "id": "E8", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R1", "R2", "R3"], "stage": 3,
+      "lines": [
+        { "who": "mingeon", "text": "우리 먼저 구관으로 나가 있을게." },
+        { "who": "gyuha", "text": "…응. 먼저 가 있을게." }
+      ]
+    },
+    {
+      "id": "E9", "title": "{dohyeon}의 책", "place": "신관 4층", "routes": ["R1", "R2", "R3"], "stage": 3,
+      "skipIf": "earlyBook",
+      "lines": [
+        { "who": "dohyeon", "text": "내 책 4층에 있어. 같이 가 줘." },
+        { "style": "subtitle", "text": "{dohyeon}의 책을 챙겼다." }
+      ]
+    },
+    {
+      "id": "E10", "title": "빈 구관", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "style": "subtitle", "text": "구관에 왔지만 {mingeon}도 {gyuha}도 없다." },
+        { "style": "subtitle", "text": "등 뒤에서 누군가 달려온다." }
+      ]
+    },
+    {
+      "id": "E11", "title": "각성", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "style": "subtitle", "text": "정신을 차리니 구관 4층 바닥에 누워 있다." },
+        { "who": "dohyeon", "text": "깼어? 아저씨가 같이 옮겨 줬어." }
+      ]
+    },
+    {
+      "id": "E12", "title": "열쇠를 가지러", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "who": "duty", "text": "출구는 잠겨 있다. 내가 가서 열쇠를 가져오마. 여기 있어라." }
+      ],
+      "choice": {
+        "prompt": "{duty:이} 혼자 열쇠를 가지러 간다.",
+        "timeout": 10,
+        "default": "stay",
+        "options": [
+          { "id": "follow", "label": "따라간다", "set": { "dutyCompanion": true } },
+          { "id": "stay", "label": "남는다" }
+        ]
+      }
+    },
+    {
+      "id": "E13", "title": "돌아오지 않는 {duty}", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "style": "subtitle", "text": "{duty:은} 돌아오지 않는다." },
+        { "who": "dohyeon", "text": "우리가 직접 찾으러 가자. 교무실에 있을 거야." }
+      ]
+    },
+    {
+      "id": "E14", "title": "{dohyeon}", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "style": "subtitle", "text": "그것이 다시 나타났다." },
+        { "style": "subtitle", "text": "열쇠를 쥐고 뛰었다." }
+      ],
+      "set": { "hasExitKey": true }
+    },
+    {
+      "id": "E15", "title": "현관", "place": "구관 1층 현관", "routes": ["R2", "R3"], "stage": 4,
+      "lines": [
+        { "style": "subtitle", "text": "처음 들어왔던 현관이 보인다." },
+        { "style": "subtitle", "text": "눈앞이 붉게 번진다." }
+      ]
+    }
+  ],
+  "endings": {
+    "A": { "route": "R1", "title": "엔딩 A", "summary": "[미확정] {gyuha}만 사망, 나머지 생존 (마지막 장면 미확정)" },
+    "B": { "route": "R2", "title": "엔딩 B", "summary": "{dohyeon:이} 혼자 출구를 나선다" },
+    "C": { "route": "R3", "title": "엔딩 C", "summary": "출입구 앞에서 주인공이 쓰러져 있다" }
+  }
+}

@@ -99,6 +99,22 @@ const both = await dbg(() => ({ an: window.__DEBUG.player.analog, yaw: window.__
 check('멀티터치: 이동 중에도 시점 회전', both.an && Math.abs(both.yaw - yaw2) > 0.2, JSON.stringify({ ...both, yaw2 }));
 await touch('touchEnd');
 
+// 스토리: 메뉴의 '다음 사건' → 대화창 탭으로 넘기기 → 선택지 버튼 탭으로 플래그 변경
+await page.tap('.menu-toggle');
+await page.locator('.mbtn', { hasText: '다음 사건' }).tap();
+await page.tap('.menu-toggle');
+check('메뉴 → 다음 사건(E1)', await dbg(() => window.__DEBUG.story.event?.id === 'E1'));
+await dbg(() => { const r = window.__DEBUG.story; r.jump('E2'); });
+const idx0 = await dbg(() => window.__DEBUG.story.lineIdx);
+for (let i = 0; i < 4 && (await dbg(() => window.__DEBUG.story.lineIdx)) === idx0; i++) { await page.tap('.story-dlg'); await page.waitForTimeout(150); }
+check('대화창 탭으로 다음 줄', (await dbg(() => window.__DEBUG.story.lineIdx)) > idx0);
+await dbg(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); });
+check('선택지 버튼 2개 표시', (await page.$$('.story-opt')).length === 2);
+await page.screenshot({ path: 'screenshots/touch_story_choice.png' });
+await page.locator('.story-opt', { hasText: '따라간다' }).tap();
+check('선택지 탭 → dutyCompanion = true, 루트 R2', await dbg(() => window.__DEBUG.story.flags.values.dutyCompanion && window.__DEBUG.story.route === 'R2'));
+await dbg(() => window.__DEBUG.story.reset());
+
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');
 await browser.close();
 server.kill();

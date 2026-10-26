@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "shots": "node scripts/shots.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "touch": "node scripts/touch.mjs"
+    "touch": "node scripts/touch.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

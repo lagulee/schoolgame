@@ -8,7 +8,7 @@
 - 명세 S1~S14 구현 완료, 시각 검증 3회 수행. 상세 이력·결정 이유·한계·다음 후보는 [`PROGRESS.md`](PROGRESS.md).
 - 현재 버전 `v1.0` (시작 화면에 `v1.0` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리.
 - 추가 완료: GitHub Pages 배포(`main` 푸시 → `dist/`), 터치 조작(조이스틱·드래그·🔦·접이식 메뉴), 이 규칙 문서.
-- 테스트: `npm run build` / `smoke`(키보드·충돌) / `touch`(터치) / `shots`(스크린샷). 모두 통과 상태.
+- 테스트: `npm run build` / `test`(스토리 엔진 단위 테스트) / `smoke`(키보드·충돌·스토리) / `touch`(터치) / `shots`(스크린샷). 모두 통과 상태.
 - **미검증**: 실제 폰·GPU 에서의 FPS, 터치 감도, 소리. headless 환경에서는 측정할 수 없었다.
 - 스토리 구현 계획·단계 현황: [`docs/story/STAGES.md`](docs/story/STAGES.md) (기준 문서 `docs/story/STORY.md`).
 - 작업을 마치면 `PROGRESS.md` 의 타임라인·한계·다음 후보를 갱신한다.

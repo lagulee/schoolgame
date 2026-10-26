@@ -64,6 +64,39 @@
       .menu-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(440px, 72vw); gap: 6px; padding: 8px; top: calc(60px + env(safe-area-inset-top)); }
       .mbtn { min-height: 38px; font-size: 13px; }
     }
+    /* 스토리: 자막·대화창·선택지·상호작용 안내 (터치 조작 층 #touch 보다 위) */
+    #story { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+    .story-sub { position: absolute; left: 50%; bottom: calc(14% + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: min(760px, 86vw);
+      padding: 6px 14px; border-radius: 4px; background: rgba(0,0,0,0.5); color: #eef2f7; font-size: 19px; line-height: 1.5; text-align: center;
+      text-shadow: 0 1px 3px #000; pointer-events: auto; cursor: pointer; }
+    .story-sub.sms { color: #cfe6ff; background: rgba(12,24,40,0.72); border: 1px solid rgba(140,180,230,0.35); }
+    .story-dlg { position: absolute; left: 50%; bottom: calc(5% + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(820px, 90vw); box-sizing: border-box;
+      min-height: 104px; padding: 14px 20px 26px; border-radius: 8px; background: rgba(6,9,14,0.84); border: 1px solid rgba(200,212,230,0.22);
+      pointer-events: auto; cursor: pointer; }
+    .story-dlg.ending { border-color: rgba(220,90,80,0.5); }
+    .story-name { display: inline-block; margin-bottom: 6px; padding: 1px 10px; border-radius: 3px; background: rgba(150,170,200,0.18); color: #f1d9a8; font-size: 15px; font-weight: 600; }
+    .story-text { color: #eef2f7; font-size: 19px; line-height: 1.55; white-space: pre-wrap; }
+    .story-hint { position: absolute; right: 14px; bottom: 6px; font-size: 12px; color: #8996a8; animation: pulse 2.4s ease-in-out infinite; }
+    .story-choice { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, 88vw); box-sizing: border-box;
+      padding: 18px 18px 14px; border-radius: 10px; background: rgba(6,9,14,0.88); border: 1px solid rgba(200,212,230,0.28); pointer-events: auto; }
+    .story-prompt { color: #eef2f7; font-size: 18px; line-height: 1.5; margin: 0 4px 12px; }
+    .story-options { display: grid; gap: 8px; }
+    .story-opt { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border-radius: 8px; text-align: left;
+      border: 1px solid rgba(200,215,235,0.28); background: rgba(34,44,62,0.85); color: #e6ebf2; font-size: 17px; cursor: pointer; touch-action: manipulation; }
+    .story-opt.sel { border-color: rgba(241,217,168,0.9); background: rgba(70,62,40,0.9); }
+    .story-key { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.12); font: 13px ui-monospace, monospace; color: #cfd6e0; }
+    body.touch .story-key { display: none; }
+    .story-timer { height: 5px; margin-top: 12px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .story-timer-fill { height: 100%; background: #c9b27a; transform-origin: left center; }
+    .story-timer.warn .story-timer-fill { background: #d0564a; }
+    #interact { position: fixed; left: 50%; top: 58%; transform: translateX(-50%); z-index: 9; padding: 6px 14px; border-radius: 6px;
+      border: 1px solid rgba(200,215,235,0.35); background: rgba(0,0,0,0.55); color: #eef2f7; font-size: 15px; pointer-events: none; }
+    body.touch #interact { pointer-events: auto; min-height: 48px; top: auto; bottom: calc(120px + env(safe-area-inset-bottom)); left: auto; right: calc(20px + env(safe-area-inset-right)); transform: none; }
+    @media (max-height: 460px) {
+      .story-text, .story-sub { font-size: 16px; } .story-dlg { min-height: 84px; padding: 10px 16px 22px; }
+      .story-opt { min-height: 44px; font-size: 15px; } .story-prompt { font-size: 16px; margin-bottom: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -78,9 +111,10 @@
         <tr><td>WASD / Shift</td><td>이동 / 달리기</td><td>F</td><td>손전등</td></tr>
         <tr><td>마우스</td><td>시점 (ESC 해제)</td><td>H</td><td>헤드밥 감소·끔</td></tr>
         <tr><td>B / G / V</td><td>블룸 / 그레인 / 비네팅</td><td>M</td><td>음소거</td></tr>
-        <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>E</td><td>이벤트 강제 발동</td></tr>
+        <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>E</td><td>상호작용 · 대화 넘기기</td></tr>
         <tr><td>[ ]</td><td>안개 밀도 − / +</td><td>L</td><td>점검 모드</td></tr>
         <tr><td>P</td><td>스크린샷 저장</td><td>~</td><td>디버그 HUD</td></tr>
+        <tr><td>Y</td><td>이상 현상 발동 (디버그)</td><td>N / K</td><td>다음 사건 / 스토리 초기화 (디버그)</td></tr>
       </table>
       <div id="loading">텍스처 생성 중…</div>
       <div id="version"><div class="ver-main"></div><div class="ver-sub"></div></div>

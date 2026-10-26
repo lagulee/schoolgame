@@ -12,6 +12,7 @@ import { Director } from './events/director.js';
 import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
 import { Hud } from './debug/hud.js';
 import { isTouchDevice, setupTouch, enterImmersive } from './player/touch.js';
+import { setupStory } from './story/setup.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -96,6 +97,8 @@ function toast(msg) {
   toastTimer = setTimeout(() => (toastEl.style.opacity = 0), 1400);
 }
 const onOff = (v) => (v ? '켜짐' : '꺼짐');
+const touchMode = isTouchDevice();
+const story = setupStory({ player, touch: touchMode, toast });
 
 // 기능 (키보드와 터치 메뉴가 같이 쓴다)
 const act = {
@@ -107,7 +110,9 @@ const act = {
   fogMore: () => { setFog(state.fog + FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); },
   inspect: () => { state.inspect = !state.inspect; lights.setInspect(state.inspect); toast(`점검 모드 ${onOff(state.inspect)}`); },
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
-  event: () => { director.force(); toast(`이벤트: ${director.status}`); },
+  event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
+  storyNext: () => story.next(),
+  storyReset: () => story.reset(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
   hud: () => hud.toggle(),
   shot: () => { requestScreenshot(); toast('스크린샷 저장'); },
@@ -116,15 +121,17 @@ const act = {
 const KEYS = {
   KeyF: act.flash, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
-  KeyE: act.event, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
+  KeyY: act.event, KeyN: act.storyNext, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
 };
+// 대화·선택지·상호작용(E)이 먼저 키를 받고, 소비하지 않은 키만 기존 단축키로 넘긴다
 addEventListener('keydown', (e) => {
-  if (!e.repeat) KEYS[e.code]?.();
+  if (e.repeat) return;
+  if (story.key(e.code)) return;
+  KEYS[e.code]?.();
 });
 
 // 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
 const overlay = document.getElementById('overlay');
-const touchMode = isTouchDevice();
 if (touchMode) {
   overlay.querySelector('.start').textContent = '화면을 터치하여 시작';
   const nextQuality = { low: 'mid', mid: 'high', high: 'low' };
@@ -135,7 +142,7 @@ if (touchMode) {
     flashlight,
     menuItems: [
       { id: 'flash', run: act.flash },
-      { label: '이벤트 발동', run: act.event },
+      { label: '이상 현상 발동', run: act.event },
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
       { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: act.bob },
@@ -147,6 +154,8 @@ if (touchMode) {
       { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: act.inspect },
       { label: 'HUD', run: act.hud },
       { label: '전체화면', run: enterImmersive },
+      { label: '다음 사건 (디버그)', run: act.storyNext },
+      { label: '스토리 초기화', run: act.storyReset },
     ],
   });
   addEventListener('keydown', (e) => e.code === 'KeyF' && touch.syncFlash());
@@ -180,6 +189,7 @@ function step(t, dt) {
   if (dt > 0) player.update(dt);
   flashlight.update(dt);
   if (!shot) director.update(t, dt);
+  story.update(dt);
   world.update(t, dt, camera);
   fx.update(camera);
   audio.update();
@@ -189,11 +199,11 @@ function step(t, dt) {
     hud.update({
       quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
       fog: state.fog, bob: player.bob.level, flags: post.flags, flash: flashlight.on, inspect: state.inspect,
-      muted: audio.muted, events: director.log,
+      muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }
 }
-window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player };
+window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner };
 
 if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
@@ -207,6 +217,10 @@ if (shot) {
   if (shot.event) {
     director.t = shot.time;
     director.trigger(shot.event);
+  }
+  if (shot.story) {
+    story.ui.instant = true;
+    story.runner.jump(shot.story, shot.storyLine);
   }
   let n = 0;
   renderer.setAnimationLoop(() => {
