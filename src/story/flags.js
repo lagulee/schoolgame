@@ -55,4 +55,10 @@ export class Flags {
   snapshot() {
     return { ...this.values };
   }
+
+  // 체크포인트 복원. 알림(onChange)은 보내지 않는다. 저장에 없는 플래그는 기본값
+  restore(values = {}) {
+    this.values = { ...this.defaults };
+    for (const name of FLAG_NAMES) if (name in values) this.values[name] = !!values[name];
+  }
 }

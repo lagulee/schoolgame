@@ -113,6 +113,7 @@ const act = {
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
   storyReset: () => story.reset(),
+  storyBook: () => story.book(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
   hud: () => hud.toggle(),
   shot: () => { requestScreenshot(); toast('스크린샷 저장'); },
@@ -121,7 +122,7 @@ const act = {
 const KEYS = {
   KeyF: act.flash, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
-  KeyY: act.event, KeyN: act.storyNext, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
+  KeyY: act.event, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
 };
 // 대화·선택지·상호작용(E)이 먼저 키를 받고, 소비하지 않은 키만 기존 단축키로 넘긴다
 addEventListener('keydown', (e) => {
@@ -155,6 +156,7 @@ if (touchMode) {
       { label: 'HUD', run: act.hud },
       { label: '전체화면', run: enterImmersive },
       { label: '다음 사건 (디버그)', run: act.storyNext },
+      { label: '책 줍기 (디버그)', run: act.storyBook },
       { label: '스토리 초기화', run: act.storyReset },
     ],
   });
@@ -220,7 +222,8 @@ if (shot) {
   }
   if (shot.story) {
     story.ui.instant = true;
-    story.runner.jump(shot.story, shot.storyLine);
+    if (shot.story === 'ending') story.runner.showEnding(shot.storyEnding);
+    else story.runner.jump(shot.story, shot.storyLine, shot.storyFlags);
   }
   let n = 0;
   renderer.setAnimationLoop(() => {

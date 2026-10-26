@@ -48,7 +48,7 @@ const sim = await page.evaluate(() => {
 });
 console.log('이동 시뮬레이션', sim);
 
-// 스토리 엔진: N(다음 사건)으로 E1~ 을 차례로 불러 E(넘기기)·숫자키(선택)로 진행하고 플래그 변화를 확인한다
+// 스토리 엔진: N(다음 사건)으로 E1~ 을 차례로 불러 E(넘기기)로 진행하고, J(4층 책 줍기)로 R1 에 들어가 플래그·시점 변화를 확인한다
 const fails = [];
 const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
 const S = (fn, arg) => page.evaluate(fn, arg);
@@ -60,31 +60,44 @@ const finishEvent = async () => {
 };
 const played = [];
 const flagsAfter = {};
-for (let i = 0; i < 8; i++) {
+const S_ = () => S(() => ({ id: window.__DEBUG.story.event?.id, mode: window.__DEBUG.story.mode, pov: window.__DEBUG.story.pov,
+  vis: [...document.querySelectorAll('#story > div')].filter((d) => d.style.display !== 'none').map((d) => d.className) }));
+await press('KeyJ', 120);
+check('J(책 줍기)는 E5 전에는 무시', !(await S(() => window.__DEBUG.story.flags.values.earlyBook)) && (await S(() => window.__DEBUG.story.mode)) === 'idle');
+for (let i = 0; i < 15; i++) {
   await press('KeyN', 120);
-  const st = await S(() => ({ id: window.__DEBUG.story.event?.id, mode: window.__DEBUG.story.mode,
-    vis: [...document.querySelectorAll('#story > div')].filter((d) => d.style.display !== 'none').map((d) => d.className) }));
+  const st = await S_();
   played.push(st.id);
-  if (i === 0) check('N → E1 자막·문자 표시', st.id === 'E1' && st.vis.length === 1, JSON.stringify(st));
+  if (i === 0) check('N → E1 자막 표시', st.id === 'E1' && st.vis.length === 1, JSON.stringify(st));
   if (i === 1) {
     await press('KeyN', 120);
     check('사건 도중 N 은 무시 (진행 중)', (await S(() => window.__DEBUG.story.event?.id)) === 'E2');
     check('E2 대화창 + 화자 이름', st.vis.includes('story-dlg') && (await page.textContent('.story-name')).length > 0);
   }
+  if (st.id === 'R1-e') {
+    check('R1-e 태민 시점 전환', st.pov === 'mingeon', JSON.stringify(st));
+    await press('KeyE', 120); // 타자 효과 끝내기
+    await press('KeyE', 120); // 둘째 줄 = 태민 대사
+    const nm = await S(() => ({ line: window.__DEBUG.story.lineIdx, who: window.__DEBUG.story.event.lines[window.__DEBUG.story.lineIdx].who, shown: getComputedStyle(document.querySelector('.story-name')).display !== 'none' }));
+    check('태민 시점: 태민 대사는 이름 없이', nm.who === 'mingeon' && !nm.shown, JSON.stringify(nm));
+  }
   await finishEvent();
   if (st.id === 'E5') {
-    check('E5 선택지 표시', (await S(() => window.__DEBUG.story.mode)) === 'choice' && (await page.$$('.story-opt')).length === 2);
-    const q = await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1]);
-    await press('Digit1', 120); // 숫자키 1 = 첫 항목(책을 챙긴다). 선택지가 떠 있으면 품질 단축키로 넘어가지 않는다
-    check('숫자키 선택 → earlyBook = true, 루트 R1', await S(() => window.__DEBUG.story.flags.values.earlyBook && window.__DEBUG.story.route === 'R1'));
-    check('선택 중 숫자키가 품질을 바꾸지 않음', (await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1])) === q, q);
+    check('E5 선택지 없음', (await S(() => window.__DEBUG.story.mode)) === 'idle' && !(await page.isVisible('.story-choice')));
+    await press('KeyJ', 120); // 신관 4층 책 줍기 (상호작용 사건, 맵 배치 전 디버그 키)
+    await finishEvent();
+    check('J → 책 줍기 → earlyBook = true, 루트 R1', await S(() => window.__DEBUG.story.flags.values.earlyBook && window.__DEBUG.story.route === 'R1'));
   }
   flagsAfter[st.id] = await S(() => ({ ...window.__DEBUG.story.flags.values }));
 }
-check('E1~E8 순서대로 발동, earlyBook 이면 E9 생략 후 엔딩', played.join() === 'E1,E2,E3,E4,E5,E6,E7,E8', played.join());
+const r1 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((x) => `R1-${x}`);
+check('E1~E7 → R1-a~R1-h 순서 (E8·E9 생략)', played.join() === ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', ...r1].join(), played.join());
 check('E4 후 hasConnectorKey = true', flagsAfter.E4?.hasConnectorKey === true);
+check('R1-e 후 hasExitKey = true', flagsAfter['R1-e']?.hasExitKey === true && flagsAfter['R1-d']?.hasExitKey === false);
 await press('KeyN', 120);
-check('R1 엔딩 표시', (await S(() => window.__DEBUG.story.mode)) === 'ending' && (await page.textContent('.story-name')).includes('R1'));
+check('R1 엔딩 A 표시', (await S(() => window.__DEBUG.story.mode)) === 'ending' && (await page.textContent('.story-name')).includes('R1 → 엔딩 A'));
+check('엔딩 기록 localStorage(endingsSeen)', await S(() => JSON.parse(localStorage.getItem('schoolgame.endingsSeen') ?? '[]').includes('A')));
+check('시점이 주인공으로 복귀', (await S(() => window.__DEBUG.story.pov)) === 'player');
 check('같은 사건 연속 발동 금지', await S(() => { const r = window.__DEBUG.story; r.close(); const ok = r.start('E3'); while (r.mode === 'line') r.advance(); return ok && !r.start('E3') && r.lastReason.includes('연속'); }));
 await press('KeyK', 120);
 check('K → 스토리 초기화', await S(() => !window.__DEBUG.story.flags.values.earlyBook && window.__DEBUG.story.registry.last === null));
@@ -93,6 +106,11 @@ await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode ===
 check('E12 선택지 + 제한 시간 막대', (await S(() => window.__DEBUG.story.mode)) === 'choice' && (await page.isVisible('.story-timer')));
 const poll = (fn) => page.waitForFunction(fn, null, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
 check('선택지 동안 이동 정지', await poll(() => window.__DEBUG.player.frozen));
+const q = await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1]);
+await press('Digit2', 120); // 숫자키 2 = 둘째 항목(남는다). 선택지가 떠 있으면 품질 단축키로 넘어가지 않는다
+check('숫자키 선택 → 남는다', await poll(() => window.__DEBUG.story.mode === 'idle' && !window.__DEBUG.story.flags.values.dutyCompanion));
+check('선택 중 숫자키가 품질을 바꾸지 않음', (await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1])) === q, q);
+await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); });
 await press('KeyS', 120);
 await press('KeyE', 120);
 check('S 로 항목 이동(기본값 남는다 → 따라간다, 순환) → E 결정', await poll(() => window.__DEBUG.story.mode === 'idle' && window.__DEBUG.story.flags.values.dutyCompanion && !window.__DEBUG.player.frozen));

@@ -1,5 +1,5 @@
 {
-  "_comment": "사건 E1~E15 뼈대. 기준 문서는 docs/story/STORY.md. 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계.",
+  "_comment": "사건 E1~E15·R1-a~R1-h 뼈대 (기준: docs/story/STORY.md v3). 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. 배열 순서 = 진행 순서. 같은 id 를 루트별 변형으로 여러 번 쓸 수 있다(routes 가 겹치지 않을 때, 예: E13·E14). lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계. objective/objectiveRepeat: objectives 의 키(핸드폰 목표, 엔딩을 본 판이면 objectiveRepeat 우선). pov: player | mingeon (조작 시점). puzzle: data/puzzles.json id. chase: data/chases.json id. jumpscare: 점프스케어 번호(한 판 3개 이내). undecided: 아래 undecided 의 키(사용자 확인 전).",
   "draft": true,
   "flags": {
     "hasConnectorKey": false,
@@ -7,31 +7,60 @@
     "dutyCompanion": false,
     "hasExitKey": false
   },
+  "undecided": {
+    "a": "[미확정] 2-2 '귀신은 한 번에 한 명만 노린다'와 R2 E14 에서 주인공·{duty:이} 모두 죽는 것의 충돌 (순차 사망으로 볼지)",
+    "b": "[미확정] R1 에서 {duty:을} 처음 만나는 장면이 없음 (R1-c 는 '이미 만난 상태' 가정)",
+    "e": "[미확정] 핸드폰 라이트가 기존 손전등을 대체하는 범위 (마당 포함 여부)"
+  },
+  "objectives": {
+    "goFifth": "신관 5층에 두고 온 책을 찾으러 간다",
+    "hide": "{gyuha:과} 함께 숨을 곳을 찾는다",
+    "findConnectorKey": "교무실에서 연결문 열쇠를 찾는다",
+    "climb": "연결문을 열고 신관 5층으로 올라간다",
+    "climbRepeat": "신관 5층으로 올라간다. 4층을 지나며 {dohyeon}의 책을 챙긴다",
+    "takeBook": "5층에서 내 책을 챙긴다",
+    "power": "불을 켜러 배전반으로 간다",
+    "findFriends": "흩어진 {gyuha:과} {mingeon:을} 찾는다",
+    "dohyeonBook": "{dohyeon}의 책을 챙기러 신관 4층으로 간다",
+    "giveBook": "{dohyeon}에게 책을 돌려준다",
+    "goOld": "구관으로 돌아간다",
+    "findClue": "출구 열쇠 번호를 알아낸다",
+    "exitKeyPlan": "출구 열쇠를 어떻게 가져올지 정한다",
+    "findExitKey": "교무실 열쇠함에서 번호가 맞는 열쇠를 찾는다",
+    "wait": "{mingeon:과} {duty:을} 기다린다",
+    "runExit": "열쇠를 들고 현관으로 달린다",
+    "exit": "현관 문을 열고 나간다"
+  },
   "events": [
     {
       "id": "E1", "title": "진입", "place": "구관 1층 현관", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "goFifth",
       "lines": [
         { "style": "subtitle", "text": "두고 온 책을 찾으러, 밤의 학교에 몰래 들어왔다." },
-        { "who": "gyuha", "text": "빨리 챙기고 나가자. 신관엔 아직 야자하는 애들 있대." },
-        { "style": "sms", "who": "dohyeon", "text": "내 책도 4층 내 책상에 있음" }
+        { "who": "gyuha", "text": "빨리 챙기고 나가자. 신관엔 아직 야자하는 애들 있대." }
       ]
     },
     {
-      "id": "E2", "title": "{gyuha}의 퇴장", "place": "구관 복도", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "id": "E2", "title": "복도의 그것", "place": "구관 1층 복도·교실", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "hide", "chase": "C1", "puzzle": "P1",
       "lines": [
         { "who": "gyuha", "text": "방금… 저기 뭐 있었어. 봤어?" },
+        { "style": "subtitle", "text": "복도 끝에서 그것이 다가온다. 둘이 함께 달린다." },
+        { "style": "subtitle", "text": "열린 교실에 숨었다. 문 앞을 그림자가 천천히 지나간다." },
         { "who": "gyuha", "text": "나 도저히 못 가겠다. 밖에서 기다릴게. 내 책도 좀 부탁해." },
         { "style": "subtitle", "text": "{gyuha:이} 왔던 길로 돌아간다. 발소리가 멀어진다." }
       ]
     },
     {
       "id": "E3", "title": "잠긴 연결문", "place": "구관↔신관 연결문", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "findConnectorKey",
       "lines": [
         { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." }
       ]
     },
     {
       "id": "E4", "title": "교무실 열쇠", "place": "구관 2층 교무실", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "findConnectorKey",
       "lines": [
         { "style": "subtitle", "text": "복도 끝에 무언가 서 있다. …움직이지 않는다." },
         { "style": "subtitle", "text": "연결문 열쇠를 챙겼다." }
@@ -39,22 +68,15 @@
       "set": { "hasConnectorKey": true }
     },
     {
-      "id": "E5", "title": "신관 4층을 지나며", "place": "연결문→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "id": "E5", "title": "신관 계단", "place": "연결문→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "climb", "objectiveRepeat": "climbRepeat",
       "lines": [
-        { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어왔다. 계단은 4층을 지나 5층으로 이어진다." }
-      ],
-      "choice": {
-        "prompt": "4층이다. {dohyeon}의 책상이 이 층에 있다.",
-        "timeout": null,
-        "default": "pass",
-        "options": [
-          { "id": "take", "label": "{dohyeon}의 책을 미리 챙긴다", "set": { "earlyBook": true } },
-          { "id": "pass", "label": "그냥 5층으로 올라간다" }
-        ]
-      }
+        { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어왔다. 계단이 위로 이어진다." }
+      ]
     },
     {
       "id": "E6", "title": "5층, 돌아온 {gyuha}", "place": "신관 5층", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "takeBook",
       "lines": [
         { "style": "subtitle", "text": "내 책을 챙겼다." },
         { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
@@ -63,15 +85,33 @@
     },
     {
       "id": "E7", "title": "정전", "place": "신관 2층", "routes": ["R1", "R2", "R3"], "stage": 3,
+      "pov": "player", "objective": "power", "jumpscare": 1,
       "lines": [
         { "who": "mingeon", "text": "너네 이 시간에 여기서 뭐 해?" },
         { "style": "subtitle", "text": "불이 딱 꺼진다." },
         { "who": "dohyeon", "text": "배전반 쪽으로 가 보자." },
-        { "style": "subtitle", "text": "어둠 속에서 무언가가 나타났다. 일행이 흩어진다." }
+        { "style": "subtitle", "text": "어둠 속에서 무언가가 나타났다. 일행이 {dohyeon:과} 나, {gyuha:과} {mingeon}, 둘씩 갈라졌다." }
       ]
     },
     {
-      "id": "E8", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R1", "R2", "R3"], "stage": 3,
+      "id": "R1-a", "title": "책을 건네다", "place": "신관 2층", "routes": ["R1"], "stage": 6,
+      "pov": "player", "objective": "giveBook",
+      "lines": [
+        { "style": "subtitle", "text": "4층에서 챙겨 온 책을 {dohyeon}에게 건넸다." },
+        { "who": "dohyeon", "text": "어? 내 책이네. 고마워, 4층 안 가도 되겠다." }
+      ]
+    },
+    {
+      "id": "R1-b", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R1"], "stage": 6,
+      "pov": "player", "objective": "findFriends", "puzzle": "P3",
+      "lines": [
+        { "who": "mingeon", "text": "우리 먼저 구관으로 가 있을게." },
+        { "who": "gyuha", "text": "…응. 먼저 가 있을게." }
+      ]
+    },
+    {
+      "id": "E8", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R2", "R3"], "stage": 3,
+      "pov": "player", "objective": "findFriends", "puzzle": "P3",
       "lines": [
         { "who": "mingeon", "text": "우리 먼저 구관으로 나가 있을게." },
         { "who": "gyuha", "text": "…응. 먼저 가 있을게." }
@@ -79,30 +119,34 @@
     },
     {
       "id": "E9", "title": "{dohyeon}의 책", "place": "신관 4층", "routes": ["R1", "R2", "R3"], "stage": 3,
-      "skipIf": "earlyBook",
+      "pov": "player", "objective": "dohyeonBook", "skipIf": "earlyBook",
       "lines": [
         { "who": "dohyeon", "text": "내 책 4층에 있어. 같이 가 줘." },
         { "style": "subtitle", "text": "{dohyeon}의 책을 챙겼다." }
       ]
     },
     {
-      "id": "E10", "title": "빈 구관", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "id": "E10", "title": "빈 구관", "place": "구관 현관 홀→계단", "routes": ["R2", "R3"], "stage": 4,
+      "pov": "player", "objective": "goOld", "chase": "C2", "jumpscare": 2,
       "lines": [
         { "style": "subtitle", "text": "구관에 왔지만 {mingeon}도 {gyuha}도 없다." },
-        { "style": "subtitle", "text": "등 뒤에서 누군가 달려온다." }
+        { "style": "subtitle", "text": "등 뒤에서 {mingeon:이} 달려온다. …뭔가 이상하다." }
       ]
     },
     {
       "id": "E11", "title": "각성", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
+      "pov": "player", "objective": "findClue", "puzzle": "P2",
       "lines": [
         { "style": "subtitle", "text": "정신을 차리니 구관 4층 바닥에 누워 있다." },
-        { "who": "dohyeon", "text": "깼어? 아저씨가 같이 옮겨 줬어." }
+        { "who": "dohyeon", "text": "깼어? 아저씨가 같이 옮겨 줬어." },
+        { "who": "duty", "text": "출구 열쇠 번호부터 알아내야 한다. 당직실에 단서가 있을 거다." }
       ]
     },
     {
       "id": "E12", "title": "열쇠를 가지러", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
+      "pov": "player", "objective": "exitKeyPlan",
       "lines": [
-        { "who": "duty", "text": "출구는 잠겨 있다. 내가 가서 열쇠를 가져오마. 여기 있어라." }
+        { "who": "duty", "text": "출구는 잠겨 있다. 내가 교무실에 가서 열쇠를 가져오마. 여기 있어라." }
       ],
       "choice": {
         "prompt": "{duty:이} 혼자 열쇠를 가지러 간다.",
@@ -115,31 +159,112 @@
       }
     },
     {
-      "id": "E13", "title": "돌아오지 않는 {duty}", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "id": "E13", "title": "돌아오지 않는 {duty}", "place": "구관 2층 교무실", "routes": ["R3"], "stage": 4,
+      "pov": "player", "objective": "findExitKey", "puzzle": "P4",
       "lines": [
         { "style": "subtitle", "text": "{duty:은} 돌아오지 않는다." },
-        { "who": "dohyeon", "text": "우리가 직접 찾으러 가자. 교무실에 있을 거야." }
+        { "who": "dohyeon", "text": "우리가 직접 찾으러 가자. 교무실에 있을 거야." },
+        { "style": "subtitle", "text": "교무실 안쪽에서 무언가가 다가온다." }
       ]
     },
     {
-      "id": "E14", "title": "{dohyeon}", "place": "구관", "routes": ["R2", "R3"], "stage": 4,
+      "id": "E13", "title": "셋이서 교무실로", "place": "구관 2층 교무실", "routes": ["R2"], "stage": 5,
+      "pov": "player", "objective": "findExitKey", "puzzle": "P4",
       "lines": [
-        { "style": "subtitle", "text": "그것이 다시 나타났다." },
-        { "style": "subtitle", "text": "열쇠를 쥐고 뛰었다." }
+        { "who": "duty", "text": "번호표를 잘 봐라. 틀린 걸 꽂으면 소리가 난다." },
+        { "style": "subtitle", "text": "셋이서 열쇠 꾸러미를 뒤져 출구 열쇠를 찾았다." }
+      ]
+    },
+    {
+      "id": "E14", "title": "{dohyeon}", "place": "교무실→복도→계단→현관 홀", "routes": ["R3"], "stage": 4,
+      "pov": "player", "objective": "runExit", "chase": "C4", "jumpscare": 3,
+      "lines": [
+        { "style": "subtitle", "text": "그것이 다시 나타났다. {dohyeon:을} 노린다." },
+        { "style": "subtitle", "text": "열쇠를 쥐고 혼자 뛰었다." }
       ],
       "set": { "hasExitKey": true }
     },
     {
-      "id": "E15", "title": "현관", "place": "구관 1층 현관", "routes": ["R2", "R3"], "stage": 4,
+      "id": "E14", "title": "쫓아오는 것", "place": "교무실→복도→계단→현관 홀", "routes": ["R2"], "stage": 5,
+      "pov": "player", "objective": "runExit", "chase": "C4", "jumpscare": 3, "undecided": ["a"],
       "lines": [
-        { "style": "subtitle", "text": "처음 들어왔던 현관이 보인다." },
+        { "style": "subtitle", "text": "[미확정] 열쇠를 들고 나오자 그것이 쫓아온다." },
+        { "style": "subtitle", "text": "[미확정] {duty:과} 나는 쓰러지고, {dohyeon:만} 열쇠를 들고 달아난다." }
+      ],
+      "set": { "hasExitKey": true }
+    },
+    {
+      "id": "E15", "title": "현관", "place": "구관 1층 현관", "routes": ["R3"], "stage": 4,
+      "pov": "player", "objective": "exit",
+      "lines": [
+        { "style": "subtitle", "text": "처음 들어왔던 현관이 보인다. 문 앞에 무언가 놓여 있다." },
         { "style": "subtitle", "text": "눈앞이 붉게 번진다." }
+      ]
+    },
+    {
+      "id": "R1-c", "title": "구관 4층의 일행", "place": "구관 4층", "routes": ["R1"], "stage": 6,
+      "pov": "player", "objective": "findClue", "puzzle": "P2", "undecided": ["b"],
+      "lines": [
+        { "style": "subtitle", "text": "[미확정] 구관 4층에 {duty}, {mingeon}, {gyuha:이} 모여 있다." },
+        { "who": "duty", "text": "출구 열쇠는 교무실 열쇠함에 있다. 내가 가져오마." },
+        { "who": "mingeon", "text": "저도 같이 갈게요." }
+      ]
+    },
+    {
+      "id": "R1-d", "title": "기다리는 동안", "place": "구관 4층", "routes": ["R1"], "stage": 6,
+      "pov": "player", "objective": "wait",
+      "lines": [
+        { "who": "dohyeon", "text": "금방 오겠지?" },
+        { "who": "gyuha", "text": "…응. 금방 올 거야." },
+        { "style": "subtitle", "text": "돌아보니 {gyuha:이} 있던 자리에 검은 연기만 흩어진다." }
+      ]
+    },
+    {
+      "id": "R1-e", "title": "교무실 열쇠함", "place": "구관 2층 교무실", "routes": ["R1"], "stage": 6,
+      "pov": "mingeon", "objective": "findExitKey", "puzzle": "P4",
+      "lines": [
+        { "who": "duty", "text": "번호표를 비춰 봐라. 틀린 걸 꽂으면 소리가 난다." },
+        { "who": "mingeon", "text": "찾았어요. 이거예요." }
+      ],
+      "set": { "hasExitKey": true }
+    },
+    {
+      "id": "R1-f", "title": "복도의 {gyuha}", "place": "교무실 앞 복도", "routes": ["R1"], "stage": 6,
+      "pov": "mingeon", "objective": "runExit", "jumpscare": 2,
+      "lines": [
+        { "who": "gyuha", "text": "왜 이렇게 늦어?" },
+        { "style": "subtitle", "text": "{gyuha}의 모습을 한 그것이 {duty:을} 덮친다." }
+      ]
+    },
+    {
+      "id": "R1-g", "title": "도망", "place": "교무실 앞→복도→현관", "routes": ["R1"], "stage": 6,
+      "pov": "mingeon", "objective": "runExit", "chase": "C3",
+      "lines": [
+        { "style": "subtitle", "text": "열쇠를 쥐고 달린다. 등 뒤로 발소리가 따라온다." }
+      ]
+    },
+    {
+      "id": "R1-h", "title": "출구", "place": "구관 1층 현관", "routes": ["R1"], "stage": 6,
+      "pov": "player", "objective": "exit",
+      "lines": [
+        { "who": "mingeon", "text": "열쇠 있어! 빨리 열어!" },
+        { "style": "subtitle", "text": "문 앞에 깨진 핸드폰이 떨어져 있다. {gyuha}의 것이다." }
       ]
     }
   ],
   "endings": {
-    "A": { "route": "R1", "title": "엔딩 A", "summary": "[미확정] {gyuha}만 사망, 나머지 생존 (마지막 장면 미확정)" },
-    "B": { "route": "R2", "title": "엔딩 B", "summary": "{dohyeon:이} 혼자 출구를 나선다" },
-    "C": { "route": "R3", "title": "엔딩 C", "summary": "출입구 앞에서 주인공이 쓰러져 있다" }
-  }
+    "A": { "route": "R1", "title": "엔딩 A", "survivors": ["player", "mingeon", "dohyeon"], "summary": "출구 문 앞에서 {gyuha}의 흔적을 발견한다. {gyuha:은} 이미 죽어 있었다. {duty}도 돌아오지 못했다. 셋이 학교 밖으로 나온다." },
+    "B": { "route": "R2", "title": "엔딩 B", "survivors": ["dohyeon"], "summary": "{dohyeon:이} 혼자 출구를 나선다." },
+    "C": { "route": "R3", "title": "엔딩 C", "survivors": [], "summary": "혼자 살아남아 출구에 닿았지만, 출입구 앞에서 주인공이 눈에서 피를 흘리며 쓰러져 있다." }
+  },
+  "interactions": [
+    {
+      "id": "dohyeonBook", "title": "{dohyeon}의 책", "place": "신관 4층 {dohyeon}의 책상 위", "stage": 2,
+      "after": "E5", "before": "E7",
+      "lines": [
+        { "style": "subtitle", "text": "책상 위에 {dohyeon}의 이름이 적힌 책이 있다. 챙겼다." }
+      ],
+      "set": { "earlyBook": true }
+    }
+  ]
 }
