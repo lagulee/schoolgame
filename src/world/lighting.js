@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PALETTE, YAJA_LIGHT } from '../config.js';
+import { LIGHTS, PALETTE, YAJA_LIGHT, INTERIOR } from '../config.js';
 import { pilotiBackZ } from './layout.js';
 import { haloTexture } from '../materials/windowTex.js';
 
@@ -80,14 +80,49 @@ export function buildLighting(scene, ctx) {
   // 점검 모드: 형태 확인용 밝은 보조광
   const inspect = new THREE.AmbientLight(0xffffff, 0);
   scene.add(inspect);
+  let inspectOn = false;
+  let indoor = 0; // 0 = 바깥, 1 = 본관 안 (단계 8, atmosphere.js 가 3초에 걸쳐 바꾼다)
+  const I = INTERIOR.inside;
+  const mix = (a, b) => a + (b - a) * indoor;
+  const sky = [new THREE.Color(PALETTE.hemiSky), new THREE.Color(I.hemiSky)];
+  const ground = [new THREE.Color(PALETTE.hemiGround), new THREE.Color(I.hemiGround)];
+  const applyHemi = () => {
+    hemi.intensity = mix(L.hemi, I.hemi) * (inspectOn ? L.inspectBoost : 1);
+    hemi.color.lerpColors(sky[0], sky[1], indoor);
+    hemi.groundColor.lerpColors(ground[0], ground[1], indoor);
+  };
   out.setInspect = (on) => {
+    inspectOn = on;
     inspect.intensity = on ? 1.6 : 0;
-    hemi.intensity = on ? L.hemi * L.inspectBoost : L.hemi;
+    applyHemi();
+  };
+  // 실내: 하늘빛을 STORY 15-2 값으로, 달·가로등·붉은 LED 번짐은 배율로 줄인다 (벽을 뚫고 비치지 않게)
+  out.setIndoor = (k) => {
+    indoor = k;
+    applyHemi();
+    moon.intensity = L.moon.intensity * mix(1, I.moon);
+    for (const lamp of out.lamps) {
+      lamp.dim = mix(1, I.lamps);
+      lamp.light.intensity = lamp.baseIntensity * (lamp.on ?? 1) * lamp.dim;
+    }
+    for (const r of [red1, red2]) {
+      r.userData.dim = mix(1, I.red);
+      r.intensity = r.userData.base * r.userData.dim;
+    }
+  };
+  // 실내에서는 달 그림자를 마지막 자리에 고정해 매 프레임 다시 그리지 않는다
+  let frozen = false;
+  out.freezeMoon = (on) => {
+    if (on === frozen) return;
+    frozen = on;
+    moon.shadow.autoUpdate = !on;
+    moon.shadow.needsUpdate = true;
   };
 
   const tmp = new THREE.Vector3();
   const texel = (2 * L.moon.shadowRange) / L.moon.shadowRes;
   out.update = (playerPos) => {
+    if (frozen) return;
     // 그림자 텍셀 단위로 스냅 → 이동 중 그림자 가장자리 떨림 감소
     tmp.set(Math.round(playerPos.x / texel) * texel, 0, Math.round(playerPos.z / texel) * texel);
     moon.target.position.copy(tmp);

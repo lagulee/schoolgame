@@ -80,6 +80,7 @@ audio.addLedBuzz(world.ctx.entrance.signPos);
 audio.addLedBuzz(world.ctx.sur.sign.group.position);
 for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
+world.interior.attach({ interactions: story.interactions, toast, audio, player }); // 본관 실내 문 (E)
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
@@ -223,6 +224,7 @@ function step(t, dt) {
   staminaBar.update(dt, player.stamina);
   audio.setBreath(audio.muted ? 0 : player.tired);
   touchSync?.();
+  world.interior.update(dt, player, camera);
   world.update(t, dt, camera);
   fx.update(camera, player.level);
   audio.update();
@@ -230,13 +232,13 @@ function step(t, dt) {
   captureIfRequested(renderer.domElement);
   if (!shot) {
     hud.update({
-      quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z, player.level),
+      quality: state.quality, pos: camera.position, level: player.level, interior: world.interior.atmo.hudLine(player), surface: collision.surfaceAt(camera.position.x, camera.position.z, player.level),
       fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), chase: chase.hudLine(), puzzle: puzzle.hudLine(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }
 }
-window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
@@ -246,7 +248,8 @@ if (shot) {
   lights.setInspect(shot.inspect);
   if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;
-  if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch);
+  if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch, shot.level);
+  world.interior.snap(player, camera); // 자동문·실내 노출을 최종 상태로
   if (shot.event) {
     director.t = shot.time;
     director.trigger(shot.event);

@@ -1,0 +1,59 @@
+{
+  "_comment": "본관(구관) 실내 배치 (단계 8 = 옛 1b, STORY 4-1·4-2). 좌표 m (x 오른쪽, z − 가 북쪽), 층 level 0 = 1층 … 4 = 5층. 사각형 [x0, z0, x1, z1] 은 벽 안쪽까지 포함한 칸이고 벽은 칸 안쪽으로 세운다. 두께·높이 등 치수는 src/config.js INTERIOR. 위치 관계(중정·ㅁ자 순환 복도·층당 반 4개·2층 교무실·3층 연결통로 입구·4층 당직실)는 STORY [확정], 나머지 배치는 [가정].",
+  "levels": 5,
+  "courtyard": [-15, -50, 15, -28],
+  "spaces": [
+    { "id": "N", "kind": "corridor", "name": "북쪽 복도", "rect": [-18, -53, 18, -50], "levels": [0, 4] },
+    { "id": "E", "kind": "corridor", "name": "동쪽 복도", "rect": [15, -50, 18, -14], "levels": [0, 4] },
+    { "id": "W", "kind": "corridor", "name": "서쪽 복도", "rect": [-18, -50, -15, -25], "levels": [0, 4] },
+    { "id": "S", "kind": "corridor", "name": "남쪽 복도", "rect": [-15, -28, 15, -25], "levels": [0, 4] },
+    { "id": "lobby", "kind": "lobby", "name": "현관 홀", "rect": [15.35, -14, 28.65, 7.65], "levels": [0, 0], "windows": ["s", "e", "w"] },
+    { "id": "backHall", "kind": "hall", "name": "필로티 쪽 출입문 홀", "rect": [-5, -25, 5, -20.35], "levels": [0, 0], "glass": "s" }
+  ],
+  "stairs": [
+    { "id": "S1", "name": "현관 쪽 계단", "rect": [18, -21.5, 24.6, -18], "open": "w" },
+    { "id": "S2", "name": "북서쪽 계단", "rect": [-24.6, -50, -18, -46.5], "open": "e" }
+  ],
+  "northBand": { "z": [-61.65, -53], "slots": [[-18, -9.5], [-9.5, -1], [-1, 7.5], [7.5, 16]], "doors": [1.2, -1.2], "side": "s", "front": "e", "windows": "n" },
+  "rooms": [
+    { "id": "1F-counsel", "level": 0, "slot": 0, "kind": "counsel", "name": "상담실", "enter": true },
+    { "id": "1F-1", "level": 0, "slot": 1, "kind": "classroom", "name": "1-1", "enter": true },
+    { "id": "1F-2", "level": 0, "slot": 2, "kind": "classroom", "name": "1-2", "enter": true },
+    { "id": "1F-admin", "level": 0, "slot": 3, "kind": "admin", "name": "행정실", "enter": true },
+    { "id": "2F-1", "level": 1, "slot": 0, "kind": "classroom", "name": "1-3" },
+    { "id": "2F-2", "level": 1, "slot": 1, "kind": "classroom", "name": "1-4" },
+    { "id": "2F-3", "level": 1, "slot": 2, "kind": "classroom", "name": "1-5" },
+    { "id": "2F-4", "level": 1, "slot": 3, "kind": "classroom", "name": "1-6" },
+    { "id": "2F-staff", "level": 1, "rect": [18, -50, 26.65, -36], "side": "w", "doors": [2, 12], "front": "n", "windows": "e", "kind": "staff", "name": "교무실", "enter": true },
+    { "id": "3F-1", "level": 2, "slot": 0, "kind": "classroom", "name": "2-1" },
+    { "id": "3F-2", "level": 2, "slot": 1, "kind": "classroom", "name": "2-2" },
+    { "id": "3F-3", "level": 2, "slot": 2, "kind": "classroom", "name": "2-3" },
+    { "id": "3F-4", "level": 2, "slot": 3, "kind": "classroom", "name": "2-4" },
+    { "id": "3F-bridge", "level": 2, "rect": [16, -61.65, 20, -53], "kind": "passage", "name": "연결통로 입구", "exit": { "side": "n", "at": 2.5, "name": "연결통로 문" } },
+    { "id": "4F-1", "level": 3, "slot": 0, "kind": "classroom", "name": "2-5" },
+    { "id": "4F-2", "level": 3, "slot": 1, "kind": "classroom", "name": "2-6" },
+    { "id": "4F-3", "level": 3, "slot": 2, "kind": "classroom", "name": "2-7", "enter": true },
+    { "id": "4F-4", "level": 3, "slot": 3, "kind": "classroom", "name": "2-8" },
+    { "id": "4F-duty", "level": 3, "rect": [18, -36, 26.65, -29], "side": "w", "doors": [1.6], "front": "s", "windows": "e", "kind": "duty", "name": "당직실", "enter": true },
+    { "id": "5F-1", "level": 4, "slot": 0, "kind": "classroom", "name": "3-1" },
+    { "id": "5F-2", "level": 4, "slot": 1, "kind": "classroom", "name": "3-2" },
+    { "id": "5F-3", "level": 4, "slot": 2, "kind": "classroom", "name": "3-3" },
+    { "id": "5F-4", "level": 4, "slot": 3, "kind": "classroom", "name": "3-4" }
+  ],
+  "entrance": { "id": "entrance", "name": "현관 유리문", "x": 15, "z": [-2.7, 0.7] },
+  "props": {
+    "_comment": "복도 벽 소품 (모든 층 같은 자리, 문·계단 입구와 겹치지 않게). 점은 [x, z, 향하는 쪽], 줄은 [x0, z0, x1, z1, 향하는 쪽]. x·z 는 복도 벽면(칸 경계) 위",
+    "hydrants": [[18, -23, "w"], [-18, -40, "e"], [-5.25, -53, "s"], [9, -25, "n"]],
+    "lockers": [[-18, -45, -18, -37, "e"], [-12, -25, -6, -25, "n"], [6, -25, 12, -25, "n"]],
+    "boards": [[18, -27.6, 18, -25.2, "w"], [-18, -34, -18, -31, "e"]],
+    "extinguishers": [[18, -16, "w"], [-18, -29, "e"], [7.5, -53, "s"]]
+  },
+  "messages": {
+    "locked": "{name} — 잠겨 있다.",
+    "doorLabel": "{name} 문 열기",
+    "doorClose": "{name} 문 닫기",
+    "glassLabel": "유리문 열기",
+    "glassLocked": "유리문이 잠겨 있다.",
+    "bridgeLocked": "연결통로 문이 잠겨 있다."
+  }
+}

@@ -1,5 +1,5 @@
 // E 키 상호작용: 플레이어 근처의 대상(문·열쇠·책 등)을 등록해 두고, 가장 가까운 대상에 안내를 띄운다.
-// 단계 0 에서는 등록된 대상이 없다. 실내 맵(단계 1~) 에서 add() 로 대상을 붙인다.
+// 단계 8 부터 본관 실내 문(interior/doors.js)이 add() 로 붙는다. label 은 getter 여도 된다.
 // 터치 기기에서는 안내 자체가 누를 수 있는 버튼이 된다.
 import { onTap } from '../ui/tap.js';
 
@@ -45,6 +45,11 @@ export class Interactions {
       this.prompt.style.display = best ? '' : 'none';
       if (best) this.prompt.textContent = `${this.opts.touch ? '✋' : 'E'}  ${best.label}`;
     }
+  }
+
+  // 안내 문구가 바뀌었을 때 (예: 문 열기 → 닫기) 다음 update 에서 다시 쓴다
+  refresh() {
+    this.current = null;
   }
 
   use() {

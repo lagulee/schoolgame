@@ -1,4 +1,4 @@
-// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&light=0|1][&phone=1][&battery=%][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A] 쿼리 모드와 P 키 스크린샷
+// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&lv=층][&light=0|1][&phone=1][&battery=%][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A] 쿼리 모드와 P 키 스크린샷
 export function parseShotParams() {
   const q = new URLSearchParams(location.search);
   if (!q.has('shot')) return null;
@@ -8,6 +8,7 @@ export function parseShotParams() {
     pos,
     yaw: num('yaw', 0),
     pitch: num('pitch', 0),
+    level: num('lv', 0), // 층 (0 = 1층·바깥, 1 = 2층 …, 0.5 단위 = 계단참). 실내 시점 (단계 8)
     light: q.get('light') === '1', // 핸드폰 라이트
     phone: q.get('phone') === '1', // 핸드폰 화면 열기
     battery: q.has('battery') ? parseFloat(q.get('battery')) : null, // 배터리 % 고정 (저전력 확인용)

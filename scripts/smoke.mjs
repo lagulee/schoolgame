@@ -1,4 +1,4 @@
-// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
+// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
 // ?light=1 : 핸드폰 라이트를 켠 채 시작 (손전등이 없어진 뒤 화면이 어두워도 같은 조건으로 점검)
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
@@ -119,6 +119,41 @@ check('운동장 북쪽 그물에서 멈춤', near(ext.fieldNorth[1], -95.7, 0.1
 check('운동장 동쪽 그물에서 멈춤', near(ext.fieldEast[0], 101.7, 0.1), JSON.stringify(ext.fieldEast));
 check('필로티는 유리문에서 멈춤 (얕은 입구)', near(ext.piloti[1], -19.7, 0.1), JSON.stringify(ext.piloti));
 check('옆길 북쪽(동쪽 날개 옆 틈)은 막힘', near(ext.pathNorth[1], 8.4, 0.1), JSON.stringify(ext.pathNorth));
+// 단계 8 본관 실내: 현관 자동문으로 들어가 계단으로 2층, 교실 문 E 열기·들어가기, 잠긴 문, 실내 분위기·HUD
+const walkIn = (pos, yaw, sec, lv = 0) => S(([pos, yaw, sec, lv]) => {
+  const P = window.__DEBUG.player;
+  const I = window.__DEBUG.interior;
+  if (pos) { P.setView(pos, yaw, 0, lv); P.vel.set(0, 0); } else P.setView([P.pos.x, 1.6, P.pos.z], yaw, 0, P.level);
+  P.stamina.reset();
+  P.keys.clear();
+  if (sec) P.keys.add('KeyW');
+  for (let i = 0; i < sec * 60; i++) { P.update(1 / 60); I.update(1 / 60, P, P.camera); }
+  P.keys.clear();
+  P.vel.set(0, 0);
+  return { x: +P.pos.x.toFixed(2), z: +P.pos.z.toFixed(2), lv: P.level, y: +P.floorY.toFixed(2), surf: P.collision.surfaceAt(P.pos.x, P.pos.z, P.level), inside: I.atmo.inside, k: +I.atmo.k.toFixed(2), door: I.entrance.f };
+}, [pos, yaw, sec, lv]);
+const ent = await walkIn([12.6, 1.6, -1], -90, 2.4);
+check('현관 자동문이 열리고 현관 홀(돌 바닥)로 들어감, 실내 노출 전환 시작', ent.x > 15.5 && ent.surf === 'stone' && ent.inside && ent.door > 0.9 && ent.k > 0 && ent.k < 0.5, JSON.stringify(ent));
+const fade = await walkIn(null, -90, 3.5);
+check('3초 뒤 실내 노출 전환 끝 (k = 1), 멀어지면 자동문 닫힘', fade.k === 1 && fade.door === 0, JSON.stringify(fade));
+await walkIn([18.7, 1.6, -18.9], -90, 3.2);
+await walkIn(null, 0, 0.9);
+const up = await walkIn(null, 90, 3.6);
+check('S1 계단으로 2층 (level 1, 바닥 높이 4.05)', up.lv === 1 && near(up.y, 4.05), JSON.stringify(up));
+check('HUD 에 층·실내 표시', await poll(() => /층 1 /.test(document.getElementById('hud').textContent) && document.getElementById('hud').textContent.includes('실내: 2층')));
+await walkIn([-16.8, 1.6, -52], 0, 0, 1);
+check('잠긴 교실 문 안내 (2층 1-3)', await poll(() => document.getElementById('interact').textContent.includes('1-3 문 열기')));
+await press('KeyE', 120);
+check('잠긴 문: E → 잠김 안내, 문은 그대로', await poll(() => document.getElementById('toast').textContent.includes('잠겨 있다')) && !(await S(() => window.__DEBUG.interior.doors.openIds.length)));
+await walkIn([-8.3, 1.6, -52], 0, 0, 0);
+check('1층 1-1 교실 문 안내', await poll(() => document.getElementById('interact').textContent.includes('1-1 문 열기')));
+const blocked = await walkIn(null, 0, 2);
+await press('KeyE', 120);
+check('E → 문 열림 + 안내가 닫기로 바뀜', await poll(() => window.__DEBUG.interior.doors.openIds.includes('1F-1-1') && document.getElementById('interact').textContent.includes('1-1 문 닫기')));
+const inRoom = await walkIn(null, 0, 2.5);
+check('닫힌 문은 막고, 연 문으로 교실에 들어감 (마루 바닥)', blocked.z > -53 && inRoom.z < -53.6 && inRoom.surf === 'wood', JSON.stringify([blocked, inRoom]));
+await walkIn([0, 1.6, 12], 0, 0.5);
+check('밖으로 나오면 실내 분위기 해제 시작', !(await S(() => window.__DEBUG.interior.atmo.inside)));
 check('걷기 1.6 m/s 그대로', near(stam.walk.v, 1.6) && !stam.walk.run && stam.walk.st === 100, JSON.stringify(stam.walk));
 check('달리기 3.6 m/s, 3초에 −37.5', near(stam.run3.v, 3.6) && stam.run3.run && near(stam.run3.st, 62.5, 0.3), JSON.stringify(stam.run3));
 check('8초 넘게 달리면 탈진 → 달리기 해제', stam.runOut.ex && !stam.runOut.run && stam.runOut.st === 0, JSON.stringify(stam.runOut));

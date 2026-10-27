@@ -94,7 +94,7 @@ export class Director {
 
   setLamp(lamp, on) {
     lamp.on = on;
-    lamp.light.intensity = lamp.baseIntensity * on;
+    lamp.light.intensity = lamp.baseIntensity * on * (lamp.dim ?? 1); // dim: 실내에서 줄인 배율 (lighting.setIndoor)
     lamp.lensMat.color.copy(lamp.baseLens).multiplyScalar(0.04 + 0.96 * on);
     lamp.halo.material.color.copy(lamp.baseHalo).multiplyScalar(on);
   }

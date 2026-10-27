@@ -1,31 +1,40 @@
 import * as THREE from 'three';
-import { DIM, SCHOOL } from '../config.js';
-import { addBlock, instanced, mat4 } from './geom.js';
+import { DIM, SCHOOL, INTERIOR } from '../config.js';
+import { addBlock, addBlocks, instanced, mat4 } from './geom.js';
 import { FacadeKit } from './facade.js';
-import { pilotiBackZ } from './layout.js';
+import { pilotiBackZ, frontShellWalls, pilotiWalls, facadeFaces, buildingTop } from './layout.js';
 import { buildMainRear } from './mainBuilding.js';
 import { pilotiGlassTexture } from '../materials/windowTex.js';
 
-// 본관 앞부분: ㄷ자 매스 (북쪽 중앙 블록 + 동·서 날개 = 좌우 돌출부), 얕은 필로티, 유리 계단실, 외벽 디테일.
-// 뒷부분(중정형 셸)은 mainBuilding.js. 큰 충돌은 layout.js 의 addSchoolCollision
+// 본관 앞부분: ㄷ자 (북쪽 중앙 블록 + 동·서 날개 = 좌우 돌출부), 얕은 필로티, 유리 계단실, 외벽 디테일.
+// 단계 8부터 속이 빈 셸(벽 + 지붕 슬래브)이고 안은 실내(interior/). 뒷부분(중정형 셸)은 mainBuilding.js. 큰 충돌은 layout.js
 export function buildBuildings(root, M, col) {
   const g = new THREE.Group();
   g.name = 'buildings';
   root.add(g);
   const { innerX: ix, outerX: ox, frontZ: fz, backZ: bz, wingSouthZ: wz } = DIM;
-  const top = DIM.floors * DIM.floorH + DIM.parapet;
+  const top = buildingTop();
+  const roof = DIM.floors * DIM.floorH;
   const pw = DIM.piloti.halfW;
   const ph = DIM.piloti.h;
   const T = { tile: 2 };
 
-  // 매스 (벽돌 변형 2종을 나눠 써서 반복 티를 줄인다). 충돌은 layout.js
+  // 셸 벽 (벽돌 변형 2종을 번갈아 써서 반복 티를 줄인다) + 필로티 양옆 벽. 충돌은 layout.js
   const pz = pilotiBackZ();
-  addBlock(g, M.brick, -ox, 0, bz, -pw, top, fz, T);
-  addBlock(g, M.brickB, pw, 0, bz, ox, top, fz, T);
-  addBlock(g, M.brick, -pw, ph, bz, pw, top, fz, T);
-  addBlock(g, M.brick, -pw, 0, bz, pw, ph, pz, T); // 필로티 뒤: 본관 1층 (얕은 입구, K3)
-  addBlock(g, M.brickB, -ox, 0, fz, -ix, top, wz, T);
-  addBlock(g, M.brick, ix, 0, fz, ox, top, wz, T);
+  // 재질별로 메시 하나씩 합친다 (뒷부분 셸 벽도 같은 목록 → mainBuilding.js 가 채운다)
+  const walls = { brick: [], brickB: [] };
+  frontShellWalls().forEach(({ r: [x0, z0, x1, z1], y0, y1 }, i) => walls[i % 2 ? 'brickB' : 'brick'].push([x0, y0, z0, x1, y1, z1]));
+  for (const [x0, z0, x1, z1] of pilotiWalls().slice(0, 2)) walls.brick.push([x0, 0, z0, x1, ph, z1]);
+  // 지붕 슬래브: 실내 맨 위층 천장(roof − slab)보다 5 cm 위에서 시작해 천장 면과 겹치지 않게
+  const sy = roof - INTERIOR.slab + 0.05;
+  // 셸 벽 바깥 면과 겹치지 않게 벽 안쪽까지만 (rx 밖의 중앙 블록 뒷면도 셸 벽)
+  const w = SCHOOL.shellWall;
+  const rx = SCHOOL.main.outerX;
+  const slabs = [
+    [-ix, bz, ix, fz - w], [ix, bz, rx, fz], [rx, bz + w, ox - w, fz], [-rx, bz, -ix, fz], [-ox + w, bz + w, -rx, fz],
+    [ix + w, fz, ox - w, wz - w], [-ox + w, fz, -ix - w, wz - w],
+  ];
+  const roofs = slabs.map(([x0, z0, x1, z1]) => [x0, sy, z0, x1, roof, z1]);
 
   // 필로티 내부: 콘크리트 마감 벽 + 천장 + 가운데 기둥 + 천장 형광등(발광만) + 막힌 끝의 유리문
   addBlock(g, M.concrete, -pw, 0, pz, -pw + 0.05, ph, fz, { tile: 2 });
@@ -50,38 +59,25 @@ export function buildBuildings(root, M, col) {
   for (const s of stairs) buildStairwell(g, M, s, top + 0.9);
   for (const [x0, z0, x1, z1] of stairs) col.box(x0, z0, x1, z1);
 
-  // 외벽 디테일
+  // 외벽 디테일: 면 위치·창 자리는 layout.facadeFaces (실내 창과 같은 목록), 여기서는 장식만 더한다
   const kit = new FacadeKit(M);
-  const fl = DIM.floorH;
-  kit.add({
-    id: 'front', origin: [-ix, fz], normal: [0, 1], length: ix * 2, cctv: 0.12, ac: 0.05,
-    openings: [
-      { u0: ix - pw - 0.3, u1: ix + pw + 0.3, v0: 0, v1: ph + 0.1 },
-      { u0: ix - 4.2, u1: ix + 4.2, v0: 3 * fl + 0.45, v1: 4 * fl - 0.1 }, // LED 전광판 자리
-      { u0: ix * 2 - 3.1, u1: ix * 2, v0: 0, v1: top + 1 }, // 계단실
-    ],
-    pipes: [0.35, ix - pw - 0.6, ix + pw + 0.6],
-  });
-  kit.add({
-    id: 'west', origin: [-ix, wz], normal: [1, 0], length: wz - fz, cctv: 0.1, ac: 0.08,
-    openings: [{ u0: 0, u1: 3.7, v0: 0, v1: top + 1 }],
-    pipes: [3.9, wz - fz - 0.35],
-  });
-  kit.add({
-    id: 'east', origin: [ix, fz], normal: [-1, 0], length: wz - fz, cctv: 0.1, ac: 0.04,
-    openings: [{ u0: DIM.canopy.z0 - fz - 0.2, u1: DIM.canopy.z1 - fz + 0.2, v0: 0, v1: DIM.canopy.colH + 0.6 }],
-    pipes: [0.35, wz - fz - 0.35],
-  });
-  kit.add({ id: 'eastSouth', origin: [ix, wz], normal: [0, 1], length: ox - ix, ac: 0.1, cctv: 0.05 });
-  kit.add({ id: 'westSouth', origin: [-ox, wz], normal: [0, 1], length: ox - ix, ac: 0.1, cctv: 0.05 });
+  const F = facadeFaces();
+  const face = (id, extra = {}) => kit.add({ id, ...F[id], ...extra });
+  face('front', { cctv: 0.12, ac: 0.05, pipes: [0.35, ix - pw - 0.6, ix + pw + 0.6] });
+  face('west', { cctv: 0.1, ac: 0.08, pipes: [3.9, wz - fz - 0.35] });
+  face('east', { cctv: 0.1, ac: 0.04, pipes: [0.35, wz - fz - 0.35] });
+  face('eastSouth', { ac: 0.1, cctv: 0.05 });
+  face('westSouth', { ac: 0.1, cctv: 0.05 });
   // 중앙 블록 뒷면은 단계 7부터 중정형 뒷부분에 붙는다: 뒷부분보다 튀어나온 양끝 2 m 만 보인다
-  const rx = SCHOOL.main.outerX;
-  kit.add({ id: 'backE', origin: [ox, bz], normal: [0, -1], length: ox - rx, noWindows: true, pipes: [] });
-  kit.add({ id: 'backW', origin: [-rx, bz], normal: [0, -1], length: ox - rx, noWindows: true, pipes: [] });
+  face('backE', { pipes: [] });
+  face('backW', { pipes: [] });
   // 옆면: 운동장에서 보이므로 창을 낸다 (이전에는 창 없는 벽)
-  kit.add({ id: 'sideE', origin: [ox, wz], normal: [1, 0], length: wz - bz, cctv: 0.06, ac: 0.08, pipes: [0.35, wz - bz - 0.35] });
-  kit.add({ id: 'sideW', origin: [-ox, bz], normal: [-1, 0], length: wz - bz, noWindows: true, pipes: [] });
-  const rear = buildMainRear(g, M, kit);
+  face('sideE', { cctv: 0.06, ac: 0.08, pipes: [0.35, wz - bz - 0.35] });
+  face('sideW', { pipes: [] });
+  const rear = buildMainRear(g, M, F, walls, roofs);
+  for (const k of ['brick', 'brickB']) addBlocks(g, M[k], walls[k], T);
+  addBlocks(g, M.concrete, roofs, { tile: 3 });
+  for (const id of ['rearE', 'rearW', 'rearN']) kit.add({ id, ...F[id], ...rear.decor[id] });
   kit.finalize(g);
   return { kit, litInfo: kit.litInfo, cctv: kit.cctv, rear };
 }

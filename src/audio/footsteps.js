@@ -9,6 +9,9 @@ const SURF = {
   grass: { type: 'lowpass', f: 650, q: 0.5, dec: 0.17, thump: 0.15, gain: 0.7 },
   dirt: { type: 'bandpass', f: 1500, q: 0.7, dec: 0.07, thump: 0.25, gain: 0.8, grains: 2 }, // 운동장 마사토
   gravel: { type: 'bandpass', f: 2200, q: 0.6, dec: 0.05, thump: 0.2, gain: 0.85, grains: 4 },
+  // 단계 8 본관 실내: 인조석 복도·계단(울림), 교실 마루(둔탁)
+  tile: { type: 'bandpass', f: 2300, q: 1.4, dec: 0.06, thump: 0.3, gain: 1.05, echo: 0.42 },
+  wood: { type: 'bandpass', f: 700, q: 0.9, dec: 0.11, thump: 0.6, gain: 0.95, echo: 0.12 },
 };
 
 export class Footsteps {

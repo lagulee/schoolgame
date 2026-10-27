@@ -1,18 +1,24 @@
 // 단계 7(외부 확장): 건물·담장·이동 경계 충돌. layout.js 를 실제 Collision 에 올려
 // 시작 지점에서 걸어서 갈 수 있는 곳(격자 탐색)과 막혀야 하는 곳을 확인한다.
+// 단계 8 부터 본관은 속이 빈 셸 + 실내(interior/plan.js)라 현관 유리문을 닫은 상태로 바깥을 검사한다.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Collision } from '../src/player/collision.js';
 import { addSchoolCollision, pilotiBackZ, mainShellWalls, annexWalls } from '../src/world/layout.js';
 import { DIM, PLAYER, SCHOOL } from '../src/config.js';
+import { readFileSync } from 'node:fs';
+import { buildPlan, addInteriorCollision } from '../src/world/interior/plan.js';
 
 const R = PLAYER.radius;
 const STEP = 0.5;
 const AREA = { x0: -60, x1: 130, z0: -130, z1: 30 };
 
-function world() {
+const plan = buildPlan(JSON.parse(readFileSync(new URL('../data/mainInterior.json', import.meta.url), 'utf8')));
+
+function world(entranceOpen = false) {
   const col = new Collision();
   addSchoolCollision(col);
+  addInteriorCollision(col, plan).get('entrance').on = !entranceOpen;
   return col;
 }
 
@@ -78,6 +84,18 @@ test('건물 안·건물 사이·담장 밖으로는 갈 수 없다', () => {
     '동쪽 보도 끝 너머': [40, DIM.fenceZ + 2],
   };
   for (const [name, [x, z]] of Object.entries(blocked)) assert.equal(can(x, z), false, name);
+});
+
+test('현관 유리문: 닫혀 있으면 현관 홀에 못 들어가고, 열리면 1층 복도까지 간다 (단계 8)', () => {
+  const hall = [22, -3];
+  const corridor = [16.5, -30];
+  assert.equal(can(...hall), false, '닫힌 문');
+  assert.equal(can(...corridor), false);
+  const open = reachable(world(true), [PLAYER.start[0], PLAYER.start[2]]);
+  assert.ok(open(...hall), '열린 문 → 현관 홀');
+  assert.ok(open(...corridor), '현관 홀 → 1층 동쪽 복도');
+  assert.equal(open(0, -40), false, '중정은 난간 너머');
+  assert.ok(open(0, pilotiBackZ() - 1), '필로티 유리문 안쪽(출입문 홀)은 실내 복도로 이어진다 (유리문 자체는 아래 검사처럼 막힘)');
 });
 
 test('필로티는 얕은 입구: 유리문에서 멈춘다', () => {

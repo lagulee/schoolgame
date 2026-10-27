@@ -30,7 +30,8 @@ export class Hud {
     this.el.textContent = [
       `FPS ${this.fps.toFixed(0)}   품질 ${data.quality}`,
       `드로우콜 ${r.calls}   삼각형 ${(r.triangles / 1000).toFixed(1)}k`,
-      `위치 ${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)}   바닥 ${data.surface}`,
+      `위치 ${p.x.toFixed(1)}, ${p.y.toFixed(2)}, ${p.z.toFixed(1)}   층 ${data.level}   바닥 ${data.surface}`,
+      data.interior,
       `안개 ${data.fog.toFixed(4)}   헤드밥 ${Math.round(data.bob * 100)}%`,
       `블룸 ${data.flags.bloom ? 'on' : 'off'}  그레인 ${data.flags.grain ? 'on' : 'off'}  비네팅 ${data.flags.vignette ? 'on' : 'off'}`,
       `점검 ${data.inspect ? 'on' : 'off'}   음소거 ${data.muted ? 'on' : 'off'}`,

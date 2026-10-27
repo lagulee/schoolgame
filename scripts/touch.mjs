@@ -154,6 +154,20 @@ check('조이스틱을 누른 채 📱 → 화면 열림', await dbg(() => windo
 await dbg(() => { window.__DEBUG.phone.closeScreen(); window.__DEBUG.phone.setLight(false); });
 await touch('touchEnd');
 
+// 본관 실내 (단계 8): 1층 1-1 교실 문 앞 → 안내 버튼(✋) 탭 → 문 열림·안내가 닫기로 바뀜 → 다시 탭하면 닫힘
+await dbg(() => window.__DEBUG.player.setView([-8.3, 1.6, -52], 0, 0, 0));
+await page.waitForFunction(() => document.getElementById('interact').textContent.includes('1-1 문 열기'), null, { timeout: 30000 }).catch(() => {});
+const dp = await dbg(() => document.getElementById('interact').textContent);
+check('실내 문 안내가 터치 버튼(✋)으로', dp.startsWith('✋') && dp.includes('1-1 문 열기'), JSON.stringify(dp));
+await page.tap('#interact');
+await page.waitForFunction(() => document.getElementById('interact').textContent.includes('1-1 문 닫기'), null, { timeout: 30000 }).catch(() => {});
+check('탭 → 1-1 문 열림 + 안내 닫기', await dbg(() => window.__DEBUG.interior.doors.openIds.includes('1F-1-1') && document.getElementById('interact').textContent.includes('닫기')));
+await page.screenshot({ path: 'screenshots/touch_door.png' });
+await page.tap('#interact');
+await page.waitForFunction(() => !window.__DEBUG.interior.doors.openIds.includes('1F-1-1'), null, { timeout: 30000 }).catch(() => {});
+check('한 번 더 탭 → 문 닫힘', !(await dbg(() => window.__DEBUG.interior.doors.openIds.includes('1F-1-1'))));
+await dbg(() => window.__DEBUG.player.setView([0, 1.6, 12], 0, 0, 0));
+
 // 스토리: 메뉴의 '다음 사건' → 대화창 탭으로 넘기기 → 선택지 버튼 탭으로 플래그 변경
 await page.tap('.menu-toggle');
 await page.locator('.mbtn', { hasText: '다음 사건' }).tap();

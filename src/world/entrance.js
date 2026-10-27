@@ -3,7 +3,7 @@ import { DIM, SCHOOL_NAME } from '../config.js';
 import { addBlock, addBox, addPlane, instanced, mat4 } from './geom.js';
 import { LedSign } from './ledSign.js';
 
-// 동쪽 날개 현관: 자주빛 캐노피, 화강암 원기둥 2개, 유리 자동문, 카드 리더기, 계단 3단, 붉은 LED 전광판
+// 동쪽 날개 현관: 자주빛 캐노피, 화강암 원기둥 2개, 유리 자동문 틀, 카드 리더기, 계단 3단, 붉은 LED 전광판
 export function buildEntrance(root, M, col) {
   const g = new THREE.Group();
   g.name = 'entrance';
@@ -41,23 +41,21 @@ export function buildEntrance(root, M, col) {
   col.surface(S.x0, S.z0 - 0.2, wx, S.z1 + 0.2, 'stone');
   col.surface(C.x0, C.z0, wx, C.z1, 'stone');
 
-  // 유리 자동문: 은색 프레임 + 청백색으로 새어 나오는 실내광
+  // 유리 자동문의 은색 바깥 틀 + 위 유리 (문짝 두 장은 interior/lobby.js, 열면 셸 벽 속으로 들어간다)
+  const E = DIM.entranceDoor;
   const doorY = S.count * S.rise;
-  const dz0 = S.z0 + 0.3;
-  const dz1 = S.z1 - 0.3;
+  const dz0 = S.z0 + E.inset;
+  const dz1 = S.z1 - E.inset;
   const dw = dz1 - dz0;
-  addBlock(g, M.silver, wx - 0.12, doorY, dz0 - 0.12, wx + 0.02, doorY + 3.0, dz0, { cast: false });
-  addBlock(g, M.silver, wx - 0.12, doorY, dz1, wx + 0.02, doorY + 3.0, dz1 + 0.12, { cast: false });
-  addBlock(g, M.silver, wx - 0.12, doorY + 2.4, dz0, wx + 0.02, doorY + 2.52, dz1, { cast: false });
-  addBlock(g, M.silver, wx - 0.12, doorY + 2.9, dz0, wx + 0.02, doorY + 3.02, dz1, { cast: false });
-  addBlock(g, M.silver, wx - 0.1, doorY, (dz0 + dz1) / 2 - 0.03, wx + 0.0, doorY + 2.4, (dz0 + dz1) / 2 + 0.03, { cast: false });
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(dw, 2.4), M.door);
-  door.rotation.y = -Math.PI / 2;
-  door.position.set(wx - 0.05, doorY + 1.2, (dz0 + dz1) / 2);
-  g.add(door);
-  const transom = new THREE.Mesh(new THREE.PlaneGeometry(dw, 0.38), M.glass);
+  const fx0 = wx - E.frame;
+  const fx1 = wx + 0.02;
+  addBlock(g, M.silver, fx0, doorY, dz0 - E.frame, fx1, doorY + E.top - 0.02, dz0, { cast: false });
+  addBlock(g, M.silver, fx0, doorY, dz1, fx1, doorY + E.top - 0.02, dz1 + E.frame, { cast: false });
+  addBlock(g, M.silver, fx0, doorY + E.h, dz0, fx1, doorY + E.h + E.frame, dz1, { cast: false });
+  addBlock(g, M.silver, fx0, doorY + E.top - E.frame, dz0, fx1, doorY + E.top, dz1, { cast: false });
+  const transom = new THREE.Mesh(new THREE.PlaneGeometry(dw, E.top - E.h - 2 * E.frame), M.glass);
   transom.rotation.y = -Math.PI / 2;
-  transom.position.set(wx - 0.05, doorY + 2.71, (dz0 + dz1) / 2);
+  transom.position.set(wx - 0.05, doorY + (E.h + E.top) / 2, (dz0 + dz1) / 2);
   g.add(transom);
 
   // 카드 리더기 + 초록 비상구 표지
@@ -75,6 +73,7 @@ export function buildEntrance(root, M, col) {
   g.add(sign.group);
 
   return {
+    group: g,
     sign,
     signPos: new THREE.Vector3(C.x0 - 0.3, C.colH + 0.2, zc),
     lightPos: new THREE.Vector3(wx - 0.9, doorY + 2.0, (dz0 + dz1) / 2),

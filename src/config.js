@@ -53,6 +53,7 @@ export const DIM = {
   piloti: { halfW: 5, h: 4.5, colR: 0.42, colZ: -15.2, depth: 6 }, // depth: 정면에서 유리문까지 (K3, 2026-10-26 사용자 선택: 얕은 입구)
   canopy: { z0: -4, z1: 2, x0: 11, colH: 4.4, colD: 0.7, thick: 0.45 },
   steps: { x0: 12.0, tread: 0.4, rise: 0.15, count: 3, z0: -3, z1: 1 },
+  entranceDoor: { inset: 0.3, frame: 0.12, h: 2.4, top: 3.02 }, // 현관 유리문: 계단 끝에서 들어온 폭·은색 틀 두께·문 높이·틀 꼭대기 (문 아래 = 계단 위)
   wave: { x0: 12, x1: 15, z0: -12.9, z1: -4.4, h: 3.1, amp: 0.35, waves: 2.5 },
   bay: 3.2, // 창 모듈 폭
   window: { w: 1.1, h: 1.45, sill: 0.95, inset: 0.06 },
@@ -171,6 +172,46 @@ export const SCHOOL = {
   farWestX: -150, // 먼 아파트 실루엣 (본관 서쪽, 건물 사이로 보이는 지평선을 가림)
 };
 
+// 본관 실내 (단계 8 = 옛 1b, data/mainInterior.json). 층 level 0 = 1층·바깥, 0.5 단위 = 계단참.
+// 바닥 높이 = base + level × DIM.floorH, 천장 = 다음 층 바닥 − slab (5층은 지붕 슬래브 아래)
+export const INTERIOR = {
+  base: 0.45, // 1층 바닥 (현관 계단 3단 위)
+  slab: 0.3, // 층 슬래브 두께
+  wall: 0.15, // 칸막이 벽 (방은 칸 안쪽, 복도는 빈 공간 쪽으로)
+  lining: 0.05, // 외벽 안쪽 마감
+  door: { w: 1.0, h: 2.1, leaf: 0.05, time: 0.45, reach: 1.3 }, // 교실 미닫이 문: 폭·높이·두께·여닫는 시간(초)·상호작용 반경(m)
+  exitDoor: { w: 1.4, h: 2.2 }, // 연결통로 문 (잠김)
+  rail: { h: 1.1, t: 0.08, post: 1.8 }, // 중정 난간: 높이·두께·기둥 간격
+  column: 0.45, // 중정 기둥 (정사각형 한 변)
+  columnEvery: [7.5, 11], // 중정 기둥 간격 (남북 변, 동서 변)
+  stair: { near: 1.5, far: 1.45, divider: 0.1, steps: 12 }, // 계단 앞 층계참 폭, 중간 계단참 폭, 두 줄 칸막이, 한 줄 계단 수 (단 높이 = 층 높이 / 2 / 계단 수)
+  wainscot: 1.0, // 벽 아래 걸레받이 띠 높이
+  courtyardFloor: 0.3, // 중정 바닥 높이 (1층 복도보다 낮은 화단)
+  entrance: { reach: 2.6, time: 0.9, leafT: 0.04 }, // 현관 자동문: 감지 거리(m, 문 가운데 기준)·열림 시간(초)·문짝 두께
+  inside: { exposure: 0.55, fade: 3, hemi: 0.3, hemiSky: 0x3a4660, hemiGround: 0x171512, moon: 0.04, lamps: 0.12, red: 0.5 }, // 실내 노출·전환 시간(STORY 15-2)·하늘빛(밝은 색으로 바꿔 윤곽만 보이게)·바깥 광원 배율
+  nearSight: { color: 0x8a96ad, intensity: 3.5, distance: 7 }, // 어둠에 익은 눈: 카메라 둘레의 약한 빛 (그림자 없음, 실내에서만). 라이트 없이도 바로 앞 윤곽이 보이게 (STORY 15-2)
+  signLight: { pool: 4, exit: { color: 0x3cff8c, intensity: 1.4, distance: 5 }, hydrant: { color: 0xff2a1a, intensity: 0.7, distance: 3 } }, // 유도등·소화전 표시등: 가까운 것부터 pool 개만 점광원
+  windowGlow: { depth: 1.6, opacity: 0.07 }, // 창가 바닥의 희미한 달빛 (가산 혼합)
+  props: { // 복도 벽 소품 (data/mainInterior.json props): 폭·높이·깊이·바닥에서 높이 (m)
+    hydrant: { w: 0.75, h: 1.0, d: 0.2, y: 0.5 }, // 소화전함 + 위쪽 붉은 표시등
+    locker: { h: 1.75, d: 0.42, cell: 0.4 },
+    board: { h: 1.0, d: 0.03, y: 1.0 },
+    extinguisher: { r: 0.085, h: 0.5, out: 0.15 },
+    sign: { w: 0.44, h: 0.17, d: 0.06, y: 2.4 }, // 비상구 유도등 (문·계단 입구 위)
+  },
+  furniture: { // 가구 (interior/furniture.js): 다리 굵기, 의자, 교실 배치(행·간격·앞 여유·옆 여백), 교무실 책상 섬, 현관 신발장, 천장 형광등 기구
+    leg: 0.035,
+    chair: { seat: 0.44, back: 0.84 },
+    lockerD: 0.42,
+    classroom: { board: 4.2, boardH: 1.2, rows: 5, pitch: 0.92, front: 2.3, margin: 0.85, desk: { w: 0.62, d: 0.45, h: 0.72 }, lockerH: 1.15 },
+    staff: { islands: [1.4, 4.2], runs: [[2.6, 6.2], [7.4, 11.0]] },
+    lobby: { shoes: [18.5, 24.5], shoesH: 1.8, shoesD: 0.4, board: [25, 27.5] },
+    fixture: { l: 1.25, w: 0.18, h: 0.07, every: 3.2, room: 2.8 },
+  },
+  showOutside: 32, // 바깥에서 현관까지 이 거리 안이면 1층 실내를 그린다
+  doorSight: { level: 0, z: -30 }, // 1층 동쪽 복도 이 z 보다 남쪽·현관 홀에서는 바깥을 그린다 (현관 유리문으로 보임)
+};
+
 // 신관 2층 야자 교실 창 불빛 (STORY 15장 "유일하게 밝은 곳"). 깜빡이지 않는다
 export const YAJA_LIGHT = { color: 0xe6f2ff, emissive: 1.25, leak: 0.3, intensity: 14, distance: 13, out: 1.6 };
 
@@ -189,6 +230,16 @@ export const SHOTS = [
   { name: '12_annex_yaja', pos: [46, 1.6, -52], yaw: 50, pitch: 8 },
   { name: '13_bridge', pos: [44, 1.6, -71], yaw: 92, pitch: 12 },
   { name: '09_phone_screen', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, light: 1, phone: 1, story: 'E3' },
+  // 단계 8: 본관 실내 (lv = 층, 0 = 1층). 실내는 어두워 핸드폰 라이트를 켠다
+  { name: '14_entrance_open', pos: [12.6, 1.6, -1], yaw: -90, pitch: 2 },
+  { name: '15_lobby_to_door', pos: [24, 1.6, -1], yaw: 90, pitch: 0, light: 1 },
+  { name: '16_lobby_lockers', pos: [22, 1.6, 4], yaw: 18, pitch: 2, light: 1 },
+  { name: '17_corridor_east', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, light: 1 },
+  { name: '18_atrium_2f', pos: [3.6, 1.6, -52.2], yaw: 160, pitch: -14, lv: 1, light: 1 },
+  { name: '19_classroom', pos: [-8.9, 1.6, -54.3], yaw: -68, pitch: -10, light: 1 },
+  { name: '20_stairs', pos: [18.7, 1.6, -19], yaw: -90, pitch: 18, light: 1 },
+  { name: '21_staff_room', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1 },
+  { name: '22_duty_room', pos: [19.4, 1.6, -34.4], yaw: -125, pitch: -6, lv: 3, light: 1 },
 ];
 
 // 핸드폰 (STORY 8장). 배터리 단위는 %. 단계 0b-1(단계 3)에서 손전등을 대체했다

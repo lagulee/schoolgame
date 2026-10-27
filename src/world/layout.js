@@ -27,6 +27,58 @@ export function fieldFenceRuns() {
 
 // 필로티(얕은 입구)의 막힌 끝 z
 export const pilotiBackZ = () => DIM.frontZ - DIM.piloti.depth;
+// 파라펫 꼭대기
+export const buildingTop = () => DIM.floors * DIM.floorH + DIM.parapet;
+
+// 현관 유리문 자리 (동쪽 날개 안쪽 면 x = innerX). z0~z1 = 문짝, frame = 은색 틀 두께, y = 문 아래(계단 위), top = 틀 꼭대기
+export function entranceOpening() {
+  const S = DIM.steps;
+  const E = DIM.entranceDoor;
+  const y = S.count * S.rise;
+  return { x: DIM.innerX, z0: S.z0 + E.inset, z1: S.z1 - E.inset, frame: E.frame, y, h: E.h, top: y + E.top };
+}
+
+// 본관 앞부분(ㄷ자) 셸 벽: { r: [x0, z0, x1, z1], y0, y1 }. 단계 8부터 속이 빈 셸이라 현관 홀·출입문 홀이 안에 들어간다.
+// 모서리끼리 겹치지 않게 나눠 바깥 면이 겹쳐 그려지지 않는다 (z-fighting 방지)
+export function frontShellWalls() {
+  const { innerX: ix, outerX: ox, frontZ: fz, backZ: bz, wingSouthZ: wz } = DIM;
+  const w = SCHOOL.shellWall;
+  const rx = SCHOOL.main.outerX;
+  const pw = DIM.piloti.halfW;
+  const top = buildingTop();
+  const e = entranceOpening();
+  const ez0 = e.z0 - e.frame;
+  const ez1 = e.z1 + e.frame;
+  const full = (r) => ({ r, y0: 0, y1: top });
+  return [
+    full([ox - w, bz, ox, wz]), // 동쪽 옆면 (중앙 블록 + 날개)
+    full([-ox, bz, -ox + w, wz]),
+    full([rx, bz, ox - w, bz + w]), // 중앙 블록 뒷면 중 뒷부분보다 튀어나온 양끝
+    full([-ox + w, bz, -rx, bz + w]),
+    full([ix, wz - w, ox - w, wz]), // 날개 남쪽 면
+    full([-ox + w, wz - w, -ix, wz]),
+    full([ix, fz, ix + w, ez0]), // 동쪽 날개 안쪽 면 (현관 문 자리 비움)
+    full([ix, ez1, ix + w, wz - w]),
+    { r: [ix, ez0, ix + w, ez1], y0: e.top, y1: top }, // 현관 문 위
+    full([-ix - w, fz, -ix, wz - w]), // 서쪽 날개 안쪽 면
+    full([-ix, fz - w, -pw, fz]), // 중앙 블록 앞면 (필로티 양옆)
+    full([pw, fz - w, ix, fz]),
+    { r: [-pw, fz - w, pw, fz], y0: DIM.piloti.h, y1: top }, // 필로티 위
+  ];
+}
+
+// 필로티 양옆 벽 + 막힌 끝 유리벽 (높이는 필로티 높이)
+export function pilotiWalls() {
+  const pw = DIM.piloti.halfW;
+  const w = SCHOOL.shellWall;
+  const pz = pilotiBackZ();
+  const fz = DIM.frontZ - w;
+  return [
+    [-pw - w, pz, -pw, fz],
+    [pw, pz, pw + w, fz],
+    [-pw, pz - w, pw, pz], // 유리문 (잠김)
+  ];
+}
 
 // 본관 뒷부분(중정형 셸)의 바깥 벽 [x0, z0, x1, z1]
 export function mainShellWalls() {
@@ -36,21 +88,80 @@ export function mainShellWalls() {
   return [
     [X - w, B, X, F], // 동
     [-X, B, -X + w, F], // 서
-    [-X, B, X, B + w], // 북(뒷면)
+    [-X + w, B, X - w, B + w], // 북(뒷면)
   ];
 }
 
-// 본관 안쪽 중정 벽 (밖에서는 안 보이지만 단계 8 실내의 기준이 된다)
-export function courtyardWalls() {
-  const { outerX: X, backZ: B, ring } = SCHOOL.main;
-  const w = SCHOOL.shellWall;
-  const ix = X - ring;
-  const iz = B + ring;
-  return [
-    [ix - w, iz, ix, DIM.backZ],
-    [-ix, iz, -ix + w, DIM.backZ],
-    [-ix, iz - w, ix, iz],
-  ];
+// 본관 셸 전체 바닥 자리 (실내 벽을 만들 때 셸과 겹치는 부분을 뺀다)
+export const buildingShells = () => [...frontShellWalls().map((s) => s.r), ...pilotiWalls(), ...mainShellWalls()];
+
+// 본관이 덮는 바닥 자리 [x0, z0, x1, z1] (필로티는 바깥). 바깥 효과(바닥 안개)를 실내에서 지울 때 쓴다
+export function mainFootprints() {
+  const { innerX: ix, outerX: ox, frontZ: fz, backZ: bz, wingSouthZ: wz } = DIM;
+  const { outerX: X, backZ: B } = SCHOOL.main;
+  const pw = DIM.piloti.halfW;
+  const pz = pilotiBackZ();
+  return [[-X, B, X, bz], [-ox, bz, ox, pz], [-ox, pz, -pw, fz], [pw, pz, ox, fz], [-ox, fz, -ix, wz], [ix, fz, ox, wz]];
+}
+
+// 외벽 면: origin [x, z] 에서 법선 normal [nx, nz] 의 오른쪽(u)으로 length m. openings 는 창을 내지 않는 자리 (u, v = 높이).
+// FacadeKit(외벽 창·띠)과 실내 창(interior/plan.js)이 같은 면을 쓴다
+export function facadeFaces() {
+  const { innerX: ix, outerX: ox, frontZ: fz, backZ: bz, wingSouthZ: wz } = DIM;
+  const top = buildingTop();
+  const pw = DIM.piloti.halfW;
+  const ph = DIM.piloti.h;
+  const fl = DIM.floorH;
+  const C = DIM.canopy;
+  const { outerX: X, backZ: B } = SCHOOL.main;
+  const Br = SCHOOL.bridge;
+  const bv = Br.floor * fl;
+  return {
+    front: {
+      origin: [-ix, fz], normal: [0, 1], length: ix * 2,
+      openings: [
+        { u0: ix - pw - 0.3, u1: ix + pw + 0.3, v0: 0, v1: ph + 0.1 },
+        { u0: ix - 4.2, u1: ix + 4.2, v0: 3 * fl + 0.45, v1: 4 * fl - 0.1 }, // LED 전광판 자리
+        { u0: ix * 2 - 3.1, u1: ix * 2, v0: 0, v1: top + 1 }, // 계단실
+      ],
+    },
+    west: { origin: [-ix, wz], normal: [1, 0], length: wz - fz, openings: [{ u0: 0, u1: 3.7, v0: 0, v1: top + 1 }] },
+    east: { origin: [ix, fz], normal: [-1, 0], length: wz - fz, openings: [{ u0: C.z0 - fz - 0.2, u1: C.z1 - fz + 0.2, v0: 0, v1: C.colH + 0.6 }] },
+    eastSouth: { origin: [ix, wz], normal: [0, 1], length: ox - ix },
+    westSouth: { origin: [-ox, wz], normal: [0, 1], length: ox - ix },
+    // 중앙 블록 뒷면은 단계 7부터 중정형 뒷부분에 붙는다: 뒷부분보다 튀어나온 양끝 2 m 만 보인다
+    backE: { origin: [ox, bz], normal: [0, -1], length: ox - X, noWindows: true },
+    backW: { origin: [-X, bz], normal: [0, -1], length: ox - X, noWindows: true },
+    sideE: { origin: [ox, wz], normal: [1, 0], length: wz - bz }, // 운동장에서 보이므로 창을 낸다
+    sideW: { origin: [-ox, bz], normal: [-1, 0], length: wz - bz, noWindows: true },
+    rearE: { origin: [X, bz], normal: [1, 0], length: bz - B },
+    rearW: { origin: [-X, B], normal: [-1, 0], length: bz - B },
+    rearN: {
+      origin: [X, B], normal: [0, -1], length: X * 2,
+      openings: [{ u0: X - Br.x1 - 0.3, u1: X - Br.x0 + 0.3, v0: bv - 0.2, v1: bv + Br.h + 0.4 }], // 연결통로가 붙는 자리
+    },
+  };
+}
+
+// 면 위 u 의 바닥 좌표 [x, z]
+export const facePoint = (f, u) => [f.origin[0] + f.normal[1] * u, f.origin[1] - f.normal[0] * u];
+
+// 면의 floor 층(0 = 1층) 창 가운데 u 목록. FacadeKit 의 창 배치와 같은 규칙 (bay 당 2개, 열린 자리는 건너뜀)
+export function windowSlots(f, floor) {
+  if (f.noWindows) return [];
+  const W = DIM.window;
+  const bays = Math.floor(f.length / DIM.bay);
+  const off = (f.length - bays * DIM.bay) / 2;
+  const v = floor * DIM.floorH + W.sill + W.h / 2;
+  const hit = (u) => (f.openings ?? []).some((o) => u + W.w / 2 + 0.1 > o.u0 && u - W.w / 2 - 0.1 < o.u1 && v + W.h / 2 + 0.1 > o.v0 && v - W.h / 2 - 0.1 < o.v1);
+  const out = [];
+  for (let b = 0; b < bays; b++) {
+    for (const k of [0.3, 0.7]) {
+      const u = off + b * DIM.bay + DIM.bay * k;
+      if (!hit(u)) out.push(u);
+    }
+  }
+  return out;
 }
 
 export function annexWalls() {
@@ -65,19 +176,17 @@ export function annexWalls() {
 }
 
 export function addSchoolCollision(col) {
-  const { innerX: ix, outerX: ox, frontZ: fz, backZ: bz, wingSouthZ: wz, streetMaxZ, fenceZ } = DIM;
-  const pw = DIM.piloti.halfW;
+  const { outerX: ox, wingSouthZ: wz, streetMaxZ, fenceZ } = DIM;
+  const all = [0, DIM.floors - 1]; // 셸 벽은 모든 층·계단참을 막는다
 
-  // 본관 앞부분 (ㄷ자): 중앙 블록 좌우 + 동·서 날개, 필로티 막힌 끝
-  col.box(-ox, bz, -pw, fz);
-  col.box(pw, bz, ox, fz);
-  col.box(-ox, fz, -ix, wz);
-  col.box(ix, fz, ox, wz);
-  col.box(-pw, bz, pw, pilotiBackZ());
+  // 본관 앞부분 (ㄷ자 셸): 바닥부터 올라가는 벽은 1층(바깥)부터, 필로티·현관 문 위 벽은 2층부터
+  for (const s of frontShellWalls()) col.box(...s.r, s.y0 > 0 ? [1, all[1]] : all);
+  for (const r of pilotiWalls()) col.box(...r, all);
   col.circle(0, DIM.piloti.colZ, DIM.piloti.colR);
 
   // 본관 뒷부분·신관 셸 + 연결통로 기둥
-  for (const b of [...mainShellWalls(), ...annexWalls()]) col.box(...b);
+  for (const b of mainShellWalls()) col.box(...b, all);
+  for (const b of annexWalls()) col.box(...b);
   const Br = SCHOOL.bridge;
   for (const x of [Br.x0 + 0.4, Br.x1 - 0.4]) col.circle(x, Br.pillarZ, Br.pillarR);
 

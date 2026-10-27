@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // BoxGeometry 의 각 면 UV 를 실제 치수(m)/tile 로 늘려 텍스처 밀도를 일정하게 만든다.
 export function boxGeo(w, h, d, tile = 1) {
@@ -22,6 +23,19 @@ export function addBox(parent, mat, w, h, d, x, y, z, opt = {}) {
   m.castShadow = opt.cast ?? true;
   m.receiveShadow = opt.receive ?? true;
   m.updateMatrix();
+  m.matrixAutoUpdate = false;
+  parent.add(m);
+  return m;
+}
+
+// 같은 재질의 박스 여러 개를 메시 하나로 합친다 (셸 벽·지붕 슬래브: 드로우콜·그림자 패스 절약). list: [x0, y0, z0, x1, y1, z1][]
+export function addBlocks(parent, mat, list, opt = {}) {
+  if (!list.length) return null;
+  const geos = list.map(([x0, y0, z0, x1, y1, z1]) => boxGeo(x1 - x0, y1 - y0, z1 - z0, opt.tile ?? 1).translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2));
+  const m = new THREE.Mesh(mergeGeometries(geos), mat);
+  for (const g of geos) g.dispose();
+  m.castShadow = opt.cast ?? true;
+  m.receiveShadow = opt.receive ?? true;
   m.matrixAutoUpdate = false;
   parent.add(m);
   return m;

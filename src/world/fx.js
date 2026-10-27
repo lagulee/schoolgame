@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { PALETTE, PHONE } from '../config.js';
 import { U } from './shared.js';
 import { puddleTexture } from '../materials/windowTex.js';
+import { mainFootprints } from './layout.js';
+
+// 바닥 안개가 본관 안(단계 8 실내)에 그려지지 않게 지우는 사각형 [x0, z0, x1, z1] → vec4
+const HOLES = mainFootprints().map(([x0, z0, x1, z1]) => new THREE.Vector4(x0, z0, x1, z1));
 
 const NOISE_GLSL = /* glsl */ `
 float h21(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -23,6 +27,7 @@ function fogLayer(cx, cz, w, d, y, density, radius, speed) {
       uRadius: { value: radius },
       uSpeed: { value: speed },
       uFog: { value: 0.02 },
+      uHoles: { value: HOLES },
     },
     vertexShader: /* glsl */ `
       varying vec3 vW;
@@ -31,9 +36,14 @@ function fogLayer(cx, cz, w, d, y, density, radius, speed) {
       uniform float uTime, uDensity, uRadius, uSpeed, uFog;
       uniform vec3 uColor;
       uniform vec2 uCenter;
+      uniform vec4 uHoles[${HOLES.length}];
       varying vec3 vW;
       ${NOISE_GLSL}
       void main() {
+        for (int i = 0; i < ${HOLES.length}; i++) {
+          vec4 h = uHoles[i];
+          if (vW.x > h.x && vW.x < h.z && vW.z > h.y && vW.z < h.w) discard;
+        }
         vec2 p = vW.xz * 0.16 + vec2(uTime * 0.035, uTime * 0.015) * uSpeed + vW.y * 3.1;
         float n = fbm2(p + fbm2(p * 0.7 - uTime * 0.02) * 1.3);
         float a = smoothstep(0.38, 0.85, n) * uDensity;
@@ -247,7 +257,7 @@ export function buildFx(scene, ctx, phoneLight, collision) {
       const hz = Math.hypot(d.x, d.z);
       let len = coneLen;
       if (hz > 1e-3) len = Math.min(len, collision.rayDistance(sp.x, sp.z, d.x / hz, d.z / hz, coneLen * hz, level) / hz);
-      if (d.y < -1e-3) len = Math.min(len, sp.y / -d.y);
+      if (d.y < -1e-3) len = Math.min(len, (sp.y - collision.floorHeight(sp.x, sp.z, level)) / -d.y); // 층 바닥까지
       cone.scale.setScalar(Math.max(0.3, len * 1.15) / coneLen);
       cone.position.copy(sp);
       cone.lookAt(tmp.copy(sp).add(d));

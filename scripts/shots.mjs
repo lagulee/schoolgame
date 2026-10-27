@@ -31,6 +31,8 @@ for (const s of SHOTS) {
     shot: '1', pos: s.pos.join(','), yaw: s.yaw, pitch: s.pitch, light: s.light ? '1' : '0', q: args.q || 'high',
   });
   if (s.phone) q.set('phone', '1');
+  if (s.lv) q.set('lv', s.lv);
+  if (s.inspect) q.set('inspect', '1');
   if (s.story) q.set('story', s.story);
   if (args.extra) for (const kv of args.extra.split('&')) { const [k, v] = kv.split('='); q.set(k, v); }
   const t0 = Date.now();

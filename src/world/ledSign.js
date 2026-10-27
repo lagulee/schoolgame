@@ -70,7 +70,7 @@ export class LedSign {
     this.draw(t);
     if (this.light) {
       const g = t < this.glitchUntil ? 0.6 : 1;
-      this.light.intensity = this.light.userData.base * g;
+      this.light.intensity = this.light.userData.base * g * (this.light.userData.dim ?? 1); // dim: 실내 배율
     }
   }
 
