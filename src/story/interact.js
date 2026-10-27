@@ -18,7 +18,7 @@ export class Interactions {
     document.body.append(this.prompt);
   }
 
-  // item: { id, pos: [x, z], radius?, label, onUse }
+  // item: { id, pos: [x, z], level? (층, 기본 0 = 1층·바깥), radius?, label, onUse }
   add(item) {
     this.items.set(item.id, item);
   }
@@ -27,11 +27,12 @@ export class Interactions {
     this.items.delete(id);
   }
 
-  update(x, z) {
+  update(x, z, level = 0) {
     let best = null;
     let bestD = Infinity;
     if (this.enabled) {
       for (const it of this.items.values()) {
+        if ((it.level ?? 0) !== level) continue; // 다른 층의 같은 자리 대상은 무시
         const d = Math.hypot(it.pos[0] - x, it.pos[1] - z);
         if (d <= (it.radius ?? this.opts.radius) && d < bestD) {
           best = it;

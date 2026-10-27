@@ -113,7 +113,7 @@ function setFog(d) {
 const act = {
   phone: () => phone.toggleScreen(),
   light: () => phone.toggleLight(),
-  bank: () => phone.debugBank(player.pos, camera.getWorldDirection(new THREE.Vector3())),
+  bank: () => phone.debugBank(player.pos, camera.getWorldDirection(new THREE.Vector3()), player.level),
   bloom: () => toast(`블룸 ${onOff(post.toggle('bloom'))}`),
   grain: () => toast(`그레인 ${onOff(post.toggle('grain'))}`),
   vignette: () => toast(`비네팅 ${onOff(post.toggle('vignette'))}`),
@@ -224,13 +224,13 @@ function step(t, dt) {
   audio.setBreath(audio.muted ? 0 : player.tired);
   touchSync?.();
   world.update(t, dt, camera);
-  fx.update(camera);
+  fx.update(camera, player.level);
   audio.update();
   post.render(t);
   captureIfRequested(renderer.domElement);
   if (!shot) {
     hud.update({
-      quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z),
+      quality: state.quality, pos: camera.position, surface: collision.surfaceAt(camera.position.x, camera.position.z, player.level),
       fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), chase: chase.hudLine(), puzzle: puzzle.hudLine(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });

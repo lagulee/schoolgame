@@ -17,9 +17,9 @@ export function setupChase({ story, player, toast }) {
     getSpeed: () => player.speed,
     stamina: player.stamina,
     pose: {
-      get: () => ({ pos: [player.pos.x, PLAYER.eye, player.pos.z], yaw: player.camera.rotation.y, pitch: player.camera.rotation.x }),
+      get: () => ({ pos: [player.pos.x, PLAYER.eye, player.pos.z], level: player.level, yaw: player.camera.rotation.y, pitch: player.camera.rotation.x }),
       set: (p) => {
-        player.setView(p.pos, (p.yaw * 180) / Math.PI, (p.pitch * 180) / Math.PI);
+        player.setView(p.pos, (p.yaw * 180) / Math.PI, (p.pitch * 180) / Math.PI, p.level ?? 0); // 층이 없는 예전 저장은 1층
         player.vel.set(0, 0); // 다시 시작할 때는 멈춘 채로
       },
     },

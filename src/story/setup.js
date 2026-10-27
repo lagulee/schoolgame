@@ -81,7 +81,7 @@ export function setupStory({ player, touch, toast }) {
       runner.update(dt);
       player.frozen = runner.choosing; // 선택지가 떠 있는 동안 이동 정지 (W/S 가 선택 이동 키)
       interactions.enabled = !runner.active;
-      interactions.update(player.pos.x, player.pos.z);
+      interactions.update(player.pos.x, player.pos.z, player.level);
     },
     hudLines() {
       const f = runner.flags.values;

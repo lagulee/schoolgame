@@ -18,11 +18,11 @@ export class PowerBanks {
     this.placed = new Set();
   }
 
-  // 월드에 놓기 (맵 단계에서는 powerbanks.json 좌표로 호출)
-  place(id, pos) {
+  // 월드에 놓기 (맵 단계에서는 powerbanks.json 좌표로 호출). level = 층 (0 = 1층)
+  place(id, pos, level = 0) {
     if (this.phone.picked.has(id)) return false;
     this.placed.add(id);
-    this.interactions.add({ id, pos, label: this.msgs.bankLabel, onUse: () => this.pick(id) });
+    this.interactions.add({ id, pos, level, label: this.msgs.bankLabel, onUse: () => this.pick(id) });
     return true;
   }
 
@@ -44,14 +44,14 @@ export class PowerBanks {
     return r;
   }
 
-  // 디버그: 아직 줍지도 놓지도 않은 첫 보조배터리를 (x, z) 에 놓는다
-  debugPlaceNext(x, z) {
+  // 디버그: 아직 줍지도 놓지도 않은 첫 보조배터리를 (x, z, 층) 에 놓는다
+  debugPlaceNext(x, z, level = 0) {
     const def = [...this.defs.values()].find((d) => !this.phone.picked.has(d.id) && !this.placed.has(d.id));
     if (!def) {
       this.toast?.(this.msgs.bankNone);
       return null;
     }
-    this.place(def.id, [x, z]);
+    this.place(def.id, [x, z], level);
     this.toast?.(fmt(this.msgs.bankPlaced, { id: def.id }));
     return def.id;
   }

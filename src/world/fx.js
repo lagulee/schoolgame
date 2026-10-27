@@ -238,7 +238,7 @@ export function buildFx(scene, ctx, phoneLight, collision) {
       dustMat.uniforms.uPx.value = pr;
       for (const s of shafts) s.bugMat.uniforms.uPx.value = pr;
     },
-    update(camera) {
+    update(camera, level = 0) {
       const on = phoneLight.on;
       cone.visible = on;
       // 벽·바닥에 닿는 곳에서 원뿔이 0 으로 사라지도록 길이를 맞춘다 (딱딱한 단면 방지)
@@ -246,7 +246,7 @@ export function buildFx(scene, ctx, phoneLight, collision) {
       const d = phoneLight.dir;
       const hz = Math.hypot(d.x, d.z);
       let len = coneLen;
-      if (hz > 1e-3) len = Math.min(len, collision.rayDistance(sp.x, sp.z, d.x / hz, d.z / hz, coneLen * hz) / hz);
+      if (hz > 1e-3) len = Math.min(len, collision.rayDistance(sp.x, sp.z, d.x / hz, d.z / hz, coneLen * hz, level) / hz);
       if (d.y < -1e-3) len = Math.min(len, sp.y / -d.y);
       cone.scale.setScalar(Math.max(0.3, len * 1.15) / coneLen);
       cone.position.copy(sp);

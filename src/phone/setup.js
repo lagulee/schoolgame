@@ -54,10 +54,10 @@ export function setupPhone({ scene, camera, story, touch, toast }) {
       toast(phone.toggleLight() ? msgs.lightOn : msgs.lightOff);
     },
     // 디버그 U: 플레이어 앞 DEBUG_BANK_AHEAD m 에 다음 보조배터리를 놓는다
-    debugBank(pos, dir) {
+    debugBank(pos, dir, level = 0) {
       const h = Math.hypot(dir.x, dir.z) || 1;
       const a = PHONE.DEBUG_BANK_AHEAD;
-      return banks.debugPlaceNext(pos.x + (dir.x / h) * a, pos.z + (dir.z / h) * a);
+      return banks.debugPlaceNext(pos.x + (dir.x / h) * a, pos.z + (dir.z / h) * a, level);
     },
     reset() {
       banks.clear();

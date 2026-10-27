@@ -18,6 +18,7 @@ export class Player {
     this.vel = new THREE.Vector2();
     this.pos = new THREE.Vector3(PLAYER.start[0], 0, PLAYER.start[2]);
     this.floorY = 0;
+    this.level = 0; // 층 (0 = 1층·바깥, 0.5 단위 = 계단참). 계단(경사)을 지나면 Collision.levelAt 이 바꾼다
     this.bob = new HeadBob();
     this.fov = PLAYER.fov;
     this.onStep = null; // (surface, running) => void
@@ -40,9 +41,10 @@ export class Player {
     addEventListener('blur', () => this.keys.clear());
   }
 
-  setView(pos, yawDeg, pitchDeg) {
+  setView(pos, yawDeg, pitchDeg, level = 0) {
     this.pos.set(pos[0], 0, pos[2]);
-    this.floorY = this.collision.floorHeight(pos[0], pos[2]);
+    this.level = level;
+    this.floorY = this.collision.floorHeight(pos[0], pos[2], level);
     this.camera.rotation.set(pitchDeg * DEG, yawDeg * DEG, 0, 'YXZ');
     this.camera.position.set(pos[0], this.floorY + (pos[1] ?? PLAYER.eye), pos[2]);
   }
@@ -102,16 +104,18 @@ export class Player {
     st.update(dt, mode);
     this.tired += ((st.exhausted ? 1 : 0) - this.tired) * (1 - Math.exp(-STAMINA.TIRED_EASE * dt));
 
-    this.collision.move(this.pos, this.vel.x * dt, this.vel.y * dt, PLAYER.radius);
+    const col = this.collision;
+    col.move(this.pos, this.vel.x * dt, this.vel.y * dt, PLAYER.radius, this.level);
+    this.level = col.levelAt(this.pos.x, this.pos.z, this.level);
 
     // 계단 높이는 부드럽게 따라간다
-    const fh = this.collision.floorHeight(this.pos.x, this.pos.z);
+    const fh = col.floorHeight(this.pos.x, this.pos.z, this.level);
     this.floorY += (fh - this.floorY) * (1 - Math.exp(-12 * dt));
 
     const ref = this.running ? PLAYER.run : PLAYER.walk;
     const b = this.bob.update(dt, Math.min(1, this.speed / ref), this.running);
     if (b.stepped && this.onStep && this.speed > 0.3) {
-      this.onStep(this.collision.surfaceAt(this.pos.x, this.pos.z), this.running);
+      this.onStep(col.surfaceAt(this.pos.x, this.pos.z, this.level), this.running);
     }
 
     // 탈진: 느린 사인 두 개를 섞은 약한 흔들림 (위치만, 밝기 변화 없음)
