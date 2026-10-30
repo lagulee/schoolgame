@@ -11,7 +11,7 @@ import { Director } from './events/director.js';
 import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
 import { Hud } from './debug/hud.js';
 import { DebugGate } from './debug/gate.js';
-import { GateUi } from './debug/gateUi.js';
+import { GateUi, tapCounter } from './debug/gateUi.js';
 import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
@@ -118,6 +118,7 @@ function setFog(d) {
 const gate = new DebugGate();
 const gateUi = new GateUi(gate, {
   toast,
+  onUnlock: () => touchRefresh?.(), // 열려 있는 터치 메뉴에 디버그 항목을 바로 보이게
   onOpen: () => { player.keys.clear(); player.controls.unlock?.(); },
 });
 const act = {
@@ -155,6 +156,8 @@ const KEYS = {
 };
 // 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
 const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote']);
+const unlocked = () => gate.unlocked;
+const verTap = tapCounter(DEBUG.tapCount, DEBUG.tapWindowMs, () => act.unlock());
 const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` 키로 해제)'));
 // E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
@@ -165,9 +168,13 @@ addEventListener('keydown', (e) => {
   if (FREE_CODES.has(e.code) || gate.unlocked) fn();
 });
 
+// 시작 화면의 버전 글자를 5번 연속 탭하면 디버그 비밀번호 창 (시작 클릭으로 번지지 않게 막음)
+document.getElementById('version').addEventListener('click', (e) => { e.stopPropagation(); verTap(); });
+
 // 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
 const overlay = document.getElementById('overlay');
 let touchSync = null; // 터치 📱·💡 버튼 켜짐 표시
+let touchRefresh = null; // 터치 메뉴 항목 다시 그리기 (디버그 잠금 해제 직후)
 if (touchMode) {
   overlay.querySelector('.start').textContent = '화면을 터치하여 시작';
   const nextQuality = { low: 'mid', mid: 'high', high: 'low' };
@@ -177,33 +184,34 @@ if (touchMode) {
     player,
     phone: { screen: act.phone, light: act.light, state: phone.phone },
     menuItems: [
-      { label: '이상 현상 발동', run: dbg(act.event) },
+      { label: '이상 현상 발동', run: dbg(act.event), show: unlocked },
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
-      { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: dbg(act.bob) },
-      flag('bloom', '블룸'),
-      flag('grain', '그레인'),
-      flag('vignette', '비네팅'),
-      { label: '안개 −', run: dbg(act.fogLess) },
-      { label: '안개 +', run: dbg(act.fogMore) },
-      { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: dbg(act.inspect) },
-      { label: 'HUD', run: act.hud },
+      { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: dbg(act.bob), show: unlocked },
+      { ...flag('bloom', '블룸'), show: unlocked },
+      { ...flag('grain', '그레인'), show: unlocked },
+      { ...flag('vignette', '비네팅'), show: unlocked },
+      { label: '안개 −', run: dbg(act.fogLess), show: unlocked },
+      { label: '안개 +', run: dbg(act.fogMore), show: unlocked },
+      { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: dbg(act.inspect), show: unlocked },
+      { label: 'HUD', run: act.hud, show: unlocked },
       { label: () => (document.fullscreenElement ? '전체화면 해제' : '전체화면'), run: toggleImmersive },
-      { label: '다음 사건 (디버그)', run: dbg(act.storyNext) },
-      { label: '책 줍기 (디버그)', run: dbg(act.storyBook) },
-      { label: '보조배터리 놓기 (디버그)', run: dbg(act.bank) },
-      { label: () => (chase.session.active ? '추격 중지 (디버그)' : '추격 시작 (디버그)'), run: dbg(act.chase) },
-      { label: () => (puzzle.session.active ? '시험 퍼즐 중지 (디버그)' : '시험 퍼즐 시작 (디버그)'), run: dbg(act.puzzle) },
-      { label: '단서 얻기 (디버그)', run: dbg(act.puzzleClue) },
-      { label: '정답 입력 (디버그)', run: dbg(act.puzzleRight) },
-      { label: '오답 입력 (디버그)', run: dbg(act.puzzleWrong) },
-      { label: '스토리 초기화', run: dbg(act.storyReset) },
-      { label: () => `유령 모드 ${player.ghost ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.ghost) },
-      { label: () => `무한 스태미나 ${player.stamina.infinite ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.infStamina) },
-      { label: () => (gate.unlocked ? '디버그 잠금 해제됨' : '디버그 잠금 해제'), run: act.unlock },
+      { label: '다음 사건 (디버그)', run: dbg(act.storyNext), show: unlocked },
+      { label: '책 줍기 (디버그)', run: dbg(act.storyBook), show: unlocked },
+      { label: '보조배터리 놓기 (디버그)', run: dbg(act.bank), show: unlocked },
+      { label: () => (chase.session.active ? '추격 중지 (디버그)' : '추격 시작 (디버그)'), run: dbg(act.chase), show: unlocked },
+      { label: () => (puzzle.session.active ? '시험 퍼즐 중지 (디버그)' : '시험 퍼즐 시작 (디버그)'), run: dbg(act.puzzle), show: unlocked },
+      { label: '단서 얻기 (디버그)', run: dbg(act.puzzleClue), show: unlocked },
+      { label: '정답 입력 (디버그)', run: dbg(act.puzzleRight), show: unlocked },
+      { label: '오답 입력 (디버그)', run: dbg(act.puzzleWrong), show: unlocked },
+      { label: '스토리 초기화', run: dbg(act.storyReset), show: unlocked },
+      { label: () => `유령 모드 ${player.ghost ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.ghost), show: unlocked },
+      { label: () => `무한 스태미나 ${player.stamina.infinite ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.infStamina), show: unlocked },
+      { label: () => __APP_VERSION__.label, run: () => verTap(), quiet: true }, // 눈에 띄지 않는 해제 입구: 5번 연속 탭
     ],
   });
   touchSync = touch.sync;
+  touchRefresh = touch.refresh;
   overlay.addEventListener('click', () => {
     audio.start();
     overlay.classList.add('hidden');
@@ -258,7 +266,7 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 

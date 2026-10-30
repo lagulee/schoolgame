@@ -20,7 +20,7 @@ function el(tag, cls, text) {
   return e;
 }
 
-// menuItems: [{ label, run }] — run 은 버튼을 누를 때 호출. 라벨은 문자열 또는 () => 문자열
+// menuItems: [{ label, run, show?, quiet? }] — show() 가 false 면 숨김, quiet 은 눈에 띄지 않는 스타일 — run 은 버튼을 누를 때 호출. 라벨은 문자열 또는 () => 문자열
 // phone: { screen, light, state } — 버튼 동작과 켜짐 표시용 Phone 상태
 export function setupTouch({ player, phone, menuItems }) {
   document.body.classList.add('touch');
@@ -116,9 +116,12 @@ export function setupTouch({ player, phone, menuItems }) {
   toggle.setAttribute('aria-label', '메뉴');
   const panel = el('div', 'menu-panel');
   const entries = [];
-  const refresh = () => entries.forEach(({ b, item }) => (b.textContent = typeof item.label === 'function' ? item.label() : item.label));
+  const refresh = () => entries.forEach(({ b, item }) => {
+    b.textContent = typeof item.label === 'function' ? item.label() : item.label;
+    b.style.display = item.show && !item.show() ? 'none' : ''; // show() 가 false 면 버튼 자체를 숨김 (디버그 잠금)
+  });
   for (const item of menuItems) {
-    const b = el('button', 'mbtn');
+    const b = el('button', item.quiet ? 'mbtn quiet' : 'mbtn');
     onTap(b, () => {
       item.run();
       refresh();
@@ -159,7 +162,7 @@ export function setupTouch({ player, phone, menuItems }) {
   addEventListener('blur', reset);
   document.addEventListener('visibilitychange', () => document.hidden && reset());
 
-  return { sync };
+  return { sync, refresh };
 }
 
 // 전체화면 해제: 가로 고정도 함께 푼다

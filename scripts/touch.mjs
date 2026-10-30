@@ -45,15 +45,23 @@ for (let i = 0; i < 3; i++) {
 }
 check('품질 버튼 순환 → Low', (await page.$eval('.mbtn:nth-child(3)', (b) => b.textContent)).includes('Low'));
 await page.screenshot({ path: 'screenshots/touch_menu.png' });
-// 디버그 잠금: 잠긴 동안 유령 모드 무시 → '디버그 잠금 해제' 로 비밀번호 창 → 3141 → 유령·무한 스태미나
+// 디버그 잠금: 잠긴 동안 디버그 항목은 보이지 않는다 → 메뉴 맨 아래 작은 버전을 5번 탭 → 키패드로 3141 → 항목 표시
 const mbtn = (text) => ({ tap: async () => { const c = await page.evaluate((t) => { const b = [...document.querySelectorAll('.mbtn')].find((x) => x.textContent.includes(t)); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, text); await page.touchscreen.tap(c[0], c[1]); await page.waitForTimeout(150); } });
-await mbtn('유령 모드').tap();
-check('터치: 잠금 중 유령 모드 무시', !(await dbg(() => window.__DEBUG.player.ghost)));
-await mbtn('디버그 잠금 해제').tap();
-check('터치: 잠금 해제 항목 → 비밀번호 창', await dbg(() => getComputedStyle(document.getElementById('gate')).display !== 'none'));
-await page.fill('#gate input', '3141');
-await page.locator('#gate button[type=submit]').tap();
-check('터치: 3141 → 잠금 해제', await dbg(() => window.__DEBUG.gate.unlocked));
+const visibleLabels = () => page.$$eval('.mbtn', (b) => b.filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.textContent));
+const lockedLabels = await visibleLabels();
+check('터치: 잠금 중 디버그 항목이 보이지 않음', !lockedLabels.some((t) => t.includes('디버그') || t.includes('유령') || t.includes('HUD') || t.includes('블룸') || t.includes('이상 현상')), lockedLabels.join('|'));
+check('터치: 음소거·품질·전체화면은 그대로 보임', ['음소거', '품질', '전체화면'].every((w) => lockedLabels.some((t) => t.includes(w))));
+await dbg(() => { window.__DEBUG.debugCfg.tapWindowMs = 30000; }); // SwiftShader 는 프레임당 ~1초라 실기기의 3초 창으로는 느려서 늘려 둔다
+const vpos = await page.evaluate(() => { const b = [...document.querySelectorAll('.mbtn.quiet')][0]; b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+for (let i = 0; i < 4; i++) await page.touchscreen.tap(vpos[0], vpos[1]);
+check('터치: 4번 탭으로는 안 열림', await dbg(() => getComputedStyle(document.getElementById('gate')).display === 'none'));
+await page.touchscreen.tap(vpos[0], vpos[1]);
+await page.waitForTimeout(300);
+check('터치: 5번 탭 → 비밀번호 창', await dbg(() => getComputedStyle(document.getElementById('gate')).display !== 'none'));
+for (const k of ['3', '1', '4', '1']) await page.locator('#gate .gate-pad button', { hasText: k }).first().tap();
+check('터치: 키패드 입력값', (await page.inputValue('#gate input')) === '3141');
+await page.locator('#gate .gate-pad button', { hasText: '↵' }).tap();
+check('터치: 3141 → 잠금 해제 + 디버그 항목 표시', await dbg(() => window.__DEBUG.gate.unlocked) && (await visibleLabels()).some((t) => t.includes('유령 모드')));
 await mbtn('유령 모드').tap();
 await mbtn('무한 스태미나').tap();
 check('터치: 유령 모드·무한 스태미나 켜짐', await dbg(() => window.__DEBUG.player.ghost && window.__DEBUG.player.stamina.infinite));

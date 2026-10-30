@@ -63,6 +63,8 @@ export const DIM = {
 // 디버그 모드: 비밀번호는 클라이언트 코드에 있어 보안이 아닌 문턱이다 (src/debug/gate.js)
 export const DEBUG = {
   password: '3141',
+  tapCount: 5, // 터치용 해제 입구: 버전 글자를 이 횟수만큼 연속 탭 (시작 화면의 버전, ☰ 메뉴 맨 아래 작은 버전)
+  tapWindowMs: 3000, // 탭 사이 간격이 이 시간을 넘으면 처음부터 다시 센다
   ghostSpeedScale: 2.5, // 유령 모드 이동 속도 배율 (걷기·달리기 모두)
 };
 
