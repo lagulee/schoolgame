@@ -6,6 +6,7 @@
 export class Stamina {
   constructor(cfg) {
     this.cfg = cfg;
+    this.infinite = false; // 디버그: 무한 스태미나 (reset 이 끄지 않는다)
     this.reset();
   }
 
@@ -58,6 +59,11 @@ export class Stamina {
     this.draining = false;
     this.recovering = false;
     if (dt <= 0) return;
+    if (this.infinite) {
+      this.value = c.MAX;
+      this.exhausted = false;
+      return;
+    }
     if (mode === 'run' && this.canRun) {
       this.sinceRun = 0;
       this.draining = true;

@@ -15,7 +15,31 @@ await page.goto(`http://localhost:${PORT}/?light=1`);
 await page.waitForFunction(() => document.getElementById('loading').textContent === '', null, { timeout: 120000 });
 await page.click('#overlay');
 const press = async (k, ms = 300) => { await page.keyboard.down(k); await page.waitForTimeout(ms); await page.keyboard.up(k); };
+const fails = [];
+const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
+const S = (fn, arg) => page.evaluate(fn, arg);
+const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
 await press('Digit1', 200);
+// 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
+await press('KeyB', 100);
+check('잠금: B(블룸) 무시', await S(() => window.__DEBUG.world.ctx && !window.__DEBUG.player.ghost && !window.__DEBUG.gate.unlocked));
+await press('KeyT', 100);
+await press('KeyF', 100);
+check('잠금: T·F 무시', await S(() => !window.__DEBUG.player.ghost && !window.__DEBUG.player.stamina.infinite));
+await press('Backquote', 100);
+check('잠금: ` 키 → 비밀번호 창', await poll(() => getComputedStyle(document.getElementById('gate')).display !== 'none'));
+await page.fill('#gate input', '0000');
+await page.keyboard.press('Enter');
+check('잘못된 비밀번호 → 잠긴 채 안내', await poll(() => document.querySelector('#gate .gate-msg').textContent.includes('틀렸다')) && !(await S(() => window.__DEBUG.gate.unlocked)));
+await page.fill('#gate input', '3141');
+await page.keyboard.press('Enter');
+check('3141 → 잠금 해제 + 창 닫힘', await poll(() => window.__DEBUG.gate.unlocked && getComputedStyle(document.getElementById('gate')).display === 'none'));
+await press('KeyT', 100);
+await press('KeyF', 100);
+check('T → 유령 모드, F → 무한 스태미나', await S(() => window.__DEBUG.player.ghost && window.__DEBUG.player.stamina.infinite));
+await press('KeyT', 100);
+await press('KeyF', 100);
+check('T·F 다시 → 꺼짐', await S(() => !window.__DEBUG.player.ghost && !window.__DEBUG.player.stamina.infinite));
 await page.waitForTimeout(3000);
 const p0 = await page.evaluate(() => window.__DEBUG.pos());
 await press('KeyW', 4000);
@@ -49,13 +73,24 @@ const sim = await page.evaluate(() => {
   };
 });
 console.log('이동 시뮬레이션', sim);
+// 유령 모드: 같은 걸음이 기둥에서 막히지 않고 더 빠르게 지나간다
+const ghostSim = await page.evaluate(() => {
+  const P = window.__DEBUG.player;
+  P.ghost = true;
+  P.setView([0, 1.6, 12], 0, 0);
+  P.vel.set(0, 0);
+  P.keys.clear();
+  P.keys.add('KeyW');
+  for (let i = 0; i < 20 * 60; i++) P.update(1 / 60);
+  P.keys.clear();
+  P.ghost = false;
+  return [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)];
+});
+console.log('유령 이동', ghostSim);
+check('유령 모드: 기둥을 통과해 더 멀리 간다', ghostSim[1] < sim.northToColumn[1] - 3, `${ghostSim} vs ${sim.northToColumn}`);
 
-const fails = [];
-const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
-const S = (fn, arg) => page.evaluate(fn, arg);
 const lastBefore = await S(() => window.__DEBUG.director.last);
 const ph = () => S(() => { const p = window.__DEBUG.phone; return { open: p.screenOpen, light: p.lightOn, bat: p.battery, lv: p.level, begun: p.begun, picked: [...p.picked] }; });
-const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
 // 스태미나 (단계 0b-2): 마당 한가운데서 player.update 를 직접 돌려 속도·탈진·핸드폰 감속·막대를 확인한다
 const stam = await page.evaluate(() => {
   const P = window.__DEBUG.player;

@@ -177,3 +177,18 @@ test('reset: 가득 찬 상태로', () => {
   s.reset();
   assert.ok(s.full && !s.exhausted && s.canRun);
 });
+
+test('디버그 무한 스태미나: 달려도 줄지 않고 탈진 상태도 풀린다, reset 은 끄지 않는다', () => {
+  const s = new Stamina(STAMINA);
+  exhaust(s);
+  assert.ok(s.exhausted);
+  s.infinite = true;
+  run(s, 'run', 30);
+  assert.equal(s.value, STAMINA.MAX);
+  assert.ok(!s.exhausted && s.canRun && !s.draining);
+  s.reset();
+  assert.equal(s.infinite, true);
+  s.infinite = false;
+  run(s, 'run', 3);
+  assert.ok(s.value < STAMINA.MAX);
+});

@@ -45,6 +45,20 @@ for (let i = 0; i < 3; i++) {
 }
 check('품질 버튼 순환 → Low', (await page.$eval('.mbtn:nth-child(3)', (b) => b.textContent)).includes('Low'));
 await page.screenshot({ path: 'screenshots/touch_menu.png' });
+// 디버그 잠금: 잠긴 동안 유령 모드 무시 → '디버그 잠금 해제' 로 비밀번호 창 → 3141 → 유령·무한 스태미나
+const mbtn = (text) => ({ tap: async () => { const c = await page.evaluate((t) => { const b = [...document.querySelectorAll('.mbtn')].find((x) => x.textContent.includes(t)); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, text); await page.touchscreen.tap(c[0], c[1]); await page.waitForTimeout(150); } });
+await mbtn('유령 모드').tap();
+check('터치: 잠금 중 유령 모드 무시', !(await dbg(() => window.__DEBUG.player.ghost)));
+await mbtn('디버그 잠금 해제').tap();
+check('터치: 잠금 해제 항목 → 비밀번호 창', await dbg(() => getComputedStyle(document.getElementById('gate')).display !== 'none'));
+await page.fill('#gate input', '3141');
+await page.locator('#gate button[type=submit]').tap();
+check('터치: 3141 → 잠금 해제', await dbg(() => window.__DEBUG.gate.unlocked));
+await mbtn('유령 모드').tap();
+await mbtn('무한 스태미나').tap();
+check('터치: 유령 모드·무한 스태미나 켜짐', await dbg(() => window.__DEBUG.player.ghost && window.__DEBUG.player.stamina.infinite));
+await mbtn('유령 모드').tap();
+await mbtn('무한 스태미나').tap();
 await page.tap('.menu-toggle');
 check('메뉴 닫힘', !(await dbg(() => document.querySelector('.menu-panel').classList.contains('open'))));
 

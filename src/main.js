@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA } from './config.js';
+import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA, DEBUG } from './config.js';
 import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
@@ -10,6 +10,8 @@ import { AudioSystem } from './audio/audio.js';
 import { Director } from './events/director.js';
 import { parseShotParams, requestScreenshot, captureIfRequested } from './debug/screenshot.js';
 import { Hud } from './debug/hud.js';
+import { DebugGate } from './debug/gate.js';
+import { GateUi } from './debug/gateUi.js';
 import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
@@ -111,7 +113,13 @@ function setFog(d) {
   fx.setFogDensity(state.fog);
 }
 
-// 기능 (키보드와 터치 메뉴가 같이 쓴다)
+// 디버그 잠금: 비밀번호를 맞히기 전에는 디버그 기능(아래 DEBUG_CODES·터치 메뉴의 (디버그) 항목)이 동작하지 않는다.
+// 키보드는 ` 키, 터치는 메뉴의 '디버그 잠금 해제' 로 입력 창을 연다
+const gate = new DebugGate();
+const gateUi = new GateUi(gate, {
+  toast,
+  onOpen: () => { player.keys.clear(); player.controls.unlock?.(); },
+});
 const act = {
   phone: () => phone.toggleScreen(),
   light: () => phone.toggleLight(),
@@ -133,20 +141,28 @@ const act = {
   puzzleWrong: () => puzzle.debugWrong(),
   storyBook: () => story.book(),
   mute: () => toast(audio.toggleMute() ? '음소거' : '소리 켜짐'),
-  hud: () => hud.toggle(),
+  hud: () => (gate.unlocked ? hud.toggle() : gateUi.show()),
+  ghost: () => { player.ghost = !player.ghost; toast(`유령 모드 ${onOff(player.ghost)} (벽 통과·이속 ×${DEBUG.ghostSpeedScale})`); },
+  infStamina: () => { player.stamina.infinite = !player.stamina.infinite; toast(`무한 스태미나 ${onOff(player.stamina.infinite)}`); },
+  unlock: () => (gate.unlocked ? toast('디버그 잠금 해제됨') : gateUi.show()),
   shot: () => { requestScreenshot(); toast('스크린샷 저장'); },
   bob: () => toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`),
 };
 const KEYS = {
   KeyE: act.phone, KeyR: act.light, KeyU: act.bank, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
-  KeyY: act.event, KeyC: act.chase, KeyI: act.puzzle, KeyO: act.puzzleClue, KeyZ: act.puzzleRight, KeyX: act.puzzleWrong, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob,
+  KeyY: act.event, KeyC: act.chase, KeyI: act.puzzle, KeyO: act.puzzleClue, KeyZ: act.puzzleRight, KeyX: act.puzzleWrong, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob, KeyT: act.ghost, KeyF: act.infStamina,
 };
+// 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
+const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote']);
+const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` 키로 해제)'));
 // E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
-  if (e.repeat) return;
+  if (e.repeat || gateUi.open) return;
   if (story.key(e.code)) return;
-  KEYS[e.code]?.();
+  const fn = KEYS[e.code];
+  if (!fn) return;
+  if (FREE_CODES.has(e.code) || gate.unlocked) fn();
 });
 
 // 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
@@ -156,32 +172,35 @@ if (touchMode) {
   overlay.querySelector('.start').textContent = '화면을 터치하여 시작';
   const nextQuality = { low: 'mid', mid: 'high', high: 'low' };
   const qlabel = { low: 'Low', mid: 'Mid', high: 'High' };
-  const flag = (name, label) => ({ label: () => `${label} ${post.flags[name] ? '켜짐' : '꺼짐'}`, run: act[name] });
+  const flag = (name, label) => ({ label: () => `${label} ${post.flags[name] ? '켜짐' : '꺼짐'}`, run: dbg(act[name]) });
   const touch = setupTouch({
     player,
     phone: { screen: act.phone, light: act.light, state: phone.phone },
     menuItems: [
-      { label: '이상 현상 발동', run: act.event },
+      { label: '이상 현상 발동', run: dbg(act.event) },
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
-      { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: act.bob },
+      { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: dbg(act.bob) },
       flag('bloom', '블룸'),
       flag('grain', '그레인'),
       flag('vignette', '비네팅'),
-      { label: '안개 −', run: act.fogLess },
-      { label: '안개 +', run: act.fogMore },
-      { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: act.inspect },
+      { label: '안개 −', run: dbg(act.fogLess) },
+      { label: '안개 +', run: dbg(act.fogMore) },
+      { label: () => `점검 ${state.inspect ? '켜짐' : '꺼짐'}`, run: dbg(act.inspect) },
       { label: 'HUD', run: act.hud },
       { label: () => (document.fullscreenElement ? '전체화면 해제' : '전체화면'), run: toggleImmersive },
-      { label: '다음 사건 (디버그)', run: act.storyNext },
-      { label: '책 줍기 (디버그)', run: act.storyBook },
-      { label: '보조배터리 놓기 (디버그)', run: act.bank },
-      { label: () => (chase.session.active ? '추격 중지 (디버그)' : '추격 시작 (디버그)'), run: act.chase },
-      { label: () => (puzzle.session.active ? '시험 퍼즐 중지 (디버그)' : '시험 퍼즐 시작 (디버그)'), run: act.puzzle },
-      { label: '단서 얻기 (디버그)', run: act.puzzleClue },
-      { label: '정답 입력 (디버그)', run: act.puzzleRight },
-      { label: '오답 입력 (디버그)', run: act.puzzleWrong },
-      { label: '스토리 초기화', run: act.storyReset },
+      { label: '다음 사건 (디버그)', run: dbg(act.storyNext) },
+      { label: '책 줍기 (디버그)', run: dbg(act.storyBook) },
+      { label: '보조배터리 놓기 (디버그)', run: dbg(act.bank) },
+      { label: () => (chase.session.active ? '추격 중지 (디버그)' : '추격 시작 (디버그)'), run: dbg(act.chase) },
+      { label: () => (puzzle.session.active ? '시험 퍼즐 중지 (디버그)' : '시험 퍼즐 시작 (디버그)'), run: dbg(act.puzzle) },
+      { label: '단서 얻기 (디버그)', run: dbg(act.puzzleClue) },
+      { label: '정답 입력 (디버그)', run: dbg(act.puzzleRight) },
+      { label: '오답 입력 (디버그)', run: dbg(act.puzzleWrong) },
+      { label: '스토리 초기화', run: dbg(act.storyReset) },
+      { label: () => `유령 모드 ${player.ghost ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.ghost) },
+      { label: () => `무한 스태미나 ${player.stamina.infinite ? '켜짐' : '꺼짐'} (디버그)`, run: dbg(act.infStamina) },
+      { label: () => (gate.unlocked ? '디버그 잠금 해제됨' : '디버그 잠금 해제'), run: act.unlock },
     ],
   });
   touchSync = touch.sync;
@@ -239,7 +258,7 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 

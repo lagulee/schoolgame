@@ -6,7 +6,8 @@
 ## 현재 상태 (요약)
 
 - 명세 S1~S14 구현 완료, 시각 검증 3회 수행. 스토리 단계 0·0②·0b-1(핸드폰, 손전등 제거)·0b-2(이동·스태미나)·0b-3(추격 엔진)·0b-4(퍼즐 실행기 골격)·1a(외부 확장: 본관 중정형·신관·3층 연결통로·운동장, 필로티는 얕은 입구)·1b(본관 실내 1~5층: 층별 충돌·계단·문·실내 분위기)·1c(신관 실내 1~5층·3층 연결통로·잠긴 연결문)까지 main 반영. 큰 충돌·이동 경계는 `src/world/layout.js`, 실내 배치는 `data/mainInterior.json`·`data/annexInterior.json` → `src/world/interior/`(조립 `site.js`, 연결통로 `connector.js`), 충돌의 층은 `Collision` 의 `level`. 상세 이력·결정 이유·한계·다음 후보는 [`PROGRESS.md`](PROGRESS.md).
-- 현재 버전 `v1.11` (시작 화면에 `v1.11` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리.
+- 디버그 키·터치 메뉴 디버그 항목은 비밀번호(`DEBUG.password`)로 잠겨 있다(`` ` `` 키로 해제). smoke·touch 는 `window.__DEBUG.gate` 나 입력 창으로 해제한 뒤 디버그 키를 쓴다. 새 디버그 키를 만들면 `main.js` 의 잠금 규칙(`FREE_CODES`)을 따른다.
+- 현재 버전 `v1.12` (시작 화면에 `v1.12` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리.
 - 추가 완료: GitHub Pages 배포(`main` 푸시 → `dist/`), 터치 조작(조이스틱·드래그·📱💡·접이식 메뉴), 이 규칙 문서.
 - 테스트: `npm run build` / `test`(스토리·핸드폰·스태미나·추격·퍼즐 단위 테스트, 추격 자동 시뮬레이션) / `smoke`(키보드·충돌·스토리·핸드폰·스태미나·추격·퍼즐·본관 실내·신관) / `touch`(터치·실내 문) / `shots`(스크린샷, 실내 시점 14~30). 모두 통과 상태. `test` 에 이동 경계(`layout.test.mjs`)·층 충돌(`collision-levels.test.mjs`)·본관 실내(`interior.test.mjs`)·신관·연결통로(`annex-interior.test.mjs`) 포함.
 - **미검증**: 실제 폰·GPU 에서의 FPS, 터치 감도, 소리, 실내 밝기. headless 환경에서는 측정할 수 없었다.

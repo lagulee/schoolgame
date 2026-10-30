@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { PLAYER, STAMINA } from '../config.js';
+import { PLAYER, STAMINA, DEBUG } from '../config.js';
 import { HeadBob } from './headbob.js';
 import { Stamina } from './stamina.js';
 
@@ -29,6 +29,7 @@ export class Player {
     this.running = false;
     this.wantRun = false; // 달리기 입력 (Shift·조이스틱 끝까지) — 실제 달리기는 스태미나·핸드폰 조건을 거친다
     this.stamina = new Stamina(STAMINA);
+    this.ghost = false; // 디버그 유령 모드: 벽·가구 통과 + 이동 속도 증가
     this.hidden = false; // 숨는 중 (숨기 퍼즐 단계에서 켬) → 회복이 가장 빠름
     this.phoneOpen = () => false; // 핸드폰 화면 열림 여부 (main.js 가 연결)
     this.tired = 0; // 탈진 효과 0~1 (숨소리·흔들림, 부드럽게 켜지고 꺼짐)
@@ -86,7 +87,7 @@ export class Player {
     const walkBase = st.exhausted ? STAMINA.EXHAUSTED_SPEED : PLAYER.walk;
     const walkSpeed = analog ? walkBase * Math.min(1, amag / RUN_OFF) : walkBase;
     const scale = phoneOpen ? STAMINA.PHONE_MOVE_SCALE : 1;
-    const target = moving ? (this.running ? PLAYER.run : walkSpeed) * scale : 0;
+    const target = moving ? (this.running ? PLAYER.run : walkSpeed) * scale * (this.ghost ? DEBUG.ghostSpeedScale : 1) : 0;
 
     // 시선의 수평 성분 기준 전/우 벡터
     this.camera.getWorldDirection(this._fwd);
@@ -105,7 +106,10 @@ export class Player {
     this.tired += ((st.exhausted ? 1 : 0) - this.tired) * (1 - Math.exp(-STAMINA.TIRED_EASE * dt));
 
     const col = this.collision;
-    col.move(this.pos, this.vel.x * dt, this.vel.y * dt, PLAYER.radius, this.level);
+    if (this.ghost) {
+      this.pos.x += this.vel.x * dt;
+      this.pos.z += this.vel.y * dt;
+    } else col.move(this.pos, this.vel.x * dt, this.vel.y * dt, PLAYER.radius, this.level);
     this.level = col.levelAt(this.pos.x, this.pos.z, this.level);
 
     // 계단 높이는 부드럽게 따라간다

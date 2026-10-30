@@ -60,6 +60,12 @@ export const DIM = {
   band: { h: 0.32, out: 0.1 },
 };
 
+// 디버그 모드: 비밀번호는 클라이언트 코드에 있어 보안이 아닌 문턱이다 (src/debug/gate.js)
+export const DEBUG = {
+  password: '3141',
+  ghostSpeedScale: 2.5, // 유령 모드 이동 속도 배율 (걷기·달리기 모두)
+};
+
 export const PLAYER = {
   start: [0, 1.6, 12],
   eye: 1.6,
