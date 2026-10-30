@@ -34,6 +34,7 @@ for (const s of SHOTS) {
   if (s.lv) q.set('lv', s.lv);
   if (s.inspect) q.set('inspect', '1');
   if (s.story) q.set('story', s.story);
+  if (s.open) q.set('open', s.open);
   if (args.extra) for (const kv of args.extra.split('&')) { const [k, v] = kv.split('='); q.set(k, v); }
   const t0 = Date.now();
   await page.goto(`http://localhost:${PORT}/?${q}`);

@@ -1,8 +1,9 @@
-// 본관 실내 구조 그리기 (단계 8): plan.js 결과 → 바닥·천장·벽·난간·기둥·계단·창·유리벽·복도 소품·유도등.
+// 실내 구조 그리기 (단계 8 본관, 단계 9 신관): plan.js 결과 → 바닥·천장·벽·난간·기둥·계단·창·유리벽·복도 소품·유도등.
+// 묶음 이름은 P.g 앞머리 + 층 (본관 L0…, 신관 AL0…).
 // 정적 면은 Batch 로 층·재질별 메시 하나씩, 반복되는 작은 것(창·유도등·소화기)은 인스턴싱.
 // 잠긴 방은 안이 보이지 않으므로(문·창이 불투명) 바닥·천장·창을 만들지 않는다. 벽은 복도 쪽 면 때문에 만든다.
 import * as THREE from 'three';
-import { DIM, INTERIOR } from '../../config.js';
+import { DIM, INTERIOR, ANNEX } from '../../config.js';
 import { instanced, mat4 } from '../geom.js';
 import { yAt, ceilAt } from './plan.js';
 import { SIDE } from './rects.js';
@@ -12,7 +13,8 @@ const ry = ([nx, nz]) => Math.atan2(nx, nz);
 export function buildStructure(P, batch, MI) {
   const top = P.top;
   const roof = ceilAt(top, top);
-  const G = (L) => `L${Math.floor(L)}`;
+  const G = (L) => `${P.g}L${Math.floor(L)}`;
+  const SH = `${P.g}shaft`;
   const shown = (sp) => sp.hall || sp.enter;
   const spaceOf = (id, L) => P.spaces.find((s) => s.id === id && s.L === L);
 
@@ -58,12 +60,14 @@ export function buildStructure(P, batch, MI) {
   }
   for (const c of P.columns) {
     const [x0, z0, x1, z1] = c.rect;
-    batch.box('shaft', 'wall', x0, INTERIOR.courtyardFloor, z0, x1, roof, z1, 'nsew');
+    batch.box(SH, 'wall', x0, INTERIOR.courtyardFloor, z0, x1, roof, z1, 'nsew');
   }
-  // 중정: 1층 화단 바닥 + 지붕 아래 천장
-  batch.floor('L0', 'court', P.court, INTERIOR.courtyardFloor, true);
-  batch.floor('shaft', 'ceiling', P.court, roof, false);
-  for (const st of P.stairs) buildStair(st, batch, top, roof);
+  // 중정: 1층 화단 바닥 + 지붕 아래 천장 (본관만)
+  if (P.court) {
+    batch.floor(G(0), 'court', P.court, INTERIOR.courtyardFloor, true);
+    batch.floor(SH, 'ceiling', P.court, roof, false);
+  }
+  for (const st of P.stairs) buildStair(st, batch, top, roof, P.g);
 
   // 유리벽 (출입문 홀 남쪽): 안쪽에서 본 뿌연 유리 + 틀
   for (const g of P.glass) {
@@ -103,39 +107,51 @@ export function buildStructure(P, batch, MI) {
 }
 
 // ㄷ자 계단: 계단실 벽·칸막이(모든 층 한 번에), 층마다 계단 앞 슬래브·중간 계단참·계단 단
-function buildStair(st, batch, top, roof) {
-  for (const [x0, z0, x1, z1] of st.walls) batch.box('shaft', 'wall', x0, 0, z0, x1, roof, z1, 'nsew');
+function buildStair(st, batch, top, roof, g = '') {
+  const G = (L) => `${g}L${L}`;
+  for (const [x0, z0, x1, z1] of st.walls) batch.box(`${g}shaft`, 'wall', x0, 0, z0, x1, roof, z1, 'nsew');
   const [dx0, dz0, dx1, dz1] = st.divider;
-  batch.box('shaft', 'wall', dx0, yAt(0), dz0, dx1, roof, dz1, 'nsew');
+  batch.box(`${g}shaft`, 'wall', dx0, yAt(0), dz0, dx1, roof, dz1, 'nsew');
   const into = st.open === 'w' ? 'e' : 'w'; // 계단 앞 슬래브 끝면이 향하는 쪽 (계단 안)
-  batch.floor('L0', 'stair', st.inner, yAt(0), true);
-  batch.floor(`L${top}`, 'ceiling', st.rect, roof, false);
+  batch.floor(G(0), 'stair', st.inner, yAt(0), true);
+  batch.floor(G(top), 'ceiling', st.rect, roof, false);
   for (let L = 1; L <= top; L++) {
     const [x0, z0, x1, z1] = st.near;
     const y = yAt(L);
-    batch.box(`L${L}`, 'stair', x0, y - INTERIOR.slab, z0, x1, y, z1, 't');
-    batch.box(`L${L}`, 'ceiling', x0, y - INTERIOR.slab, z0, x1, y, z1, 'b');
-    batch.box(`L${L}`, 'concrete', x0, y - INTERIOR.slab, z0, x1, y, z1, into);
+    batch.box(G(L), 'stair', x0, y - INTERIOR.slab, z0, x1, y, z1, 't');
+    batch.box(G(L), 'ceiling', x0, y - INTERIOR.slab, z0, x1, y, z1, 'b');
+    batch.box(G(L), 'concrete', x0, y - INTERIOR.slab, z0, x1, y, z1, into);
   }
   for (let L = 0; L < top; L++) {
     const [x0, z0, x1, z1] = st.far;
     const y = yAt(L) + DIM.floorH / 2;
-    batch.box(`L${L}`, 'stair', x0, y - 0.2, z0, x1, y, z1, 't');
-    batch.box(`L${L}`, 'concrete', x0, y - 0.2, z0, x1, y, z1, 'bnsew');
+    batch.box(G(L), 'stair', x0, y - 0.2, z0, x1, y, z1, 't');
+    batch.box(G(L), 'concrete', x0, y - 0.2, z0, x1, y, z1, 'bnsew');
   }
   for (const s of st.steps) {
     const [x0, z0, x1, z1] = s.rect;
-    batch.box(`L${s.L}`, 'stair', x0, s.top - 0.35, z0, x1, s.top, z1, 'tnsew');
-    batch.box(`L${s.L}`, 'concrete', x0, s.top - 0.35, z0, x1, s.top, z1, 'b');
+    batch.box(G(s.L), 'stair', x0, s.top - 0.35, z0, x1, s.top, z1, 'tnsew');
+    batch.box(G(s.L), 'concrete', x0, s.top - 0.35, z0, x1, s.top, z1, 'b');
   }
   // 1층 계단 밑 창고 벽, 맨 위층 오르는 줄 자리 난간
   const under = st.blocks.find((b) => b.kind === 'under').rect;
   const [ux0, ux1] = st.xr(st.U.near[1], st.U.near[1] + 0.12);
-  batch.box('L0', 'wall', ux0, yAt(0), under[1], ux1, yAt(1) - 0.35, under[3], 'nsew');
+  batch.box(G(0), 'wall', ux0, yAt(0), under[1], ux1, yAt(1) - 0.35, under[3], 'nsew');
   const rail = st.blocks.find((b) => b.kind === 'rail').rect;
   const [rx0, rx1] = st.xr(st.U.near[1], st.U.near[1] + INTERIOR.rail.t);
   const y = yAt(top);
-  batch.box(`L${top}`, 'railTop', rx0, y, rail[1], rx1, y + INTERIOR.rail.h, rail[3]);
+  batch.box(G(top), 'railTop', rx0, y, rail[1], rx1, y + INTERIOR.rail.h, rail[3]);
+  // 방화셔터 (신관 2층 → 1층): 내려가는 줄 위끝을 바닥에서 위층 계단 밑까지 막는다. 셔터 살 + 위 셔터 상자
+  const sh = st.blocks.find((b) => b.kind === 'shutter');
+  if (!sh) return;
+  const T = ANNEX.shutter;
+  const [sx0, sx1] = st.xr(st.U.near[1] - 0.06, st.U.near[1]);
+  const [, z0, , z1] = sh.rect;
+  const y0 = yAt(sh.L);
+  const y1 = Math.min(y0 + T.h, yAt(sh.L + 1) - 0.35);
+  const face = st.open === 'w' ? 'w' : 'e'; // 계단 앞(복도) 쪽을 향한 면
+  batch.box(G(sh.L), 'shutter', sx0, y0, z0, sx1, y1, z1, 'nsew', { local: true, tile: [z1 - z0, T.slat * 2] });
+  batch.box(G(sh.L), 'metal', sx0 - 0.04, y1, z0, sx1 + 0.04, yAt(sh.L + 1) - 0.35, z1, `nsb${face}`);
 }
 
 // 복도 소품: 소화전함(+ 붉은 표시등), 사물함, 게시판, 소화기, 유도등
@@ -146,11 +162,12 @@ function buildProps(P, batch, MI, extra) {
   const S = INTERIOR.props;
   for (const p of P.props) {
     const [x0, z0, x1, z1] = p.rect;
-    const g = `L${p.L}`;
+    const g = `${P.g}L${p.L}`;
     if (p.type === 'hydrant') batch.box(g, 'hydrant', x0, p.y0, z0, x1, p.y1, z1);
     else if (p.type === 'locker') batch.box(g, 'locker', x0, p.y0, z0, x1, p.y1, z1, 'tnsew', { local: true, tile: [S.locker.cell, S.locker.h] });
     else if (p.type === 'board') batch.box(g, 'notice', x0, p.y0, z0, x1, p.y1, z1, 'nsew', { local: true, tile: [Math.max(x1 - x0, z1 - z0), p.y1 - p.y0] });
     else if (p.type === 'extinguisher') extM.push(mat4((x0 + x1) / 2, p.y0 + S.extinguisher.h / 2, (z0 + z1) / 2, 0, 1, 1, 1));
+    else if (p.type === 'switchboard') batch.box(g, 'switchboard', x0, p.y0, z0, x1, p.y1, z1, 'tbnsew', { local: true, tile: [Math.max(x1 - x0, z1 - z0), p.y1 - p.y0] });
   }
   for (const s of P.signs) {
     const [x, z, y] = s.pos;

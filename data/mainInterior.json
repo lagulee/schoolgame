@@ -1,5 +1,5 @@
 {
-  "_comment": "본관(구관) 실내 배치 (단계 8 = 옛 1b, STORY 4-1·4-2). 좌표 m (x 오른쪽, z − 가 북쪽), 층 level 0 = 1층 … 4 = 5층. 사각형 [x0, z0, x1, z1] 은 벽 안쪽까지 포함한 칸이고 벽은 칸 안쪽으로 세운다. 두께·높이 등 치수는 src/config.js INTERIOR. 위치 관계(중정·ㅁ자 순환 복도·층당 반 4개·2층 교무실·3층 연결통로 입구·4층 당직실)는 STORY [확정], 나머지 배치는 [가정].",
+  "_comment": "본관(구관) 실내 배치 (단계 8 = 옛 1b, STORY 4-1·4-2). 좌표 m (x 오른쪽, z − 가 북쪽), 층 level 0 = 1층 … 4 = 5층. 사각형 [x0, z0, x1, z1] 은 벽 안쪽까지 포함한 칸이고 벽은 칸 안쪽으로 세운다. 두께·높이 등 치수는 src/config.js INTERIOR. 위치 관계(중정·ㅁ자 순환 복도·층당 반 4개·2층 교무실·3층 연결통로 입구·4층 당직실)는 STORY [확정], 나머지 배치는 [가정]. 3층 연결통로 입구 북쪽 벽은 통로 쪽으로 트이고(openings), 연결문·통로 안은 interior/connector.js (단계 9).",
   "levels": 5,
   "courtyard": [-15, -50, 15, -28],
   "spaces": [
@@ -29,7 +29,7 @@
     { "id": "3F-2", "level": 2, "slot": 1, "kind": "classroom", "name": "2-2" },
     { "id": "3F-3", "level": 2, "slot": 2, "kind": "classroom", "name": "2-3" },
     { "id": "3F-4", "level": 2, "slot": 3, "kind": "classroom", "name": "2-4" },
-    { "id": "3F-bridge", "level": 2, "rect": [16, -61.65, 20, -53], "kind": "passage", "name": "연결통로 입구", "exit": { "side": "n", "at": 2.5, "name": "연결통로 문" } },
+    { "id": "3F-bridge", "level": 2, "rect": [16, -61.65, 20, -53], "kind": "passage", "name": "연결통로 입구", "openings": [{ "side": "n", "to": "bridge" }] },
     { "id": "4F-1", "level": 3, "slot": 0, "kind": "classroom", "name": "2-5" },
     { "id": "4F-2", "level": 3, "slot": 1, "kind": "classroom", "name": "2-6" },
     { "id": "4F-3", "level": 3, "slot": 2, "kind": "classroom", "name": "2-7", "enter": true },
@@ -53,7 +53,6 @@
     "doorLabel": "{name} 문 열기",
     "doorClose": "{name} 문 닫기",
     "glassLabel": "유리문 열기",
-    "glassLocked": "유리문이 잠겨 있다.",
-    "bridgeLocked": "연결통로 문이 잠겨 있다."
+    "glassLocked": "유리문이 잠겨 있다."
   }
 }

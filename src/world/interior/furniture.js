@@ -1,8 +1,9 @@
-// 본관 실내 가구 배치 (단계 8, three 없음). 들어갈 수 있는 방과 현관 홀만 채운다 (잠긴 방은 안이 보이지 않음).
+// 실내 가구 배치 (단계 8 본관, 단계 9 신관, three 없음). 들어갈 수 있는 방과 현관 홀만 채운다 (잠긴 방은 안이 보이지 않음).
 // 방마다 앞(front) 벽 쪽을 u = D, 뒤를 u = 0 으로 두는 방 좌표(u, v)로 배치하고 월드 상자로 바꾼다.
-// 결과: { items: [{ L, mat, b: [x0, y0, z0, x1, y1, z1], faces?, local?, tile? }], solids: [{ rect, level }] }
+// 결과: { items: [{ L, mat, b: [x0, y0, z0, x1, y1, z1], faces?, local?, tile? }], solids: [{ rect, level }],
+//         spots: [{ id, room, L, pos: [x, z], book?: b }] (신관 책상 위 책 — 따로 그려 사건에서 숨길 수 있게) }
 // 그리기는 interior/index.js 가 Batch 로, 충돌은 addFurnitureCollision. 치수는 config INTERIOR.furniture.
-import { INTERIOR } from '../../config.js';
+import { INTERIOR, ANNEX } from '../../config.js';
 import { yAt, ceilAt } from './plan.js';
 
 const F = () => INTERIOR.furniture;
@@ -41,7 +42,7 @@ function roomKit(out, sp) {
   // 문 쪽 가로 끝 (문이 v = W 쪽이면 true) — 문 앞은 비운다
   const doorAtW = fr.at(sp.side) === 'vW';
   const vFar = (a, b) => (doorAtW ? [a, b] : [fr.W - b, fr.W - a]); // 문 반대쪽(창 쪽)에서 잰 v
-  return { ...fr, put, solid, vFar };
+  return { ...fr, put, solid, vFar, y, desks: [] };
 }
 
 // 책상(상판 + 다리 4개) — 방향 무관. 의자는 상판 앞뒤 중 u 가 작은 쪽(뒤)에
@@ -97,6 +98,7 @@ function classroom(k) {
         const a = v0 + s * (C.desk.w + 0.06);
         desk(k, [uc, uc + C.desk.d], [a, a + C.desk.w], C.desk.h);
         chair(k, [uc - 0.42, uc - 0.04], [a + 0.11, a + C.desk.w - 0.11]);
+        k.desks.push({ key: `${r},${p},${s}`, u: [uc, uc + C.desk.d], v: [a, a + C.desk.w], s });
       }
       k.solid([uc - 0.45, uc + C.desk.d], [v0, v0 + pairW]);
     }
@@ -204,7 +206,36 @@ function duty(k) {
 // [v0, v1] 중 문 쪽 끝에서 w 만큼 (베개 자리)
 const doorSide = (k, [v0, v1], w) => (k.vFar(0, 1)[0] === 0 ? [v1 - w, v1] : [v0, v0 + w]);
 
-const LAYOUT = { classroom, counsel, admin, staff, duty };
+// 책상 위 책 상자 (방 좌표 → 월드)
+function bookOn(k, d) {
+  const B = ANNEX.book;
+  const uc = (d.u[0] + d.u[1]) / 2;
+  const vc = (d.v[0] + d.v[1]) / 2;
+  const top = F().classroom.desk.h;
+  const [x0, z0, x1, z1] = k.R(uc - B.d / 2, uc + B.d / 2, vc - B.w / 2, vc + B.w / 2);
+  return [x0, k.y + top, z0, x1, k.y + top + B.h, z1];
+}
+
+// 신관 2층 야자 교실 (단계 9): 교실 + 책상 위 책·책상 옆 고리에 건 가방 (extras.yaja: { books, bags } = [줄, 짝, 자리])
+function yaja(k, extras) {
+  classroom(k);
+  const Y = extras.yaja ?? {};
+  const at = (key) => k.desks.find((d) => d.key === key.join());
+  for (const key of Y.books ?? []) {
+    const d = at(key);
+    if (d) k.items.push({ L: k.L, mat: 'book', b: bookOn(k, d) });
+  }
+  const G = ANNEX.bag;
+  for (const key of Y.bags ?? []) {
+    const d = at(key);
+    if (!d) continue;
+    const uc = (d.u[0] + d.u[1]) / 2;
+    const v = d.s === 0 ? [d.v[0] - G.d, d.v[0]] : [d.v[1], d.v[1] + G.d]; // 짝의 바깥쪽 고리
+    k.put('bag', [uc - G.w / 2, uc + G.w / 2], v, [0.28, 0.28 + G.h]);
+  }
+}
+
+const LAYOUT = { classroom, counsel, admin, staff, duty, yaja };
 
 // 천장 형광등 기구 (꺼져 있음): 복도는 가운데 줄, 방·홀은 격자
 function fixtures(out, sp, top) {
@@ -214,7 +245,7 @@ function fixtures(out, sp, top) {
   const alongX = x1 - x0 >= z1 - z0;
   const lay = (cx, cz) => {
     const [hx, hz] = alongX ? [X.l / 2, X.w / 2] : [X.w / 2, X.l / 2];
-    out.items.push({ L: sp.L, mat: 'fixture', b: [cx - hx, y - X.h, cz - hz, cx + hx, y, cz + hz], faces: 'bnsew' });
+    out.items.push({ L: sp.L, mat: sp.lit ? 'fixtureLit' : 'fixture', b: [cx - hx, y - X.h, cz - hz, cx + hx, y, cz + hz], faces: 'bnsew' });
   };
   const grid = (n, a, b) => Array.from({ length: n }, (_, i) => a + ((b - a) * (i + 0.5)) / n);
   if (sp.hall && sp.kind === 'corridor') {
@@ -238,14 +269,24 @@ function lobby(out, sp) {
   out.items.push({ L: sp.L, mat: 'notice', b: [B.board[0], y + 1.2, z, B.board[1], y + 2.2, z + 0.03], local: true, tile: [B.board[1] - B.board[0], 1], faces: 's' });
 }
 
-export function furniturePlan(P) {
-  const out = { items: [], solids: [] };
+// extras (신관 데이터): { yaja, spots } — spots 중 desk 가 있는 것은 그 책상 위에 책 자리를 만든다
+export function furniturePlan(P, extras = {}) {
+  const out = { items: [], solids: [], spots: [] };
   for (const sp of P.spaces) {
     if (!(sp.hall || sp.enter)) continue;
     fixtures(out, sp, P.top);
     if (sp.kind === 'lobby') lobby(out, sp);
     const lay = LAYOUT[sp.kind];
-    if (lay && sp.enter) lay(roomKit(out, sp));
+    if (!lay || !sp.enter) continue;
+    const k = { ...roomKit(out, sp), items: out.items, L: sp.L };
+    lay(k, extras);
+    for (const s of (extras.spots ?? []).filter((t) => t.room === sp.id && t.desk)) {
+      const d = k.desks.find((e) => e.key === s.desk.join());
+      if (!d) throw new Error(`책상 없음: ${s.id} ${s.desk}`);
+      const b = s.book ? bookOn(k, d) : null;
+      const [x0, z0, x1, z1] = k.R(d.u[0], d.u[1], d.v[0], d.v[1]);
+      out.spots.push({ id: s.id, room: sp.id, L: sp.L, pos: [(x0 + x1) / 2, (z0 + z1) / 2], book: b });
+    }
   }
   return out;
 }

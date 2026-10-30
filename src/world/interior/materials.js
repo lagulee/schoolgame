@@ -1,10 +1,11 @@
 // 본관 실내 재질 (단계 8). 텍스처는 materials/interiorTex.js 에서 코드로 만든다.
 // 벽은 월드 높이로 걸레받이·허리 띠를 칠하는 셰이더를 덧붙인다 (층마다 같은 높이).
 import * as THREE from 'three';
-import { DIM, INTERIOR } from '../../config.js';
+import { DIM, INTERIOR, YAJA_LIGHT } from '../../config.js';
 import {
   terrazzoMaps, woodFloorMaps, plasterMaps, ceilingTexture, classDoorTexture, innerWindowTexture,
   blackboardTexture, noticeTexture, exitSignTexture, lockerTexture, railBarsTexture, frostedTexture, windowGlowTexture,
+  shutterTexture, switchboardTexture,
 } from '../../materials/interiorTex.js';
 
 // 월드 UV 반복 길이 (m). 배치(batch.js)가 면의 월드 좌표 / tile 로 UV 를 만든다
@@ -70,6 +71,11 @@ export function interiorMaterials(M) {
     fabric: std(0x3a3f48, 1),
     paper: std(0xd8d4c8, 0.95),
     fixture: std(0xdfe3e6, 0.35, 0.1, { emissive: 0x9aa4ad, emissiveIntensity: 0.04 }), // 꺼진 형광등 기구 (희미하게 하얀 윤곽)
+    fixtureLit: std(0xf4f8ff, 0.3, 0.1, { emissive: YAJA_LIGHT.color, emissiveIntensity: YAJA_LIGHT.emissive }), // 켜진 형광등 (신관 2층 야자 교실, 단계 9)
+    shutter: std(0xffffff, 0.6, 0.45, { map: shutterTexture() }),
+    switchboard: std(0xffffff, 0.55, 0.4, { map: switchboardTexture() }),
+    book: std(0x5a2c30, 0.8), // 책 표지
+    bag: std(0x2c3a52, 0.95), // 가방 천
     clearGlass: new THREE.MeshPhysicalMaterial({ color: 0x9fb4c0, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.22, envMapIntensity: 1.2, depthWrite: false }),
   };
 }

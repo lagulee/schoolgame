@@ -1,7 +1,7 @@
 // ㄷ자로 꺾이는 계단실 (단계 8, three 없음). 칸 [x0, z0, x1, z1] 의 한쪽(open: 'w' | 'e')이 복도로 열려 있고
 // 열린 쪽부터 계단 앞 층계참(near) → 계단 한 줄(오름) → 중간 계단참(far) → 다른 줄(오름) → 위층 계단 앞 층계참.
 // 층 L 의 계단 앞 = level L, 중간 계단참 = level L + 0.5. 경사는 Collision.ramp 로, 가운데를 넘으면 층이 바뀐다.
-// 1층에서는 내려가는 줄(B)을, 맨 위층에서는 올라가는 줄(A)을 막는다 (옥상 계단은 단계 8(옥상)에서).
+// 1층에서는 내려가는 줄(B)을, 맨 위층에서는 올라가는 줄(A)을 막는다 (옥상 계단은 단계 8(옥상)에서). shutter 층이 있으면 그 층에서 아래로 못 간다.
 import { DIM, INTERIOR } from '../../config.js';
 
 export function stairPlan(def, levels, yAt) {
@@ -68,6 +68,8 @@ export function stairPlan(def, levels, yAt) {
   out.blocks.push({ rect: out.laneB, level: 0, kind: 'under' }); // 1층: 계단 밑 (창고 벽)
   out.blocks.push({ rect: out.laneA, level: top, kind: 'rail' }); // 맨 위층: 오르는 줄 자리는 난간
   out.blocks.push({ rect: out.divider, level: [0, top], kind: 'divider' });
+  // 방화셔터 (신관, 단계 9): 층 def.shutter 에서 아래로 내려가는 줄(= 아래층 B 줄, 계단참 ~ 그 층)을 막는다
+  if (def.shutter) out.blocks.push({ rect: out.laneB, level: [def.shutter - 0.5, def.shutter], kind: 'shutter', L: def.shutter });
   return out;
 }
 

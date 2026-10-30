@@ -80,7 +80,8 @@ audio.addLedBuzz(world.ctx.entrance.signPos);
 audio.addLedBuzz(world.ctx.sur.sign.group.position);
 for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
-world.interior.attach({ interactions: story.interactions, toast, audio, player }); // 본관 실내 문 (E)
+// 실내 문·연결문·신관 살펴보기 자리 (E). 열쇠 문은 스토리 플래그(없는 이름이면 잠김), 책상 위 책은 상호작용 사건
+world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner });
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
@@ -249,6 +250,7 @@ if (shot) {
   if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch, shot.level);
+  if (shot.open.includes('connector')) world.interior.connector.set(true);
   world.interior.snap(player, camera); // 자동문·실내 노출을 최종 상태로
   if (shot.event) {
     director.t = shot.time;

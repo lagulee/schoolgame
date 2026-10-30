@@ -1,25 +1,25 @@
-// 본관 실내 평면 계산 (단계 8 = 옛 1b, three 없음). data/mainInterior.json 을 받아 층마다
-// 바닥·천장·벽·문·난간·창·소품·유도등 자리와 계단을 만들고, 같은 결과로 충돌을 등록한다(addInteriorCollision).
-// 그리기(build.js 등)와 테스트(test/interior.test.mjs)가 이 결과를 함께 쓴다.
+// 실내 평면 계산 (three 없음). 본관(단계 8 = 옛 1b, data/mainInterior.json)과 신관(단계 9 = 옛 1c, annexPlan.js)이 같이 쓴다.
+// 층마다 바닥·천장·벽·문·난간·창·소품·유도등 자리와 계단을 만들고, 같은 결과로 충돌을 등록한다(addInteriorCollision).
+// 그리기(build.js 등)와 테스트(test/interior.test.mjs·annex-interior.test.mjs)가 이 결과를 함께 쓴다.
 //
 // 벽 규칙: 방·계단은 칸 안쪽으로 벽을 세운다 (외벽 쪽은 얇은 마감 + 창). 복도·홀은 다른 복도·홀·계단 입구와는 트이고,
 // 중정 쪽은 난간, 아무것도 없는 쪽(빈 공간)은 칸 바깥으로 벽을 세운다 → 복도 벽면은 항상 칸 경계 위에 있다.
-import { DIM, INTERIOR } from '../../config.js';
+import { DIM, INTERIOR, ANNEX } from '../../config.js';
 import { SIDE, OPP, near, subtractSpans, subtractRect, sideStrip, contains } from './rects.js';
 import { stairPlan } from './stairs.js';
-import { buildingShells, facadeFaces, facePoint, windowSlots, entranceOpening } from '../layout.js';
+import { buildingShells, facadeFaces, facePoint, windowSlots, entranceOpening, bridgeOpening } from '../layout.js';
 
 export const yAt = (L) => INTERIOR.base + L * DIM.floorH;
 export const ceilAt = (L, top) => (L >= top ? DIM.floors * DIM.floorH : yAt(L + 1)) - INTERIOR.slab;
 
 const HALL = new Set(['corridor', 'lobby', 'hall', 'passage']);
-const SURFACE = { lobby: 'stone', classroom: 'wood', counsel: 'wood', duty: 'wood' }; // 나머지는 tile
-const FLOOR = { lobby: 'floorStone', classroom: 'floorWood', counsel: 'floorWood', duty: 'floorWood' }; // 나머지는 floorTile
+const SURFACE = { lobby: 'stone', classroom: 'wood', yaja: 'wood', counsel: 'wood', duty: 'wood' }; // 나머지는 tile
+const FLOOR = { lobby: 'floorStone', classroom: 'floorWood', yaja: 'floorWood', counsel: 'floorWood', duty: 'floorWood' }; // 나머지는 floorTile
 const NORMAL = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] };
 
-// 공간 목록: 층마다 하나씩 펼친다. 북쪽 띠(northBand)의 방은 slot 으로 자리를 받는다
+// 공간 목록: 층마다 하나씩 펼친다. 방 띠(본관 northBand, 신관 band)의 방은 slot 으로 자리를 받는다
 function listSpaces(data) {
-  const nb = data.northBand;
+  const nb = data.band ?? data.northBand;
   const out = [];
   for (const s of data.spaces) {
     for (let L = s.levels[0]; L <= s.levels[1]; L++) out.push({ ...s, L, hall: HALL.has(s.kind), windows: [].concat(s.windows ?? []) });
@@ -47,13 +47,13 @@ function sideParts(sp, d, here, court) {
     if (hi - lo > 1e-3) parts.push({ a: lo, b: hi, what });
   };
   for (const t of here) if (t !== sp) take(t.rect, t);
-  take(court, 'court');
+  if (court) take(court, 'court');
   for (const [ga, gb] of subtractSpans([a, b], parts.map((p) => [p.a, p.b]))) parts.push({ a: ga, b: gb, what: 'dead' });
   return parts.sort((p, q) => p.a - q.a);
 }
 
 function classify(sp, d, part) {
-  if (sp.windows.includes(d) || sp.exit?.side === d) return 'lining';
+  if (sp.windows.includes(d) || sp.exit?.side === d || sp.openings?.some((o) => o.side === d)) return 'lining';
   if (sp.glass === d) return 'glass';
   if (!sp.hall) return 'wall';
   const t = part.what;
@@ -65,27 +65,28 @@ function classify(sp, d, part) {
 
 const thickness = { lining: INTERIOR.lining, wall: INTERIOR.wall };
 
-export function buildPlan(data) {
+// env: { shells, faces, group } — 생략하면 본관 (셸 = buildingShells, 외벽 면 = facadeFaces, 그리기 묶음 이름 앞머리 '')
+export function buildPlan(data, env = {}) {
   const top = data.levels - 1;
   const P = {
-    top, levels: data.levels, court: data.courtyard, messages: data.messages,
+    g: env.group ?? '', top, levels: data.levels, court: data.courtyard ?? null, messages: data.messages,
     spaces: listSpaces(data),
     stairs: data.stairs.map((d) => stairPlan(d, data.levels, yAt)),
     floors: [], ceilings: [], edges: [], walls: [], rails: [], columns: [], doors: [], windows: [], glass: [],
     props: [], signs: [], solids: [], colFloors: [], surfaces: [], ramps: [],
   };
-  const shells = buildingShells();
-  const faces = Object.values(facadeFaces());
+  const shells = env.shells ?? buildingShells();
+  const faces = env.faces ?? Object.values(facadeFaces());
   const stairSpaces = P.stairs.flatMap((st) => Array.from({ length: data.levels }, (_, L) => ({ ...st, L, stair: true, kind: 'stair' })));
-  P.entrance = entrance(data);
+  P.entrance = data.entrance ? entrance(data) : null;
   const e = P.entrance;
-  P.signs.push({ L: 0, kind: 'exit', pos: [e.block[2], (e.z0 + e.z1) / 2, (e.top + ceilAt(0, top)) / 2], normal: [1, 0] }); // 현관 문 위 (안쪽)
+  if (e) P.signs.push({ L: 0, kind: 'exit', pos: [e.block[2], (e.z0 + e.z1) / 2, (e.top + ceilAt(0, top)) / 2], normal: [1, 0] }); // 현관 문 위 (안쪽)
 
   for (let L = 0; L <= top; L++) {
     const here = [...P.spaces.filter((s) => s.L === L), ...stairSpaces.filter((s) => s.L === L)];
     for (const sp of here) if (!sp.stair) addSpace(P, sp, here, shells, faces);
   }
-  addCourt(P);
+  if (P.court) addCourt(P);
   for (const st of P.stairs) addStair(P, st);
   addProps(P, data.props);
   return P;
@@ -152,14 +153,20 @@ function addSolidSide(P, sp, d, type, a, b, y0, y1, faces) {
       const block = sideStrip(r, d, c - w / 2, c + w / 2, t, -1);
       const mid = (a + b) / 2;
       P.doors.push({
-        id: `${sp.id}-${i + 1}`, room: sp.id, name: sp.name, L, side: d, kind: 'room', locked: !sp.enter,
-        c, w, y: y0, h: INTERIOR.door.h, block, slide: c < mid ? -1 : 1, pos: rectCenter(block), normal: NORMAL[d],
+        id: `${sp.id}-${i + 1}`, room: sp.id, name: sp.name, L, side: d, kind: 'room', locked: !sp.enter, key: sp.key ?? null,
+        open: (sp.doorsOpen ?? []).includes(i), c, w, y: y0, h: INTERIOR.door.h, block, slide: c < mid ? -1 : 1, pos: rectCenter(block), normal: NORMAL[d],
       });
     });
   }
   if (type === 'lining' && sp.kind === 'lobby' && d === 'w') {
     const e = P.entrance;
     cuts.push({ c0: e.z0 - e.frame, c1: e.z1 + e.frame, top: e.top });
+  }
+  // 연결통로 자리 (단계 9): 통로 안쪽 폭 × 바닥 ~ 통로 천장을 비운다 (본관 3층 북쪽·신관 3층 남쪽 외벽)
+  for (const o of sp.openings ?? []) {
+    if (o.side !== d || o.to !== 'bridge') continue;
+    const B = bridgeOpening();
+    cuts.push({ c0: B.x0, c1: B.x1, top: B.y1 });
   }
   for (const [s0, s1] of subtractSpans([a, b], cuts.map((k) => [k.c0, k.c1]))) addWall(P, L, sideStrip(r, d, s0, s1, t, -1), y0, y1, type);
   for (const k of cuts) addWall(P, L, sideStrip(r, d, k.c0, k.c1, t, -1), k.top, y1, type, false); // 문 위
@@ -275,6 +282,12 @@ function addProps(P, props) {
       const cz = z + NORMAL[f][1] * E.out;
       put('extinguisher', [cx - E.r, cz - E.r, cx + E.r, cz + E.r], f, y, y + E.h, true);
     }
+    // 배전반 (신관 2층, 단계 9): 그 층에만 있는 벽 철함 [x, z, 향하는 쪽, 층]
+    for (const [x, z, f, lv] of props.switchboards ?? []) {
+      if (lv !== L) continue;
+      const B = ANNEX.switchboard;
+      put('switchboard', front(f, x, z, B.w, B.d), f, y + B.y, y + B.y + B.h, true);
+    }
   }
 }
 
@@ -287,6 +300,7 @@ export function addInteriorCollision(col, P) {
   const doors = new Map();
   for (const d of P.doors) if (d.block) doors.set(d.id, col.box(...d.block, d.L));
   const e = P.entrance;
+  if (!e) return doors;
   col.floor(...e.threshold, e.y, 0);
   col.surface(...e.threshold, 'stone', 0);
   doors.set('entrance', col.box(...e.block, 0));

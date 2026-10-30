@@ -1,5 +1,6 @@
-// 본관 실내 문 (단계 8): 교실·교무실 미닫이 문짝(열면 벽 속으로 밀려 들어감)과 문틀, 연결통로 문(잠김).
-// E 로 연다/닫는다. 잠긴 방은 덜컹거리고 안내만 띄운다 (data/mainInterior.json messages).
+// 실내 문 (단계 8 본관, 단계 9 신관): 교실·교무실 미닫이 문짝(열면 벽 속으로 밀려 들어감)과 문틀, 잠긴 철문 장식(exit).
+// E 로 연다/닫는다. 잠긴 방은 덜컹거리고 안내만 띄운다 (data/*Interior.json messages). 열쇠 문(key)은 그 플래그가 켜져야 열린다.
+// 처음부터 열려 있는 문(open)은 열린 채 시작한다 (신관 야자 교실 뒷문).
 // 문짝은 InstancedMesh 하나, 문틀·연결통로 문은 정적 Batch. 충돌은 plan.js 가 만든 문 박스 핸들(on)을 켜고 끈다.
 import * as THREE from 'three';
 import { INTERIOR, PLAYER } from '../../config.js';
@@ -16,14 +17,17 @@ export class Doors {
     this.list = [];
     const D = INTERIOR.door;
     const room = P.doors.filter((d) => d.kind === 'room');
-    for (const d of P.doors) frameOf(d, batch);
+    for (const d of P.doors) frameOf(d, batch, `${P.g}L${d.L}`);
     this.mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), MI.door, Math.max(1, room.length));
     this.mesh.castShadow = this.mesh.receiveShadow = true;
     this.mesh.name = 'interiorDoors';
     room.forEach((d, i) => {
       const alongX = SIDE[d.side].along === 'x';
       const [bx, bz] = d.pos;
-      this.list.push({ d, i, alongX, bx, bz, f: 0, target: 0, shake: 0, handle: handles.get(d.id), sound: new THREE.Vector3(bx, d.y + 1.2, bz) });
+      const f = d.open ? 1 : 0;
+      const handle = handles.get(d.id);
+      if (d.open) handle.on = false;
+      this.list.push({ d, i, alongX, bx, bz, f, target: f, shake: 0, handle, sound: new THREE.Vector3(bx, d.y + 1.2, bz) });
     });
     for (const s of this.list) this.place(s);
     this.mesh.instanceMatrix.needsUpdate = true;
@@ -40,8 +44,8 @@ export class Doors {
     this.mesh.setMatrixAt(s.i, mat4(x, s.d.y + D.h / 2, z, s.alongX ? 0 : Math.PI / 2, D.w, D.h, D.leaf));
   }
 
-  // 상호작용 등록 (E). ctx: { interactions, toast, audio, player }
-  attach({ interactions, toast, audio, player }) {
+  // 상호작용 등록 (E). ctx: { interactions, toast, audio, player, hasKey(플래그 이름) }
+  attach({ interactions, toast, audio, player, hasKey = () => false }) {
     this.audio = audio;
     this.player = player;
     const M = this.P.messages;
@@ -53,7 +57,7 @@ export class Doors {
       interactions.add({
         id: `door:${d.id}`, pos: d.pos, level: d.L, radius: R, get label() { return label(); },
         onUse: () => {
-          if (d.locked) {
+          if (d.locked || (d.key && !hasKey(d.key))) {
             s.shake = 0.0001;
             s.shakeT = 0;
             doorRattle(audio, s.sound);
@@ -73,7 +77,7 @@ export class Doors {
         id: `door:${e.d.id}`, pos: e.d.pos, level: e.d.L, radius: R, label: fill(M.doorLabel, e.d.name),
         onUse: () => {
           doorRattle(audio, e.sound);
-          toast(M.bridgeLocked);
+          toast(fill(M.locked, e.d.name));
         },
       });
     }
@@ -120,10 +124,9 @@ export class Doors {
   }
 }
 
-// 문틀: 양쪽 문설주 + 위 틀 (벽 두께보다 1 cm 씩 튀어나옴). 연결통로 문은 벽 마감 위 철문 + 손잡이 막대
-function frameOf(d, batch) {
+// 문틀: 양쪽 문설주 + 위 틀 (벽 두께보다 1 cm 씩 튀어나옴). 잠긴 철문(exit)은 벽 마감 위 철문 + 손잡이 막대
+function frameOf(d, batch, G) {
   const S = SIDE[d.side];
-  const G = `L${d.L}`;
   const k = 0.05;
   if (d.kind === 'exit') {
     const n = d.normal; // 공간 안쪽을 향함

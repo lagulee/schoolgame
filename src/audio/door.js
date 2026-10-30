@@ -1,4 +1,4 @@
-// 문 소리 (단계 8, 파일 없음): 교실 미닫이 드르륵, 잠긴 문 덜컹, 현관 자동문 모터. AudioSystem.oneShot 으로 3D 위치에서 낸다.
+// 문 소리 (단계 8·9, 파일 없음): 교실 미닫이 드르륵, 잠긴 문 덜컹, 현관 자동문 모터, 연결문 경첩 삐걱임. AudioSystem.oneShot 으로 3D 위치에서 낸다.
 
 // 짧은 두드림: 노이즈 버스트(대역 통과) + 낮은 쿵
 function knock(ctx, out, noise, t, gain, freq) {
@@ -91,4 +91,29 @@ export function autoDoor(audio, pos, dur) {
     return dur + 0.4;
   }, { ref: 3, rolloff: 1.2, volume: 0.8 });
   slide(audio, pos, dur, { freq: 380, rumble: 9, end: 0, gain: 0.08 });
+}
+
+// 여닫이 철문 (연결문, 단계 9): 경첩 삐걱임(좁은 대역 노이즈의 높낮이가 천천히 오르내림) + 끝에 묵직한 쿵 (닫을 때 더 세게)
+export function doorSwing(audio, pos, dur, closing = false) {
+  audio.oneShot(pos, (ctx, out, t) => {
+    const n = ctx.createBufferSource();
+    n.buffer = audio.noise;
+    n.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 9;
+    bp.frequency.setValueAtTime(620, t);
+    bp.frequency.linearRampToValueAtTime(880, t + dur * 0.35);
+    bp.frequency.linearRampToValueAtTime(540, t + dur * 0.85);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.12);
+    g.gain.setValueAtTime(0.16, t + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(bp).connect(g).connect(out);
+    n.start(t);
+    n.stop(t + dur + 0.05);
+    knock(ctx, out, audio.noise, t + dur, closing ? 0.6 : 0.25, 420);
+    return dur + 0.7;
+  }, { ref: 3, rolloff: 1.2, volume: 0.8 });
 }

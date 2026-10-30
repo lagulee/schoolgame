@@ -155,7 +155,7 @@ export const SCHOOL = {
     classes: [[-12, -3], [-3, 6], [6, 15]], // 층당 반 3개 (x 범위), 양끝 x −18~−12·18~24 는 계단
     yaja: { floor: 1, cls: 2 }, // 2층(index 1) 동쪽 끝 반 = 야자 교실 (운동장에서 보임)
   },
-  bridge: { x0: 17, x1: 20, floor: 2, h: 3.3, pillarZ: -72.5, pillarR: 0.32 }, // 3층(index 2) 본관 뒷면 ↔ 신관 남쪽 면
+  bridge: { x0: 17, x1: 20, floor: 2, h: 3.3, pillarZ: -72.5, pillarR: 0.32, wall: 0.25, sill: 1.0, head: 2.6, bars: [1.2, 1.5], slab: 0.45 }, // 3층(index 2) 본관 뒷면 ↔ 신관 남쪽 면. 바닥 = 실내 3층 바닥(단계 9), h = 바닥~지붕 아래(= 본관 3층 천장), wall = 낮은 벽 두께, sill·head = 띠창 아래·위, bars = 창살 시작·간격, slab = 바닥 슬래브 두께(바깥)
   path: { x0: 15, x1: 33, z0: 8, z1: 15 }, // 마당 → 운동장 옆길 (동쪽 날개 남쪽)
   field: {
     x0: 33, x1: 102, z0: -96, z1: 15, // 이동 가능 범위 (서쪽 x0 에 낮은 울타리, 남쪽은 앞 담장 연장)
@@ -180,7 +180,7 @@ export const INTERIOR = {
   wall: 0.15, // 칸막이 벽 (방은 칸 안쪽, 복도는 빈 공간 쪽으로)
   lining: 0.05, // 외벽 안쪽 마감
   door: { w: 1.0, h: 2.1, leaf: 0.05, time: 0.45, reach: 1.3 }, // 교실 미닫이 문: 폭·높이·두께·여닫는 시간(초)·상호작용 반경(m)
-  exitDoor: { w: 1.4, h: 2.2 }, // 연결통로 문 (잠김)
+  exitDoor: { w: 1.4, h: 2.2 }, // 잠긴 철문 장식 (plan exit, 단계 8 연결통로 문 → 단계 9 부터 연결문은 ANNEX.connector)
   rail: { h: 1.1, t: 0.08, post: 1.8 }, // 중정 난간: 높이·두께·기둥 간격
   column: 0.45, // 중정 기둥 (정사각형 한 변)
   columnEvery: [7.5, 11], // 중정 기둥 간격 (남북 변, 동서 변)
@@ -212,6 +212,16 @@ export const INTERIOR = {
   doorSight: { level: 0, z: -30 }, // 1층 동쪽 복도 이 z 보다 남쪽·현관 홀에서는 바깥을 그린다 (현관 유리문으로 보임)
 };
 
+// 신관 실내·연결통로 (단계 9 = 옛 1c, data/annexInterior.json). 층 높이·벽·교실 문·소품은 INTERIOR 와 같다
+export const ANNEX = {
+  connector: { w: 1.4, h: 2.2, leaf: 0.05, time: 1.1, reach: 1.4, frame: 0.06 }, // 연결문(여닫이 철문 한 짝, 안쪽(신관 쪽)으로 90° 열림): 폭·높이·두께·여는 시간(초)·상호작용 반경·문틀
+  shutter: { h: 2.4, slat: 0.1, box: 0.3 }, // 신관 2층 → 1층 계단을 막은 방화셔터 (STORY 4-1 "계단 아래가 막혀 있음"): 높이·살 간격·위 셔터 상자
+  switchboard: { w: 0.6, h: 1.1, d: 0.22, y: 0.9 }, // 배전반 (복도 벽 철함): 폭·높이·깊이·바닥에서 높이
+  yaja: { intensity: 7, distance: 10, y: 2.4, levels: [0.5, 1.5] }, // 야자 교실 형광등 빛: 플레이어가 신관 2층(이 층 범위)에 있으면 바깥 YAJA_LIGHT 를 교실 천장 아래로 옮긴다 (광원 수 그대로, 깜빡임 없음)
+  book: { w: 0.19, d: 0.26, h: 0.035 }, // 책상 위 책 (가로·세로·두께)
+  bag: { w: 0.32, d: 0.16, h: 0.4 }, // 의자에 걸친 가방 (야자 교실)
+};
+
 // 신관 2층 야자 교실 창 불빛 (STORY 15장 "유일하게 밝은 곳"). 깜빡이지 않는다
 export const YAJA_LIGHT = { color: 0xe6f2ff, emissive: 1.25, leak: 0.3, intensity: 14, distance: 13, out: 1.6 };
 
@@ -240,6 +250,15 @@ export const SHOTS = [
   { name: '20_stairs', pos: [18.7, 1.6, -19], yaw: -90, pitch: 18, light: 1 },
   { name: '21_staff_room', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1 },
   { name: '22_duty_room', pos: [19.4, 1.6, -34.4], yaw: -125, pitch: -6, lv: 3, light: 1 },
+  // 단계 9: 3층 연결통로·신관 실내 (open: connector = 연결문을 연 채)
+  { name: '23_bridge_door', pos: [18.9, 1.6, -55.5], yaw: 0, pitch: 4, lv: 2, light: 1 },
+  { name: '24_bridge_inside', pos: [18.5, 1.6, -60.5], yaw: 0, pitch: 0, lv: 2, light: 1, open: 'connector' },
+  { name: '25_annex_hall_3f', pos: [21.5, 1.6, -88.6], yaw: 150, pitch: 0, lv: 2, light: 1, open: 'connector' },
+  { name: '26_annex_corridor', pos: [16.4, 1.6, -92.6], yaw: 90, pitch: 0, lv: 2, light: 1 },
+  { name: '27_annex_yaja', pos: [11, 1.6, -92.9], yaw: -125, pitch: 0, lv: 1 },
+  { name: '28_annex_yaja_room', pos: [14.2, 1.6, -89.4], yaw: 110, pitch: -12, lv: 1 },
+  { name: '29_annex_stairs', pos: [16.1, 1.6, -91.9], yaw: -90, pitch: -6, lv: 1, light: 1 },
+  { name: '30_annex_desk_4f', pos: [3.6, 1.6, -89.5], yaw: 112, pitch: -22, lv: 3, light: 1 },
 ];
 
 // 핸드폰 (STORY 8장). 배터리 단위는 %. 단계 0b-1(단계 3)에서 손전등을 대체했다

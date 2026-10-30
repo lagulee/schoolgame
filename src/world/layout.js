@@ -1,4 +1,4 @@
-import { DIM, SCHOOL } from '../config.js';
+import { DIM, SCHOOL, INTERIOR } from '../config.js';
 
 // 학교 배치의 큰 충돌(건물·담장·보이지 않는 경계). three 를 쓰지 않는 순수 모듈이라 Node 테스트에서
 // 그대로 Collision 에 올려 이동 경계를 검사한다 (test/layout.test.mjs). 작은 소품(화단·나무·가로등)은 각 빌더가 넣는다.
@@ -80,6 +80,32 @@ export function pilotiWalls() {
   ];
 }
 
+// 3층 연결통로 (단계 9 = 옛 1c): 바닥 = 실내 3층 바닥 (interior/plan.js yAt 과 같은 식)
+export const bridgeFloorY = () => INTERIOR.base + SCHOOL.bridge.floor * DIM.floorH;
+
+// 연결통로가 본관 뒷면·신관 남쪽 면 셸 벽을 지나는 구멍: x = 통로 안쪽 폭, y = 바닥 ~ 천장(지붕 아래), level = 통로 층
+export function bridgeOpening() {
+  const Br = SCHOOL.bridge;
+  const y0 = bridgeFloorY();
+  return { x0: Br.x0 + Br.wall, x1: Br.x1 - Br.wall, y0, y1: y0 + Br.h, level: Br.floor };
+}
+
+const ALL = () => [0, DIM.floors - 1];
+
+// x 를 따라 놓인 셸 벽 [x0, z0, x1, z1] 을 연결통로 구멍으로 나눈 조각 { r, y0, y1, level }.
+// 구멍 기둥은 아래(층 0 ~ 통로 층 − 0.5)·위(통로 층 + 0.5 ~ 맨 위층) 둘로 나눠 통로 층만 트인다
+function cutForBridge([x0, z0, x1, z1]) {
+  const o = bridgeOpening();
+  const top = buildingTop();
+  const all = ALL();
+  return [
+    { r: [x0, z0, o.x0, z1], y0: 0, y1: top, level: all },
+    { r: [o.x0, z0, o.x1, z1], y0: 0, y1: o.y0, level: [0, o.level - 0.5] },
+    { r: [o.x0, z0, o.x1, z1], y0: o.y1, y1: top, level: [o.level + 0.5, all[1]] },
+    { r: [o.x1, z0, x1, z1], y0: 0, y1: top, level: all },
+  ];
+}
+
 // 본관 뒷부분(중정형 셸)의 바깥 벽 [x0, z0, x1, z1]
 export function mainShellWalls() {
   const { outerX: X, backZ: B } = SCHOOL.main;
@@ -90,6 +116,13 @@ export function mainShellWalls() {
     [-X, B, -X + w, F], // 서
     [-X + w, B, X - w, B + w], // 북(뒷면)
   ];
+}
+
+// 본관 뒷부분 셸 벽 조각 { r, y0, y1, level } — 뒷면(북)에 3층 연결통로 구멍 (충돌·그리기 공용)
+export function mainShellPieces() {
+  const [e, w, n] = mainShellWalls();
+  const full = (r) => ({ r, y0: 0, y1: buildingTop(), level: ALL() });
+  return [full(e), full(w), ...cutForBridge(n)];
 }
 
 // 본관 셸 전체 바닥 자리 (실내 벽을 만들 때 셸과 겹치는 부분을 뺀다)
@@ -115,7 +148,7 @@ export function facadeFaces() {
   const C = DIM.canopy;
   const { outerX: X, backZ: B } = SCHOOL.main;
   const Br = SCHOOL.bridge;
-  const bv = Br.floor * fl;
+  const bv = bridgeFloorY();
   return {
     front: {
       origin: [-ix, fz], normal: [0, 1], length: ix * 2,
@@ -170,9 +203,31 @@ export function annexWalls() {
   return [
     [A.x0, A.z1 - w, A.x1, A.z1], // 남(교실 창)
     [A.x0, A.z0, A.x1, A.z0 + w], // 북(복도 창)
-    [A.x0, A.z0, A.x0 + w, A.z1],
-    [A.x1 - w, A.z0, A.x1, A.z1],
+    [A.x0, A.z0 + w, A.x0 + w, A.z1 - w], // 서 (남북 벽과 겹치지 않게)
+    [A.x1 - w, A.z0 + w, A.x1, A.z1 - w], // 동
   ];
+}
+
+// 신관 셸 벽 조각 { r, y0, y1, level } — 남쪽 면에 3층 연결통로 구멍. 단계 9부터 실내가 있어 모든 층을 막는다
+export function annexShellPieces() {
+  const [s, n, w, e] = annexWalls();
+  const full = (r) => ({ r, y0: 0, y1: buildingTop(), level: ALL() });
+  return [...cutForBridge(s), full(n), full(w), full(e)];
+}
+
+// 신관 외벽 면 (FacadeKit 과 실내 창(interior/annexPlan.js)이 같은 면을 쓴다). 남쪽 = 교실 창, 북쪽 = 복도 창
+export function annexFaces() {
+  const A = SCHOOL.annex;
+  const Br = SCHOOL.bridge;
+  const bv = bridgeFloorY();
+  const len = A.x1 - A.x0;
+  const depth = A.z1 - A.z0;
+  return {
+    annexS: { origin: [A.x0, A.z1], normal: [0, 1], length: len, openings: [{ u0: Br.x0 - A.x0 - 0.3, u1: Br.x1 - A.x0 + 0.3, v0: bv - 0.2, v1: bv + Br.h + 0.4 }] },
+    annexN: { origin: [A.x1, A.z0], normal: [0, -1], length: len },
+    annexE: { origin: [A.x1, A.z1], normal: [1, 0], length: depth },
+    annexW: { origin: [A.x0, A.z0], normal: [-1, 0], length: depth },
+  };
 }
 
 export function addSchoolCollision(col) {
@@ -184,9 +239,8 @@ export function addSchoolCollision(col) {
   for (const r of pilotiWalls()) col.box(...r, all);
   col.circle(0, DIM.piloti.colZ, DIM.piloti.colR);
 
-  // 본관 뒷부분·신관 셸 + 연결통로 기둥
-  for (const b of mainShellWalls()) col.box(...b, all);
-  for (const b of annexWalls()) col.box(...b);
+  // 본관 뒷부분·신관 셸 (3층 연결통로 구멍만 트임) + 연결통로 기둥
+  for (const p of [...mainShellPieces(), ...annexShellPieces()]) col.box(...p.r, p.level);
   const Br = SCHOOL.bridge;
   for (const x of [Br.x0 + 0.4, Br.x1 - 0.4]) col.circle(x, Br.pillarZ, Br.pillarR);
 

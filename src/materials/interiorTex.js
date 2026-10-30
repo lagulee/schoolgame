@@ -307,3 +307,39 @@ export function windowGlowTexture() {
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   return t;
 }
+
+// 방화셔터 (신관, 단계 9): 가로 살 두 줄 (반복, 살 간격 = ANNEX.shutter.slat)
+export function shutterTexture() {
+  const [c, x] = canvas(16, 32);
+  x.fillStyle = '#7b8086';
+  x.fillRect(0, 0, 16, 32);
+  for (const y of [0, 16]) {
+    x.fillStyle = '#5b6066';
+    x.fillRect(0, y + 13, 16, 3);
+    x.fillStyle = '#979ca1';
+    x.fillRect(0, y + 1, 16, 2);
+  }
+  return canvasTexture(c, true);
+}
+
+// 배전반 철함 앞면: 문 두 짝 테두리 + 손잡이 + 아래 통풍 줄 + 노랑·검정 경고 띠 (글자 없음)
+export function switchboardTexture() {
+  const W = 128;
+  const H = 224;
+  const [c, x] = canvas(W, H);
+  x.fillStyle = '#8f959b';
+  x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#4d5257';
+  x.lineWidth = 3;
+  x.strokeRect(6, 6, W / 2 - 8, H - 12);
+  x.strokeRect(W / 2 + 2, 6, W / 2 - 8, H - 12);
+  x.fillStyle = '#33373b';
+  x.fillRect(W / 2 - 12, H / 2 - 14, 5, 28);
+  x.fillRect(W / 2 + 7, H / 2 - 14, 5, 28);
+  for (let k = 0; k < 5; k++) x.fillRect(18, H - 52 + k * 7, W - 36, 2);
+  for (let i = 0; i < 6; i++) {
+    x.fillStyle = i % 2 ? '#1e1e1e' : '#c9a227';
+    x.fillRect(22 + i * 14, 22, 14, 10);
+  }
+  return canvasTexture(c, true);
+}

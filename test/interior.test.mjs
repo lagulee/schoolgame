@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { Collision } from '../src/player/collision.js';
 import { addSchoolCollision } from '../src/world/layout.js';
 import { buildPlan, addInteriorCollision, yAt, ceilAt, spaceAt } from '../src/world/interior/plan.js';
+import { connectorPlan, addConnectorCollision } from '../src/world/interior/connector.js';
 import { contains } from '../src/world/interior/rects.js';
 import { DIM, INTERIOR, PLAYER } from '../src/config.js';
 
@@ -15,9 +16,11 @@ const R = PLAYER.radius;
 const STEP = 0.25;
 const AREA = { x0: -30, x1: 31, z0: -64, z1: 10 };
 
+// 단계 9 부터 본관 셸 3층에 연결통로 구멍이 있다 → 연결문(닫힘)까지 올려야 본관 안이 닫힌다 (신관 쪽은 annex-interior.test.mjs)
 function world(open = []) {
   const col = new Collision();
   addSchoolCollision(col);
+  addConnectorCollision(col, connectorPlan());
   const doors = addInteriorCollision(col, plan);
   for (const [id, h] of doors) if (open === 'all' || open.includes(id)) h.on = false;
   return { col, doors };

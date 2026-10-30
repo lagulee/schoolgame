@@ -1,4 +1,4 @@
-// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
+// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 신관(연결문·통로·계단·살펴보기) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
 // ?light=1 : 핸드폰 라이트를 켠 채 시작 (손전등이 없어진 뒤 화면이 어두워도 같은 조건으로 점검)
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
@@ -152,6 +152,35 @@ await press('KeyE', 120);
 check('E → 문 열림 + 안내가 닫기로 바뀜', await poll(() => window.__DEBUG.interior.doors.openIds.includes('1F-1-1') && document.getElementById('interact').textContent.includes('1-1 문 닫기')));
 const inRoom = await walkIn(null, 0, 2.5);
 check('닫힌 문은 막고, 연 문으로 교실에 들어감 (마루 바닥)', blocked.z > -53 && inRoom.z < -53.6 && inRoom.surf === 'wood', JSON.stringify([blocked, inRoom]));
+// 단계 9 신관: 본관 3층 연결통로 입구 → 연결문(열쇠 없으면 잠김, hasConnectorKey 면 열림) → 통로 → 신관 3층 → 계단으로 4층
+await walkIn([18.5, 1.6, -60.9], 0, 0, 2);
+check('연결문 안내 (본관 3층 연결통로 입구)', await poll(() => document.getElementById('interact').textContent.includes('연결문 열기')));
+await press('KeyE', 120);
+check('열쇠 없으면 연결문 잠김 안내, 문은 닫힌 채', await poll(() => document.getElementById('toast').textContent.includes('연결문이 잠겨')) && (await S(() => window.__DEBUG.interior.connector.state.f)) === 0);
+const stuck = await walkIn(null, 0, 2);
+check('닫힌 연결문 앞에서 멈춤 (본관 셸 안쪽)', stuck.z > -61.7 && stuck.lv === 2, JSON.stringify(stuck));
+await S(() => window.__DEBUG.story.flags.set('hasConnectorKey', true));
+await press('KeyE', 120);
+check('hasConnectorKey → E → 연결문 열림 + 안내가 닫기로', await poll(() => window.__DEBUG.interior.connector.state.target === 1 && document.getElementById('interact').textContent.includes('연결문 닫기')));
+const cross = await walkIn(null, 0, 16);
+check('연 문으로 통로를 지나 신관 3층 홀까지 (바닥 7.65, 층 그대로)', cross.z < -84 && cross.lv === 2 && near(cross.y, 7.65) && cross.inside, JSON.stringify(cross));
+check('HUD 에 신관 3층 표시', await poll(() => document.getElementById('hud').textContent.includes('실내: 신관 3층')));
+await walkIn([17.75, 1.6, -91.05], -90, 3.2, 2);
+await walkIn(null, 0, 0.9);
+const up4 = await walkIn(null, 90, 3.6);
+check('신관 동쪽 계단으로 4층 (level 3, 바닥 11.25)', up4.lv === 3 && near(up4.y, 11.25), JSON.stringify(up4));
+await walkIn([1.5, 1.6, -89.6], 90, 0, 3);
+check('4층 책상 위 책 살펴보기 안내', await poll(() => document.getElementById('interact').textContent.includes('책상 위 책')));
+await press('KeyE', 120);
+check('E5 전이면 임시 문구만 (earlyBook 그대로)', await poll(() => document.getElementById('toast').textContent.includes('누군가의 책')) && !(await S(() => window.__DEBUG.story.flags.values.earlyBook)));
+await walkIn([4.4, 1.6, -91], 0, 0, 4);
+check('5층 내 책 교실(2-13) 문 안내', await poll(() => document.getElementById('interact').textContent.includes('2-13 문 열기')));
+await press('KeyE', 120);
+check('열쇠 교실은 잠김 (hasClassKey 없음)', await poll(() => document.getElementById('toast').textContent.includes('2-13 — 잠겨 있다')) && !(await S(() => window.__DEBUG.interior.doorsA.openIds.includes('A5F-2-2'))));
+await walkIn([8, 1.6, -91.5], 0, 0.1, 1);
+const yl = await S(() => ({ inside: window.__DEBUG.interior.atmo.inside, inRoom: window.__DEBUG.interior.atmo.yajaInRoom, open: window.__DEBUG.interior.doorsA.openIds }));
+check('신관 2층: 야자 교실 빛이 교실 안으로, 뒷문은 열려 있음', yl.inside && yl.inRoom && yl.open.includes('A2F-3-2'), JSON.stringify(yl));
+await S(() => window.__DEBUG.story.flags.set('hasConnectorKey', false));
 await walkIn([0, 1.6, 12], 0, 0.5);
 check('밖으로 나오면 실내 분위기 해제 시작', !(await S(() => window.__DEBUG.interior.atmo.inside)));
 check('걷기 1.6 m/s 그대로', near(stam.walk.v, 1.6) && !stam.walk.run && stam.walk.st === 100, JSON.stringify(stam.walk));
