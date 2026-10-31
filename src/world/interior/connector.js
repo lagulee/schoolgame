@@ -21,7 +21,7 @@ export function connectorPlan(msg = {}) {
     sides: [[Br.x0, zA, o.x0, zM], [o.x1, zA, Br.x1, zM]], // 통로 옆벽
     jambs: [[o.x0, hz, hx, zIn], [hx + C.w, hz, o.x1, zIn]], // 셸 구멍 안 문 양옆 벽
     door: {
-      id: 'connector', name: msg.name ?? '연결문', hinge: [hx, hz], w: C.w, h: C.h, y: o.y0, leaf: C.leaf,
+      id: 'connector', name: msg.name ?? '연결문', key: 'hasConnectorKey', hinge: [hx, hz], w: C.w, h: C.h, y: o.y0, leaf: C.leaf,
       closed: [hx, hz, hx + C.w, zIn], // 닫힌 문 = 셸 구멍 안 문 자리
       open: [hx - 0.02, hz - C.w - 0.02, hx + C.leaf + 0.03, hz], // 90° 열린 문짝 (통로 서쪽에 붙음)
       pos: [hx + C.w / 2, (hz + zIn) / 2],
@@ -70,7 +70,7 @@ export class ConnectorState {
   }
 
   get locked() {
-    return !this.hasKey('hasConnectorKey');
+    return !this.hasKey(this.P.door.key);
   }
 
   // 문짝이 쓸고 지나가는 자리(경첩 둘레 사분원)에 플레이어가 걸쳐 있나. doorway = 닫힌 문 자리(셸 구멍)까지 (닫을 때)

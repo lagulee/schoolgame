@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { INTERIOR, PLAYER } from '../../config.js';
 import { SIDE } from './rects.js';
 import { mat4 } from '../geom.js';
-import { doorSlide, doorRattle } from '../../audio/door.js';
+import { doorSlide, doorLocked } from '../../audio/door.js';
 
 const fill = (msg, name) => msg.replace('{name}', name);
 
@@ -44,8 +44,8 @@ export class Doors {
     this.mesh.setMatrixAt(s.i, mat4(x, s.d.y + D.h / 2, z, s.alongX ? 0 : Math.PI / 2, D.w, D.h, D.leaf));
   }
 
-  // 상호작용 등록 (E). ctx: { interactions, toast, audio, player, hasKey(플래그 이름) }
-  attach({ interactions, toast, audio, player, hasKey = () => false }) {
+  // 상호작용 등록 (E). ctx: { interactions, toast, audio, player, hasKey(플래그 이름), lockSound(상호작용 id → 소리 종류, map.json) }
+  attach({ interactions, toast, audio, player, hasKey = () => false, lockSound = () => 'rattle' }) {
     this.audio = audio;
     this.player = player;
     const M = this.P.messages;
@@ -60,7 +60,7 @@ export class Doors {
           if (d.locked || (d.key && !hasKey(d.key))) {
             s.shake = 0.0001;
             s.shakeT = 0;
-            doorRattle(audio, s.sound);
+            doorLocked(audio, s.sound, lockSound(`door:${d.id}`));
             toast(fill(M.locked, d.name));
             return;
           }
@@ -76,7 +76,7 @@ export class Doors {
       interactions.add({
         id: `door:${e.d.id}`, pos: e.d.pos, level: e.d.L, radius: R, label: fill(M.doorLabel, e.d.name),
         onUse: () => {
-          doorRattle(audio, e.sound);
+          doorLocked(audio, e.sound, lockSound(`door:${e.d.id}`));
           toast(fill(M.locked, e.d.name));
         },
       });

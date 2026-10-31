@@ -1,14 +1,14 @@
 {
-  "_comment": "보조배터리 PB1~PB9 빈 뼈대 (STORY.md v3 8-4장, 위치는 [가정]). id·장소·숨긴 곳·줍는 시점(from: 이 사건들 중 하나가 시작된 뒤부터). 좌표·오브젝트·줍기 처리·체크포인트 저장은 단계 0b·1 이후.",
+  "_comment": "보조배터리 PB1~PB9 (STORY 8-4, 단계 10 에서 좌표·오브젝트 배치, 사용자 확인 2026-10-31 '추천대로'). id·장소·숨긴 곳·줍는 시점(from: 이 사건들 중 하나가 시작된 뒤부터). level = 층(0 = 1층), pos = [x, z] (상호작용·물체 자리), h = 그 층 바닥에서 물체 높이(m), anchor = 기대어 둔 가구('방 id:가구', interior/furniture.js anchors 또는 'prop:locker' = 복도 사물함) — map.test 가 pos 가 그 가구 가까이인지·걸어서 닿는지 검사. hidden = 서랍·사물함 안이라 물체가 안 보이고 label(살펴보기)로 줍는다. label 이 없으면 '보조배터리 줍기'. PB4 는 사물함(1.75 m)이 눈높이보다 높아 위가 안 보이므로 물체는 두되 '사물함 위 살펴보기'. '라이트로 살펴봐야 보인다'는 규칙은 넣지 않음 [가정]. PB4 사물함은 이 단계에서 3층 연결문 앞에 새로 둠, PB7 교실(2-13)은 열쇠(hasClassKey) 문이라 실제로는 책을 챙기러 다시 갈 때 줍는다.",
   "powerbanks": [
-    { "id": "PB1", "place": "구관 1층 현관", "spot": "안내 게시판 아래", "from": ["E1"] },
-    { "id": "PB2", "place": "구관 1층 복도", "spot": "소화전함 옆 바닥", "from": ["E1"] },
-    { "id": "PB3", "place": "구관 2층 교무실", "spot": "서랍 안", "from": ["E4"] },
-    { "id": "PB4", "place": "구관 3층 연결문 앞", "spot": "사물함 위", "from": ["E4"] },
-    { "id": "PB5", "place": "신관 3층 복도", "spot": "사물함 안", "from": ["E5"] },
-    { "id": "PB6", "place": "신관 4층 교실", "spot": "교탁 아래", "from": ["E5"] },
-    { "id": "PB7", "place": "신관 5층 교실", "spot": "책상 서랍 속", "from": ["E6"] },
-    { "id": "PB8", "place": "신관 2층 인근 교실", "spot": "청소도구함 안", "from": ["E8", "R1-b"] },
-    { "id": "PB9", "place": "구관 4층 교실", "spot": "사물함 안", "from": ["E11", "R1-c"] }
+    { "id": "PB1", "place": "구관 1층 현관", "spot": "안내 게시판 아래", "from": ["E1"], "level": 0, "pos": [26.25, -13.72], "h": 0, "anchor": "lobby:board" },
+    { "id": "PB2", "place": "구관 1층 복도", "spot": "소화전함 옆 바닥", "from": ["E1"], "level": 0, "pos": [17.82, -22.3], "h": 0, "anchor": "prop:hydrant" },
+    { "id": "PB3", "place": "구관 2층 교무실", "spot": "서랍 안", "from": ["E4"], "level": 1, "pos": [22.33, -48.53], "hidden": true, "label": "교감석 서랍 살펴보기", "anchor": "2F-staff:chiefDesk" },
+    { "id": "PB4", "place": "구관 3층 연결문 앞", "spot": "사물함 위", "from": ["E4"], "level": 2, "pos": [16.21, -59.0], "h": 1.75, "label": "사물함 위 살펴보기", "anchor": "prop:locker" },
+    { "id": "PB5", "place": "신관 3층 복도", "spot": "사물함 안", "from": ["E5"], "level": 2, "pos": [1.5, -90.36], "hidden": true, "label": "사물함 살펴보기", "anchor": "prop:locker" },
+    { "id": "PB6", "place": "신관 4층 교실", "spot": "교탁 아래", "from": ["E5"], "level": 3, "pos": [-1.58, -86.75], "hidden": true, "label": "교탁 아래 살펴보기", "anchor": "A4F-2:lectern" },
+    { "id": "PB7", "place": "신관 5층 교실", "spot": "책상 서랍 속", "from": ["E6"], "level": 4, "pos": [3.36, -84.66], "hidden": true, "label": "책상 서랍 살펴보기", "anchor": "A5F-2:desk:4,0,0" },
+    { "id": "PB8", "place": "신관 2층 인근 교실", "spot": "청소도구함 안", "from": ["E8", "R1-b"], "level": 1, "pos": [-3.4, -83.98], "hidden": true, "label": "청소도구함 살펴보기", "anchor": "A2F-1:cleaning" },
+    { "id": "PB9", "place": "구관 4층 교실", "spot": "사물함 안", "from": ["E11", "R1-c"], "level": 3, "pos": [-0.64, -57.63], "hidden": true, "label": "사물함 살펴보기", "anchor": "4F-3:lockers" }
   ]
 }

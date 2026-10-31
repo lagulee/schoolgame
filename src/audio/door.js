@@ -1,4 +1,4 @@
-// 문 소리 (단계 8·9, 파일 없음): 교실 미닫이 드르륵, 잠긴 문 덜컹, 현관 자동문 모터, 연결문 경첩 삐걱임. AudioSystem.oneShot 으로 3D 위치에서 낸다.
+// 문 소리 (단계 8·9·10, 파일 없음): 교실 미닫이 드르륵, 잠긴 문 덜컹(문 종류별, 단계 10), 현관 자동문 모터, 연결문 경첩 삐걱임. AudioSystem.oneShot 으로 3D 위치에서 낸다.
 
 // 짧은 두드림: 노이즈 버스트(대역 통과) + 낮은 쿵
 function knock(ctx, out, noise, t, gain, freq) {
@@ -66,6 +66,20 @@ export function doorRattle(audio, pos) {
   audio.oneShot(pos, (ctx, out, t) => {
     for (const [dt, g] of [[0, 0.5], [0.11, 0.38], [0.24, 0.3]]) knock(ctx, out, audio.noise, t + dt, g, 700 + Math.random() * 300);
     return 0.8;
+  }, { ref: 3, rolloff: 1.2, volume: 0.9 });
+}
+
+// 잠긴 문 소리 (단계 10, data/map.json lockSounds): rattle = 교실 미닫이 덜컹, metal = 철문(연결문) 묵직하게, glass = 유리문 가볍게 높게
+const LOCKED = {
+  metal: { hits: [[0, 0.6], [0.14, 0.45], [0.3, 0.34]], freq: [380, 160] },
+  glass: { hits: [[0, 0.32], [0.1, 0.24]], freq: [1700, 500] },
+};
+export function doorLocked(audio, pos, kind = 'rattle') {
+  const L = LOCKED[kind];
+  if (!L) return doorRattle(audio, pos);
+  audio.oneShot(pos, (ctx, out, t) => {
+    for (const [dt, g] of L.hits) knock(ctx, out, audio.noise, t + dt, g, L.freq[0] + Math.random() * L.freq[1]);
+    return 0.9;
   }, { ref: 3, rolloff: 1.2, volume: 0.9 });
 }
 

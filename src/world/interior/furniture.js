@@ -1,7 +1,8 @@
 // 실내 가구 배치 (단계 8 본관, 단계 9 신관, three 없음). 들어갈 수 있는 방과 현관 홀만 채운다 (잠긴 방은 안이 보이지 않음).
 // 방마다 앞(front) 벽 쪽을 u = D, 뒤를 u = 0 으로 두는 방 좌표(u, v)로 배치하고 월드 상자로 바꾼다.
 // 결과: { items: [{ L, mat, b: [x0, y0, z0, x1, y1, z1], faces?, local?, tile? }], solids: [{ rect, level }],
-//         spots: [{ id, room, L, pos: [x, z], book?: b }] (신관 책상 위 책 — 따로 그려 사건에서 숨길 수 있게) }
+//         spots: [{ id, room, L, pos: [x, z], book?: b }] (신관 책상 위 책 — 따로 그려 사건에서 숨길 수 있게),
+//         anchors: [{ room, what, L, pos: [x, z], top }] (보조배터리 자리 검사용: 교탁·청소함·사물함·교감석·책상·현관 게시판, 단계 10) }
 // 그리기는 interior/index.js 가 Batch 로, 충돌은 addFurnitureCollision. 치수는 config INTERIOR.furniture.
 import { INTERIOR, ANNEX } from '../../config.js';
 import { yAt, ceilAt } from './plan.js';
@@ -39,10 +40,15 @@ function roomKit(out, sp) {
     out.items.push({ L: sp.L, mat, b: [x0, y + h0, z0, x1, y + h1, z1], ...opt });
   };
   const solid = ([u0, u1], [v0, v1]) => out.solids.push({ rect: fr.R(u0, u1, v0, v1), level: sp.L });
+  // 이름 붙은 가구 자리 (방 좌표 → 월드 중심, 윗면 높이)
+  const anchor = (what, [u0, u1], [v0, v1], top) => {
+    const [x0, z0, x1, z1] = fr.R(u0, u1, v0, v1);
+    out.anchors.push({ room: sp.id, what, L: sp.L, pos: [(x0 + x1) / 2, (z0 + z1) / 2], top });
+  };
   // 문 쪽 가로 끝 (문이 v = W 쪽이면 true) — 문 앞은 비운다
   const doorAtW = fr.at(sp.side) === 'vW';
   const vFar = (a, b) => (doorAtW ? [a, b] : [fr.W - b, fr.W - a]); // 문 반대쪽(창 쪽)에서 잰 v
-  return { ...fr, put, solid, vFar, y, desks: [] };
+  return { ...fr, put, solid, anchor, vFar, y, desks: [] };
 }
 
 // 책상(상판 + 다리 4개) — 방향 무관. 의자는 상판 앞뒤 중 u 가 작은 쪽(뒤)에
@@ -83,6 +89,7 @@ function classroom(k) {
   k.put('metal', [D - 0.1, D], [W / 2 - C.board / 2, W / 2 + C.board / 2], [0.8, 0.85]);
   k.put('wood', [D - 1.55, D - 1.0], [W / 2 - 0.4, W / 2 + 0.4], [0, 1.05]);
   k.solid([D - 1.55, D - 1.0], [W / 2 - 0.4, W / 2 + 0.4]);
+  k.anchor('lectern', [D - 1.55, D - 1.0], [W / 2 - 0.4, W / 2 + 0.4], 1.05);
   const tv = k.vFar(0.2, 1.5);
   desk(k, [D - 1.95, D - 1.2], tv, 0.74);
   chair(k, [D - 1.15, D - 0.75], [tv[0] + 0.4, tv[1] - 0.45], 1);
@@ -99,6 +106,7 @@ function classroom(k) {
         desk(k, [uc, uc + C.desk.d], [a, a + C.desk.w], C.desk.h);
         chair(k, [uc - 0.42, uc - 0.04], [a + 0.11, a + C.desk.w - 0.11]);
         k.desks.push({ key: `${r},${p},${s}`, u: [uc, uc + C.desk.d], v: [a, a + C.desk.w], s });
+        k.anchor(`desk:${r},${p},${s}`, [uc, uc + C.desk.d], [a, a + C.desk.w], C.desk.h);
       }
       k.solid([uc - 0.45, uc + C.desk.d], [v0, v0 + pairW]);
     }
@@ -106,8 +114,10 @@ function classroom(k) {
   // 뒤: 사물함 + 게시판 + 청소함(창 쪽 구석)
   const lv = k.vFar(1.0, W - 1.6);
   cabinet(k, 'locker', [0, F().lockerD], lv, C.lockerH);
+  k.anchor('lockers', [0, F().lockerD], lv, C.lockerH);
   wallBoard(k, 'notice', 'u0', [1.2, W - 1.2], [1.45, 2.35]);
   cabinet(k, 'cabinet', [0, 0.5], k.vFar(0.1, 0.85), 1.8);
+  k.anchor('cleaning', [0, 0.5], k.vFar(0.1, 0.85), 1.8);
 }
 
 function counsel(k) {
@@ -174,6 +184,7 @@ function staff(k) {
   desk(k, [D - 1.7, D - 0.95], [W / 2 - 0.8, W / 2 + 0.8], 0.74);
   chair(k, [D - 0.9, D - 0.5], [W / 2 - 0.22, W / 2 + 0.22], 1);
   k.solid([D - 1.7, D - 0.5], [W / 2 - 0.8, W / 2 + 0.8]);
+  k.anchor('chiefDesk', [D - 1.7, D - 0.95], [W / 2 - 0.8, W / 2 + 0.8], 0.74);
   wallBoard(k, 'board', 'uD', [1.0, 4.0], [0.9, 2.1], 0.04);
   wallBoard(k, 'notice', 'uD', [4.5, 7.5], [1.0, 2.1]);
   cabinet(k, 'cabinet', [0.5, D - 0.3], [W - 0.45, W], 0.85);
@@ -267,11 +278,12 @@ function lobby(out, sp) {
   out.items.push({ L: sp.L, mat: 'locker', b: [B.shoes[0], y, z, B.shoes[1], y + B.shoesH, z + B.shoesD], local: true, tile: [0.3, 0.3], faces: 'tsew' });
   out.solids.push({ rect: [B.shoes[0], z, B.shoes[1], z + B.shoesD], level: sp.L });
   out.items.push({ L: sp.L, mat: 'notice', b: [B.board[0], y + 1.2, z, B.board[1], y + 2.2, z + 0.03], local: true, tile: [B.board[1] - B.board[0], 1], faces: 's' });
+  out.anchors.push({ room: sp.id, what: 'board', L: sp.L, pos: [(B.board[0] + B.board[1]) / 2, z], top: 1.2 });
 }
 
 // extras (신관 데이터): { yaja, spots } — spots 중 desk 가 있는 것은 그 책상 위에 책 자리를 만든다
 export function furniturePlan(P, extras = {}) {
-  const out = { items: [], solids: [], spots: [] };
+  const out = { items: [], solids: [], spots: [], anchors: [] };
   for (const sp of P.spaces) {
     if (!(sp.hall || sp.enter)) continue;
     fixtures(out, sp, P.top);

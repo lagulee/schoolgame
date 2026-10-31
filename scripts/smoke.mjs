@@ -1,7 +1,8 @@
-// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 신관(연결문·통로·계단·살펴보기) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 콘솔 에러 수집
+// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 신관(연결문·통로·계단·살펴보기) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 맵(위치 이름·보조배터리 자리, smokeMap.mjs) → 콘솔 에러 수집
 // ?light=1 : 핸드폰 라이트를 켠 채 시작 (손전등이 없어진 뒤 화면이 어두워도 같은 조건으로 점검)
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
+import { mapSmoke } from './smokeMap.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -358,6 +359,7 @@ await S(() => { const s = window.__DEBUG.chase; s.start('C4', { atExit: 'collaps
 check('출구 여는 동안 조작 불가', await poll(() => window.__DEBUG.player.frozen && window.__DEBUG.chase.locked));
 await S(() => window.__DEBUG.chase.update(1.05)); // SwiftShader 는 프레임이 느려 1초를 직접 진행
 check('1초 뒤 통과 → collapse, 조작 복귀', await poll(() => !window.__DEBUG.chase.active && window.__DEBUG.chase.last?.finale === 'collapse' && !window.__DEBUG.player.frozen));
+await mapSmoke({ S, check, poll, press }); // 단계 10: 위치 이름·보조배터리
 const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent, pos: window.__DEBUG?.pos?.() }));
 console.log(info);
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');

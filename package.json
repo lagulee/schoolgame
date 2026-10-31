@@ -1,7 +1,7 @@
 {
   "name": "night-school-demo",
   "private": true,
-  "version": "1.13.0",
+  "version": "1.14.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,9 @@
     "shots": "node scripts/shots.mjs",
     "smoke": "node scripts/smoke.mjs",
     "touch": "node scripts/touch.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "map": "node scripts/map.mjs",
+    "perf": "node scripts/perf.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

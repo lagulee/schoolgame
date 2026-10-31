@@ -15,6 +15,8 @@ import { GateUi, tapCounter } from './debug/gateUi.js';
 import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
+import { MapData } from './world/mapData.js';
+import mapJson from '../data/map.json';
 import { StaminaBar } from './ui/staminaBar.js';
 import { setupChase } from './chase/setup.js';
 import { setupPuzzle } from './puzzle/setup.js';
@@ -67,7 +69,9 @@ function toast(msg) {
 const onOff = (v) => (v ? '켜짐' : '꺼짐');
 const touchMode = isTouchDevice();
 const story = setupStory({ player, touch: touchMode, toast });
-const phone = setupPhone({ scene, camera, story, touch: touchMode, toast }); // 손전등 대신 핸드폰 라이트 (결정 D6)
+const mapData = new MapData(mapJson); // 위치 이름·잠긴 문 소리 (단계 10)
+const where = () => mapData.label(player.pos.x, player.pos.z, player.level);
+const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where }); // 손전등 대신 핸드폰 라이트 (결정 D6)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
 // 스태미나는 체크포인트 시점의 값으로 되돌린다 (단계 0b-3: 추격에서 잡히면 추격 시작 때의 값. 마지막 추격은 시작 때 가득)
@@ -83,7 +87,7 @@ audio.addLedBuzz(world.ctx.sur.sign.group.position);
 for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
 // 실내 문·연결문·신관 살펴보기 자리 (E). 열쇠 문은 스토리 플래그(없는 이름이면 잠김), 책상 위 책은 상호작용 사건
-world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner });
+world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner, lockSound: (id) => mapData.lockSound(id) });
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
@@ -260,13 +264,13 @@ function step(t, dt) {
   captureIfRequested(renderer.domElement);
   if (!shot) {
     hud.update({
-      quality: state.quality, pos: camera.position, level: player.level, interior: world.interior.atmo.hudLine(player), surface: collision.surfaceAt(camera.position.x, camera.position.z, player.level),
+      quality: state.quality, pos: camera.position, level: player.level, interior: `${world.interior.atmo.hudLine(player)}  위치 ${where() || '-'}`, surface: collision.surfaceAt(camera.position.x, camera.position.z, player.level),
       fog: state.fog, bob: player.bob.level, flags: post.flags, phone: phone.hudLine(), stamina: staminaHud(), chase: chase.hudLine(), puzzle: puzzle.hudLine(), inspect: state.inspect,
       muted: audio.muted, events: director.log, story: story.hudLines(),
     });
   }
 }
-window.__DEBUG = { debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 

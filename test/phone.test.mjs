@@ -229,3 +229,38 @@ test('저전력 흐려짐: 상태가 바뀌는 횟수는 어느 1초 안에서�
   assert.ok(changes.length > 10, '흐려짐이 실제로 일어남');
   for (let i = 0; i + 2 < changes.length; i++) assert.ok(changes[i + 2] - changes[i] > 1 - 1e-9, `3회가 1초 안: ${changes[i]}`);
 });
+
+test('보조배터리 맵 배치 (단계 10): placeAll 로 데이터 좌표·층에 9개, 서랍·사물함 안은 살펴보기 문구, 복원하면 다시 놓임', () => {
+  const { story, characters } = loadStory();
+  const { powerbanks } = loadSkeletons();
+  const r = new StoryRunner({ story, characters, ui: fakeUI(), timing: { subtitleBase: 1, subtitlePerChar: 0 } });
+  const items = new Map();
+  const interactions = { add: (it) => items.set(it.id, it), remove: (id) => items.delete(id) };
+  const p = new Phone(PHONE, () => 0.5);
+  const msgs = { bankLabel: '보조배터리 줍기', bankTooEarly: '{id}', bankPicked: '{n}', bankPov: 'pov', bankNone: 'none', bankPlaced: '{id}' };
+  const banks = new PowerBanks({ phone: p, defs: powerbanks, interactions, seen: seenBy(r.registry), msgs, gain: PHONE.BANK_GAIN });
+  banks.placeAll();
+  assert.equal(items.size, 9);
+  for (const d of powerbanks) {
+    assert.deepEqual(items.get(d.id).pos, d.pos);
+    assert.equal(items.get(d.id).level, d.level);
+    assert.equal(items.get(d.id).label, d.label ?? '보조배터리 줍기');
+    if (d.hidden) assert.ok(d.label, `${d.id} 살펴보기 문구`);
+  }
+  r.next(); // E1
+  const saved = p.save();
+  assert.equal(banks.pick('PB1').ok, true);
+  assert.ok(!items.has('PB1') && !banks.at.has('PB1'));
+  p.load(saved); // 체크포인트 복원 → 줍기 전
+  banks.sync();
+  assert.ok(items.has('PB1'), '복원하면 제자리에 다시 놓임');
+  assert.deepEqual(banks.at.get('PB1').pos, powerbanks[0].pos);
+  // 디버그 U: 맵에 놓인 다음 것을 앞으로 옮긴다
+  assert.equal(banks.debugPlaceNext(1, 2, 0), 'PB1');
+  assert.deepEqual(items.get('PB1').pos, [1, 2]);
+  assert.equal(banks.debugPlaceNext(1, 2, 0), 'PB2');
+  banks.clear();
+  assert.equal(items.size, 0);
+  banks.placeAll();
+  assert.deepEqual(items.get('PB1').pos, powerbanks[0].pos, '초기화 뒤 제자리');
+});

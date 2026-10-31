@@ -13,7 +13,7 @@ import { Doors } from './doors.js';
 import { EntranceDoor } from './lobby.js';
 import { buildConnector, ConnectorDoor } from './connectorView.js';
 import { Atmosphere } from './atmosphere.js';
-import { doorRattle } from '../../audio/door.js';
+import { doorLocked } from '../../audio/door.js';
 import { pilotiBackZ } from '../layout.js';
 import { SCHOOL } from '../../config.js';
 
@@ -92,20 +92,22 @@ export function buildInterior(scene, M, col, ctx, renderer) {
     connector,
     entrance,
     atmo,
-    // 상호작용(E)·소리 연결 (main.js 에서 스토리 준비 뒤). hasKey(플래그 이름) = 열쇠 문, runner = 상호작용 사건(책)
-    attach({ interactions, toast, audio: a, player, hasKey, runner: r }) {
+    // 상호작용(E)·소리 연결 (main.js 에서 스토리 준비 뒤). hasKey(플래그 이름) = 열쇠 문, runner = 상호작용 사건(책),
+    // lockSound(상호작용 id) = 잠긴 문 소리 종류 (data/map.json, 단계 10)
+    attach({ interactions, toast, audio: a, player, hasKey, runner: r, lockSound }) {
       audio = a;
       runner = r ?? null;
-      doors.attach({ interactions, toast, audio, player, hasKey });
-      doorsA.attach({ interactions, toast, audio, player, hasKey });
-      connector.attach({ interactions, toast, audio, player, hasKey });
+      const ctx = { interactions, toast, audio, player, hasKey, lockSound };
+      doors.attach(ctx);
+      doorsA.attach(ctx);
+      connector.attach(ctx);
       // 필로티 끝·출입문 홀 유리벽 (안팎 어디서나, 잠김)
       const pz = pilotiBackZ() - SCHOOL.shellWall / 2;
       const pos = new THREE.Vector3(0, 1.5, pz);
       interactions.add({
         id: 'door:pilotiGlass', pos: [0, pz], level: 0, label: P.messages.glassLabel,
         onUse: () => {
-          doorRattle(audio, pos);
+          doorLocked(audio, pos, lockSound?.('door:pilotiGlass'));
           toast(P.messages.glassLocked);
         },
       });

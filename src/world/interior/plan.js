@@ -274,7 +274,10 @@ function addProps(P, props) {
       put('hydrant', front(f, x, z, H.w, H.d), f, y + H.y, y + H.y + H.h, true);
       P.signs.push({ L, kind: 'hydrant', pos: [x + NORMAL[f][0] * 0.08, z + NORMAL[f][1] * 0.08, y + H.y + H.h + 0.15], normal: NORMAL[f] });
     }
-    for (const [x0, z0, x1, z1, f] of props.lockers) put('locker', line(x0, z0, x1, z1, f, D.locker.d), f, y, y + D.locker.h, true);
+    for (const [x0, z0, x1, z1, f, lv] of props.lockers) {
+      if (lv !== undefined && lv !== L) continue; // 6번째 값이 있으면 그 층에만 (단계 10: 3층 연결문 앞)
+      put('locker', line(x0, z0, x1, z1, f, D.locker.d), f, y, y + D.locker.h, true);
+    }
     for (const [x0, z0, x1, z1, f] of props.boards) put('board', line(x0, z0, x1, z1, f, D.board.d), f, y + D.board.y, y + D.board.y + D.board.h, false);
     for (const [x, z, f] of props.extinguishers) {
       const E = D.extinguisher;

@@ -267,6 +267,11 @@ export const SHOTS = [
   { name: '28_annex_yaja_room', pos: [14.2, 1.6, -89.4], yaw: 110, pitch: -12, lv: 1 },
   { name: '29_annex_stairs', pos: [16.1, 1.6, -91.9], yaw: -90, pitch: -6, lv: 1, light: 1 },
   { name: '30_annex_desk_4f', pos: [3.6, 1.6, -89.5], yaw: 112, pitch: -22, lv: 3, light: 1 },
+  // 단계 10: 보조배터리 자리 (PB4 연결문 앞 사물함 위, PB1 현관 게시판 아래, PB2 소화전 옆) + 핸드폰 화면 위치 이름
+  { name: '31_pb4_locker', pos: [17.6, 1.6, -57.4], yaw: 41, pitch: -14, lv: 2, light: 1 },
+  { name: '32_pb1_lobby_board', pos: [25.2, 1.6, -11.6], yaw: -27, pitch: -30, light: 1 },
+  { name: '33_pb2_hydrant', pos: [16.4, 1.6, -20.6], yaw: -40, pitch: -32, light: 1 },
+  { name: '34_phone_place', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1, phone: 1 },
 ];
 
 // 핸드폰 (STORY 8장). 배터리 단위는 %. 단계 0b-1(단계 3)에서 손전등을 대체했다
@@ -283,6 +288,8 @@ export const PHONE = {
   LOW_LEVEL: 10, // 이하이면 라이트가 더 어둡고 가끔 흐려짐
   WARN_SHOW: 3, // 경고 알림 표시 시간 (초)
   DEBUG_BANK_AHEAD: 1.0, // U 키(디버그) 보조배터리를 놓는 거리 (플레이어 앞, m)
+  // 보조배터리 물체 (단계 10, phone/bankView.js): 크기 [x, y, z] m, 표시등(깜빡임 없음)
+  BANK_VIEW: { size: [0.07, 0.025, 0.13], color: 0x1c1e22, led: 0.008, ledColor: 0x3cff9a, ledGlow: 1.4, turn: 0.35 },
   // 라이트: 이전 손전등(π/7, 거리 25, 세기 26)보다 약하게
   LIGHT: {
     intensity: 15.6, // 이전 손전등의 60%
@@ -354,4 +361,16 @@ export const STAMINA = {
   TIRED_EASE: 1.5, // 탈진 효과(숨소리·흔들림) 켜짐/꺼짐 속도 (1/s)
   SHAKE: { amp: 0.012, freq: [1.3, 2.1] }, // 탈진 화면 흔들림: 진폭(m)·느린 사인 두 개(Hz) — 밝기 변화 없는 위치 흔들림
   BREATH: { volume: 0.22, rate: 1.1 }, // 헐떡이는 숨소리: 음량·초당 호흡 수
+};
+
+// 성능 점검 (단계 10, scripts/perf.mjs): 품질별 가정 기기 해상도(CSS px)·기기 픽셀비, 측정 시점(SHOTS 이름), 프레임 수
+export const PERF = {
+  devices: {
+    low: { w: 960, h: 540, dpr: 1.0 }, // 저가형 폰 가로 가정
+    mid: { w: 1280, h: 720, dpr: 1.25 }, // 보통 폰·태블릿 (QUALITY.mid pixelRatio)
+    high: { w: 1920, h: 1080, dpr: 1.5 }, // PC (QUALITY.high pixelRatio)
+  },
+  views: ['01_front_overview', '11_field_buildings', '15_lobby_to_door', '17_corridor_east', '18_atrium_2f', '19_classroom', '24_bridge_inside', '28_annex_yaja_room'],
+  warmup: 3,
+  frames: 8,
 };

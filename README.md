@@ -116,6 +116,9 @@ npm run shots                         # config.js 의 SHOTS 시점을 screenshot
 npm run shots -- --only=02 --extra="ev=led" --suffix=_ev_led
 npm run smoke                         # 클릭·키 입력·핸드폰·결정적 이동(충돌) 테스트, 콘솔 에러 수집 (?light=1 로 라이트 켠 채)
 npm run touch                         # 모바일 에뮬레이션: 조이스틱·시점 드래그·버튼·메뉴·멀티터치 테스트
+npm run perf                          # 품질 Low/Mid/High 가정 해상도에서 프레임 시간·드로우콜 (headless 라 비율만 참고)
+npm run map                           # 실내 배치를 바꾼 뒤 data/map.json 의 공간·방·잠긴 문 다시 만들기
+node scripts/travel.mjs               # 주요 구간 이동 거리·시간 표 (걷기 1.6 m/s)
 ```
 
 Playwright 브라우저가 없다면 `npx playwright install chromium` 을 먼저 실행하세요. headless Chromium 은 `--use-angle=swiftshader --ignore-gpu-blocklist` 플래그로 WebGL 을 켭니다.

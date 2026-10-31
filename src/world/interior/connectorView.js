@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { ANNEX, INTERIOR, SCHOOL } from '../../config.js';
 import { instanced, mat4 } from '../geom.js';
 import { ConnectorState, connectorFixtures } from './connector.js';
-import { doorSwing, doorRattle } from '../../audio/door.js';
+import { doorSwing, doorLocked } from '../../audio/door.js';
 
 const G = 'bridge';
 
@@ -92,7 +92,7 @@ export class ConnectorDoor {
     this.shakeT = -1;
   }
 
-  attach({ interactions, toast, audio, player, hasKey }) {
+  attach({ interactions, toast, audio, player, hasKey, lockSound = () => 'metal' }) {
     if (hasKey) this.hasKey = hasKey;
     this.player = player;
     const M = this.P.msg;
@@ -105,7 +105,7 @@ export class ConnectorDoor {
         const r = s.use(player);
         if (r === 'locked') {
           this.shakeT = 0;
-          doorRattle(audio, this.sound);
+          doorLocked(audio, this.sound, lockSound('door:connector'));
           toast(M.locked);
         } else if (r !== 'blocked') {
           doorSwing(audio, this.sound, C.time, r === 'close');
