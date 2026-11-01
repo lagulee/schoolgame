@@ -16,6 +16,8 @@ import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './pl
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
 import { MapData } from './world/mapData.js';
+import { NavGuide } from './world/navGuide.js';
+import navData from '../data/nav.json';
 import mapJson from '../data/map.json';
 import { StaminaBar } from './ui/staminaBar.js';
 import { setupChase } from './chase/setup.js';
@@ -76,7 +78,22 @@ const mapData = new MapData(mapJson); // 위치 이름·잠긴 문 소리 (단�
 const where = () => mapData.label(player.pos.x, player.pos.z, player.level);
 // 시작 전 자유 탐색 (단계 0c): 현관 홀에 들어서면 E1 (배터리 확정·hasRoofKey 판정은 E1 시작 경로 그대로)
 const prelude = new Prelude({ runner: story.runner, def: story.runner.story.prelude, locate: (x, z, l) => mapData.locate(x, z, l) });
-const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where }); // 손전등 대신 핸드폰 라이트 (결정 D6)
+// 길 안내 (핸드폰 화살표): 목표(objective 키)에 맞는 곳까지 길을 찾아 내가 보는 방향 기준 각도를 낸다
+const flagOn = (name) => story.runner.flags.values[name] === true;
+const navGuide = new NavGuide({ col: collision, info: world.interior.nav, mapData, data: navData, hasKey: flagOn });
+const _look = new THREE.Vector3();
+const guide = (dt) => {
+  const v = navGuide.update(dt, player.pos.x, player.pos.z, player.level, story.runner.objectiveKey());
+  if (!v) return null;
+  camera.getWorldDirection(_look);
+  const h = Math.hypot(_look.x, _look.z) || 1;
+  const fx = _look.x / h;
+  const fz = _look.z / h;
+  // 오른쪽 = (−fz, fx). 0° = 바로 앞, 시계 방향이 +
+  const angle = Math.round((Math.atan2(v.ax * -fz + v.az * fx, v.ax * fx + v.az * fz) * 180) / Math.PI);
+  return { state: v.state, text: v.text, step: v.step, rough: v.rough, angle };
+};
+const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where, guide }); // 손전등 대신 핸드폰 라이트 (결정 D6) // 손전등 대신 핸드폰 라이트 (결정 D6)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
 // 스태미나는 체크포인트 시점의 값으로 되돌린다 (단계 0b-3: 추격에서 잡히면 추격 시작 때의 값. 마지막 추격은 시작 때 가득)
@@ -283,7 +300,7 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 

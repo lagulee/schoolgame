@@ -86,6 +86,8 @@ export function buildInterior(scene, M, col, ctx, renderer) {
     plan: P,
     annex: A,
     site,
+    // 길 안내(src/world/navGuide.js)용: 문 충돌 박스·평면 문 목록·연결문 박스와 열쇠 이름
+    nav: { handles, doors: [...P.doors, ...A.doors], connector: connectorHandles, connectorKey: site.bridge.door.key },
     furniture: FP,
     doors,
     doorsA,

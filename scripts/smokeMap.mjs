@@ -20,6 +20,15 @@ export async function mapSmoke({ S, check, poll, press }) {
   await S(() => window.__DEBUG.phone.openScreen());
   check('핸드폰 화면 위치 = 지금 서 있는 곳', await poll(() => document.getElementById('phone').textContent.includes('구관 1층 · 현관 홀')));
   await S(() => window.__DEBUG.phone.closeScreen());
+  // 길 안내: 학교 앞에서 핸드폰을 열면 목표(본관 현관 홀)까지 거리 글과 화살표가 나온다. 홀 안에서는 '도착'
+  await S(() => { window.__DEBUG.player.setView([0, 1.6, 12], 0, 0, 0); window.__DEBUG.phone.openScreen(); });
+  check('핸드폰 가는 길: 현관 홀까지 거리 글 + 화살표', await poll(() => { const t = document.getElementById('phone').textContent; const a = document.querySelector('.ph-arrow'); return t.includes('가는 길') && /본관 현관 홀 · 약 \d+ m/.test(t) && a.style.visibility === 'visible' && a.style.transform.startsWith('rotate('); }));
+  const a0 = await S(() => document.querySelector('.ph-arrow').style.transform);
+  await S(() => window.__DEBUG.player.setView([0, 1.6, 12], 180, 0, 0)); // 반대로 돌아서면 화살표 각도가 바뀐다
+  check('돌아서면 화살표가 돈다', await poll((a0) => document.querySelector('.ph-arrow').style.transform !== a0, a0));
+  await S(() => window.__DEBUG.player.setView([22.3, 1.6, 0], 0, 0, 0));
+  check('현관 홀 안에서는 도착 표시, 화살표 숨김', await poll(() => document.getElementById('phone').textContent.includes('도착: 본관 현관 홀') && document.querySelector('.ph-arrow').style.visibility === 'hidden'));
+  await S(() => window.__DEBUG.phone.closeScreen());
   const names = await S(() => {
     const P = window.__DEBUG.player;
     const at = (pos, lv) => { P.setView(pos, 0, 0, lv); return window.__DEBUG.phonePlace(); };

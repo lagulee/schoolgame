@@ -30,6 +30,14 @@ export class PhoneUI {
     };
     this.objEl = row(this.t.objective);
     this.placeEl = row(this.t.place);
+    // 가는 길 (길 안내): 화살표(내가 보는 쪽 기준 방향) + 이름·거리 + 계단 안내. 안내가 없는 목표에서는 줄째 숨긴다
+    this.routeRow = el('div', 'ph-row ph-route', this.root);
+    el('div', 'ph-label', this.routeRow, this.t.route);
+    const body = el('div', 'ph-route-body', this.routeRow);
+    this.arrowEl = el('div', 'ph-arrow', body, '↑');
+    const txt = el('div', 'ph-route-text', body);
+    this.routeEl = el('div', 'ph-value', txt);
+    this.stepEl = el('div', 'ph-step', txt);
     el('div', 'ph-hint', this.root, opts.touch ? this.t.closeHintTouch : this.t.closeHintKey);
     this.warnEl = el('div', '', document.body);
     this.warnEl.id = 'phone-warn';
@@ -43,7 +51,7 @@ export class PhoneUI {
     this.warnLeft = this.opts.warnShow;
   }
 
-  // view: { open, level, lightOn, low, objective, place }
+  // view: { open, level, lightOn, low, objective, place, guide } — guide: null 또는 { state, text, step, angle (도, 0 = 앞, 시계 방향), rough }
   update(dt, view) {
     if (this.warnLeft > 0) {
       this.warnLeft -= dt;
@@ -60,5 +68,13 @@ export class PhoneUI {
     this.lightEl.classList.toggle('on', view.lightOn);
     this.objEl.textContent = view.objective || this.t.none;
     this.placeEl.textContent = view.place || this.t.none;
+    const g = view.guide;
+    this.routeRow.style.display = g ? '' : 'none';
+    if (g) {
+      this.routeEl.textContent = g.text;
+      this.stepEl.textContent = [g.rough ? this.t.rough : '', g.step].filter(Boolean).join(' · ');
+      this.arrowEl.style.visibility = g.state === 'path' ? 'visible' : 'hidden';
+      this.arrowEl.style.transform = `rotate(${g.angle ?? 0}deg)`;
+    }
   }
 }

@@ -69,10 +69,11 @@ export class Collision {
     return c;
   }
 
-  hit(x, z, r, level = 0) {
+  // ignore (선택): 무시할 박스의 Set — 길 안내(src/world/nav.js)가 "열 수 있는 문"을 통과로 보려고 쓴다
+  hit(x, z, r, level = 0, ignore = null) {
     const { boxes, circles } = this.at(level);
     for (const b of boxes) {
-      if (!b.on) continue;
+      if (!b.on || ignore?.has(b)) continue;
       const cx = Math.max(b.x0, Math.min(x, b.x1));
       const cz = Math.max(b.z0, Math.min(z, b.z1));
       const dx = x - cx;

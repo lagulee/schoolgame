@@ -4,6 +4,8 @@
     "title": "핸드폰",
     "objective": "해야 할 것",
     "place": "위치",
+    "route": "가는 길",
+    "rough": "대략의 방향",
     "battery": "배터리",
     "light": "라이트",
     "on": "켜짐",

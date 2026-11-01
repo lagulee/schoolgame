@@ -95,12 +95,17 @@ export class StoryRunner {
     return this.registry.last ? this.registry.get(this.registry.last, this.route) : null;
   }
 
-  // 핸드폰 목표 문구. 엔딩을 본 판이면 objectiveRepeat 우선
-  objective() {
+  // 핸드폰 목표 키 (story.json objectives 의 키). 엔딩을 본 판이면 objectiveRepeat 우선. 길 안내(data/nav.json)도 이 키를 쓴다
+  objectiveKey() {
     const ev = this.phoneEvent();
     // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c). 끝난 사건에 objectiveDone 이 있으면 그것 (단계 12)
     const done = ev && this.event?.kind !== 'event' && ev.objectiveDone;
-    const key = ev ? (this.repeat && ev.objectiveRepeat) || done || ev.objective : this.story.prelude?.objective;
+    return (ev ? (this.repeat && ev.objectiveRepeat) || done || ev.objective : this.story.prelude?.objective) || null;
+  }
+
+  // 핸드폰 목표 문구
+  objective() {
+    const key = this.objectiveKey();
     const text = key ? this.story.objectives?.[key] : null;
     return text ? this.text(text) : '';
   }
