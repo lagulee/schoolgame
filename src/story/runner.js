@@ -85,7 +85,8 @@ export class StoryRunner {
   // 핸드폰 목표 문구. 엔딩을 본 판이면 objectiveRepeat 우선
   objective() {
     const ev = this.phoneEvent();
-    const key = (this.repeat && ev?.objectiveRepeat) || ev?.objective;
+    // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c)
+    const key = ev ? (this.repeat && ev.objectiveRepeat) || ev.objective : this.story.prelude?.objective;
     const text = key ? this.story.objectives?.[key] : null;
     return text ? this.text(text) : '';
   }

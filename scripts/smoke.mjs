@@ -1,4 +1,4 @@
-// 상호작용 스모크 테스트: 클릭 → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 신관(연결문·통로·계단·살펴보기) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 맵(위치 이름·보조배터리 자리, smokeMap.mjs) → 콘솔 에러 수집
+// 상호작용 스모크 테스트: 시작 흐름(이름 입력·자유 탐색·현관 홀 E1) → 키 입력(이동·토글·이벤트) → 본관 실내(자동문·계단·교실 문) → 신관(연결문·통로·계단·살펴보기) → 핸드폰(E 화면·R 라이트·보조배터리) → 스토리 엔진(디버그 키로 사건 진행) → 맵(위치 이름·보조배터리 자리, smokeMap.mjs) → 콘솔 에러 수집
 // ?light=1 : 핸드폰 라이트를 켠 채 시작 (손전등이 없어진 뒤 화면이 어두워도 같은 조건으로 점검)
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
@@ -14,13 +14,49 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 page.on('pageerror', (e) => errors.push(String(e)));
 await page.goto(`http://localhost:${PORT}/?light=1`);
 await page.waitForFunction(() => document.getElementById('loading').textContent === '', null, { timeout: 120000 });
-await page.click('#overlay');
 const press = async (k, ms = 300) => { await page.keyboard.down(k); await page.waitForTimeout(ms); await page.keyboard.up(k); };
 const fails = [];
 const check = (name, pass, info = '') => { if (!pass) fails.push(name); console.log(`${pass ? '✅' : '❌'} ${name} ${info}`); };
 const S = (fn, arg) => page.evaluate(fn, arg);
 const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
+// 시작 흐름 (단계 0c): 경고 → 이름 입력(필수) → 시작 → 학교 앞 자유 탐색 → 현관 홀에서 E1 한 번
+check('시작 화면: 경고 문구 + 이름 칸', (await page.isVisible('#overlay .warn')) && (await page.isVisible('#name-input')));
+await page.click('#overlay', { position: { x: 8, y: 8 } });
+check('이름 없이 누르면 시작하지 않음 (안내)', !(await S(() => window.__DEBUG.startFlow.started)) && (await page.textContent('#name-box .name-msg')).length > 0);
+await page.fill('#name-input', '가나다라마바사아자');
+await page.click('#overlay', { position: { x: 8, y: 8 } });
+check('9자 이름은 거절', !(await S(() => window.__DEBUG.startFlow.started)));
+await page.fill('#name-input', '<i>a</i>');
+await page.keyboard.press('KeyE'); // 입력 중 E 는 게임 키로 번지지 않음
+check('이름 입력 중 E 는 핸드폰을 열지 않음', !(await S(() => window.__DEBUG.phone.screenOpen)));
+await page.fill('#name-input', '<i>a</i>');
+await page.click('#overlay', { position: { x: 8, y: 8 } });
+check('이름 입력 → 시작 (오버레이 숨김)', await poll(() => window.__DEBUG.startFlow.started && document.getElementById('overlay').classList.contains('hidden')));
+check('HTML 문자 이름은 글자 그대로 (태그로 해석 안 됨, localStorage 에 저장)', await S(() => window.__DEBUG.story.text('{player}') === '<i>a</i>' && !document.querySelector('#story i, #overlay i') && localStorage.getItem('schoolgame.playerName') === '<i>a</i>'));
+check('이름 칸은 첫 시작 뒤 숨김', !(await page.isVisible('#name-input')));
+check('자유 탐색 안내 문구 (6초 뒤 사라짐, headless 는 느려 문구만 확인)', await S(() => document.getElementById('notice').textContent.includes('운동장')));
 await press('Digit1', 200);
+const pre0 = await S(() => ({ bat: window.__DEBUG.phone.battery, begun: window.__DEBUG.phone.begun, obj: window.__DEBUG.story.objective(), where: window.__DEBUG.where(), hist: window.__DEBUG.story.registry.history.length }));
+await page.waitForTimeout(1500);
+const pre1 = await S(() => window.__DEBUG.phone.battery);
+check('탐색 구간: 사건 없음, 라이트를 켜도 배터리 그대로, 목표 = 현관으로, 위치 = 앞마당', pre0.hist === 0 && !pre0.begun && pre1 === pre0.bat && pre0.obj.includes('현관') && pre0.where === '앞마당', JSON.stringify({ ...pre0, pre1 }));
+// headless 는 프레임이 느려 실제로 걸어 들어가면 오래 걸린다 → 현관 앞에 세워 두고(사건 없음) 문턱 안쪽(현관 홀)으로 옮긴다
+await S(() => window.__DEBUG.player.setView([13, 1.6, -1], -90, 0));
+await page.waitForTimeout(1500);
+const porch = await S(() => ({ where: window.__DEBUG.where(), hist: window.__DEBUG.story.registry.history.length }));
+check('현관 앞(바깥)에서는 E1 없음', porch.where === '현관 앞' && porch.hist === 0, JSON.stringify(porch));
+await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
+const e1 = await poll(() => window.__DEBUG.story.event?.id === 'E1');
+const e1s = await S(() => ({ where: window.__DEBUG.where(), begun: window.__DEBUG.phone.begun, lv: window.__DEBUG.phone.level }));
+check('현관 홀에 들어서면 E1 시작 + 배터리 확정 (86~92)', e1 && e1s.begun && e1s.lv >= 86 && e1s.lv <= 92, JSON.stringify(e1s));
+for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
+await S(() => window.__DEBUG.player.setView([13, 1.6, -1], -90, 0));
+await page.waitForTimeout(800);
+await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
+await page.waitForTimeout(1500);
+check('다시 들어와도 E1 은 한 번만', await S(() => window.__DEBUG.story.registry.history.join() === 'E1' && window.__DEBUG.story.mode === 'idle'));
+// 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀에서 E1 이 끼어들지 않게)
+await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
 await press('KeyB', 100);
 check('잠금: B(블룸) 무시', await S(() => window.__DEBUG.world.ctx && !window.__DEBUG.player.ghost && !window.__DEBUG.gate.unlocked));

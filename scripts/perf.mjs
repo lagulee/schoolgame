@@ -19,7 +19,8 @@ for (const [q, dev] of Object.entries(PERF.devices)) {
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(`http://localhost:${PORT}/?light=1`);
   await page.waitForFunction(() => document.getElementById('loading').textContent === '', null, { timeout: 180000 });
-  await page.click('#overlay');
+  await page.fill('#name-input', 'perf'); // 시작 흐름 (단계 0c): 이름 필수
+  await page.click('#overlay', { position: { x: 8, y: 8 } });
   await page.evaluate((name) => window.__DEBUG.applyQuality(name), q);
   for (const name of PERF.views) {
     const s = SHOTS.find((t) => t.name === name);

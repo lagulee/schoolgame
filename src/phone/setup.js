@@ -15,6 +15,7 @@ export function setupPhone({ scene, camera, story, touch, toast, collision, wher
   const { runner, interactions } = story;
   const msgs = texts.messages;
   const phone = new Phone(PHONE);
+  phone.freeUntilBegin = true; // E1 전 자유 탐색 구간(단계 0c)은 라이트·화면 배터리 소모 없음 (STORY 15-3)
   const light = new PhoneLight(scene, camera);
   const ui = new PhoneUI(texts, { touch, warnShow: PHONE.WARN_SHOW });
   const banks = new PowerBanks({

@@ -206,7 +206,7 @@ test('시점: 태민 시점에서는 태민 대사가 이름 없이(1인칭), �
 
 test('목표 문구: 사건의 objective, 엔딩을 본 판이면 objectiveRepeat', () => {
   const r = makeRunner();
-  assert.equal(r.objective(), '');
+  assert.equal(r.objective(), '준비되면 본관 현관으로 들어간다', '사건 전에는 시작 전 탐색 목표 (단계 0c)');
   r.jump('E5');
   assert.equal(r.objective(), '연결문을 열고 신관 5층으로 올라간다');
   r.repeat = true;

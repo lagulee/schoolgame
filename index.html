@@ -11,9 +11,9 @@
       font-family: system-ui, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; }
     #app canvas { display: block; }
     #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, rgba(10,14,22,0.82), rgba(2,3,6,0.96)); cursor: pointer; z-index: 10; }
+      background: radial-gradient(ellipse at center, rgba(10,14,22,0.82), rgba(2,3,6,0.96)); cursor: pointer; z-index: 10; overflow-y: auto; }
     #overlay.hidden { display: none; }
-    .card { max-width: 560px; padding: 28px 32px; text-align: center; }
+    .card { max-width: 560px; padding: 28px 32px; text-align: center; margin: auto; } /* margin auto: 화면보다 길면 위에서부터 스크롤 */
     .card h1 { font-weight: 600; letter-spacing: 0.08em; margin: 0 0 10px; font-size: 26px; color: #e6ebf2; }
     .warn { color: #e0b98a; font-size: 15px; margin: 6px 0 18px; }
     .start { font-size: 18px; color: #fff; margin: 16px 0; animation: pulse 2.4s ease-in-out infinite; }
@@ -24,6 +24,16 @@
     #version { margin-top: 18px; font-family: ui-monospace, monospace; letter-spacing: 0.02em; }
     #version .ver-main { font-size: 15px; color: #8d99a9; }
     #version .ver-sub { font-size: 10px; color: #4a5565; margin-top: 1px; }
+    #name-box { margin: 0 auto 4px; cursor: default; }
+    #name-box label { display: block; font-size: 14px; color: #9aa6b6; margin-bottom: 6px; }
+    #name-box input { width: 180px; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(200,215,235,0.35); background: rgba(10,14,22,0.9);
+      color: #eef2f7; font-size: 17px; text-align: center; font-family: inherit; }
+    #name-box input:focus { outline: none; border-color: rgba(241,217,168,0.8); }
+    .name-msg { min-height: 18px; margin-top: 4px; font-size: 13px; color: #ff9a8a; }
+    #notice { position: fixed; left: 50%; top: calc(18% + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 9; max-width: min(640px, 86vw);
+      padding: 7px 16px; border-radius: 6px; background: rgba(0,0,0,0.5); color: #eef2f7; font-size: 17px; line-height: 1.5; text-align: center;
+      text-shadow: 0 1px 3px #000; pointer-events: none; opacity: 0; transition: opacity 0.8s; }
+    #notice.show { opacity: 1; }
     #loading { margin-top: 12px; font-size: 13px; color: #7f8a99; }
     #hud { position: fixed; top: 8px; left: 8px; z-index: 5; font: 12px/1.45 ui-monospace, monospace;
       color: #b8f0c0; background: rgba(0,0,0,0.55); padding: 6px 9px; border-radius: 4px; white-space: pre; display: none; }
@@ -65,6 +75,7 @@
     #rotate { display: none; position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 9; padding: 6px 12px;
       border-radius: 6px; background: rgba(0,0,0,0.6); color: #e0b98a; font-size: 13px; pointer-events: none; white-space: nowrap; }
     @media (orientation: portrait) { body.touch #rotate { display: block; } }
+    @media (max-height: 460px) { .card { padding: 12px 20px; } .card h1 { font-size: 21px; margin-bottom: 4px; } .warn { margin: 4px 0 8px; } .start { margin: 8px 0; } }
     @media (max-height: 460px) { /* 가로 모드 폰: 3열로 줄여 스크롤 없이 한 화면에 */
       .menu-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(440px, 72vw); gap: 6px; padding: 8px; top: calc(60px + env(safe-area-inset-top)); }
       .mbtn { min-height: 38px; font-size: 13px; }
@@ -137,6 +148,11 @@
     <div class="card">
       <h1>밤 학교 · 3D 룩 데모</h1>
       <div class="warn">헤드폰 권장 · 어두운 장면 · 약한 깜빡임 포함</div>
+      <div id="name-box">
+        <label for="name-input">주인공 이름</label>
+        <input id="name-input" type="text" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="1~8자" />
+        <div class="name-msg" aria-live="polite"></div>
+      </div>
       <div class="start">클릭하여 시작</div>
       <div class="touchhelp">왼쪽 아래 조이스틱: 이동 (끝까지 밀면 달리기, 아래쪽 막대 = 스태미나)<br />화면 드래그: 시점 · 오른쪽 아래 📱: 핸드폰 화면 · 💡: 라이트 · 오른쪽 위 ☰: 메뉴<br />가로 모드를 권장합니다</div>
       <table class="keys">
@@ -154,6 +170,7 @@
   </div>
   <div id="hud"></div>
   <div id="toast"></div>
+  <div id="notice"></div>
   <div id="rotate">가로 모드로 돌리면 더 잘 보여요</div>
   <script type="module" src="/src/main.js"></script>
 </body>

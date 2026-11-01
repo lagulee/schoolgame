@@ -15,6 +15,7 @@
     "e": "손전등을 완전히 없애고 핸드폰 라이트만 쓴다. 마당·시작 전 탐색 구간 포함 (결정 D6)"
   },
   "objectives": {
+    "goEntrance": "준비되면 본관 현관으로 들어간다",
     "goFifth": "신관 5층에 두고 온 책을 찾으러 간다",
     "hide": "{gyuha:과} 함께 숨을 곳을 찾는다",
     "findConnectorKey": "교무실에서 연결문 열쇠를 찾는다",
@@ -32,6 +33,13 @@
     "wait": "{mingeon:과} {duty:을} 기다린다",
     "runExit": "열쇠를 들고 현관으로 달린다",
     "exit": "현관 문을 열고 나간다"
+  },
+  "prelude": {
+    "_comment": "시작 전 자유 탐색 (단계 0c, STORY 15-3). 이름 입력 뒤 학교 앞에서 자유롭게 돌아다니고, trigger 공간(data/map.json 의 space id)에 1층으로 들어서면 event 를 한 번 시작한다. objective: 그 전까지의 핸드폰 목표(objectives 키). hint: 시작할 때 잠깐 뜨는 안내 [제안].",
+    "event": "E1",
+    "trigger": "lobby",
+    "objective": "goEntrance",
+    "hint": "운동장을 둘러볼 수 있다. 준비되면 본관 현관으로 들어가자."
   },
   "events": [
     {

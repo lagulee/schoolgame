@@ -29,9 +29,21 @@ await page.goto(`http://localhost:${PORT}/`);
 await page.waitForFunction(() => document.getElementById('loading').textContent === '', null, { timeout: 120000 });
 check('터치 기기 자동 감지', await dbg(() => document.body.classList.contains('touch')));
 check('시작 문구 터치용', (await page.textContent('#overlay .start')).includes('터치'));
-await page.touchscreen.tap(400, 180);
+// 시작 흐름 (단계 0c): 이름 없이 탭하면 시작하지 않음 → 이름 칸을 탭해 입력 → 바깥을 탭해 시작
+await page.touchscreen.tap(12, 12);
+await page.waitForTimeout(300);
+check('이름 없이 탭하면 시작하지 않음', await dbg(() => !document.getElementById('overlay').classList.contains('hidden') && !window.__DEBUG.startFlow.started));
+const nameBox = await page.$eval('#name-input', (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r.bottom <= innerHeight]; });
+check('360px 높이에서도 이름 칸이 화면 안에', nameBox[2], JSON.stringify(nameBox));
+await page.touchscreen.tap(nameBox[0], nameBox[1]);
+await page.waitForTimeout(200);
+check('이름 칸을 탭해도 시작하지 않음', await dbg(() => !window.__DEBUG.startFlow.started));
+await page.keyboard.type('하늘');
+await page.screenshot({ path: 'screenshots/touch_start_name.png' });
+await page.touchscreen.tap(12, 12);
 await page.waitForTimeout(500);
-check('탭으로 시작 (오버레이 숨김)', await dbg(() => document.getElementById('overlay').classList.contains('hidden')));
+check('이름 입력 뒤 탭으로 시작 (오버레이 숨김)', await dbg(() => document.getElementById('overlay').classList.contains('hidden') && window.__DEBUG.story.text('{player}') === '하늘'));
+await dbg(() => { window.__DEBUG.prelude.enabled = false; }); // 현관 홀 E1 자동 진입은 smoke 가 점검. 여기서는 메뉴로 사건을 부른다
 
 // 메뉴: 열기 → 품질 Low 로 낮춰 SwiftShader 에서도 빠르게
 await page.tap('.menu-toggle');
@@ -88,6 +100,7 @@ const tphone = () => dbg(() => ({ open: window.__DEBUG.phone.screenOpen, light: 
   shown: document.getElementById('phone').style.display !== 'none' }));
 check('손전등 🔦 버튼 없음', !(await page.$('.tbtn.flash')));
 check('메뉴에 손전등 항목 없음', !labels.some((l) => l.includes('손전등')));
+await dbg(() => window.__DEBUG.phone.begin()); // E1 전 탐색 구간은 배터리 소모가 없으므로(단계 0c) 판 시작 상태로 맞춘 뒤 비용을 본다
 const tp0 = await tphone();
 await page.tap('.tbtn.phone');
 await page.waitForFunction(() => document.getElementById('phone').style.display !== 'none', null, { timeout: 30000 }).catch(() => {});

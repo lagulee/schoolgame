@@ -20,6 +20,8 @@ import mapJson from '../data/map.json';
 import { StaminaBar } from './ui/staminaBar.js';
 import { setupChase } from './chase/setup.js';
 import { setupPuzzle } from './puzzle/setup.js';
+import { Prelude } from './story/prelude.js';
+import { setupStartFlow } from './ui/startFlow.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -71,6 +73,8 @@ const touchMode = isTouchDevice();
 const story = setupStory({ player, touch: touchMode, toast });
 const mapData = new MapData(mapJson); // 위치 이름·잠긴 문 소리 (단계 10)
 const where = () => mapData.label(player.pos.x, player.pos.z, player.level);
+// 시작 전 자유 탐색 (단계 0c): 현관 홀에 들어서면 E1 (배터리 확정·hasRoofKey 판정은 E1 시작 경로 그대로)
+const prelude = new Prelude({ runner: story.runner, def: story.runner.story.prelude, locate: (x, z, l) => mapData.locate(x, z, l) });
 const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where }); // 손전등 대신 핸드폰 라이트 (결정 D6)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
@@ -177,6 +181,8 @@ document.getElementById('version').addEventListener('click', (e) => { e.stopProp
 
 // 시작 화면: 터치 기기는 탭으로 시작(포인터락 없음), 그 외에는 클릭 후 포인터락
 const overlay = document.getElementById('overlay');
+// 경고 → 이름 입력(필수) → 시작. 이름이 맞을 때만 시작 화면을 닫는다 (단계 0c)
+const startFlow = setupStartFlow({ overlay, touch: touchMode, hint: story.runner.text(story.runner.story.prelude.hint), onName: (name) => story.setPlayerName(name) });
 let touchSync = null; // 터치 📱·💡 버튼 켜짐 표시
 let touchRefresh = null; // 터치 메뉴 항목 다시 그리기 (디버그 잠금 해제 직후)
 if (touchMode) {
@@ -217,12 +223,14 @@ if (touchMode) {
   touchSync = touch.sync;
   touchRefresh = touch.refresh;
   overlay.addEventListener('click', () => {
+    if (!startFlow.accept()) return;
     audio.start();
     overlay.classList.add('hidden');
     enterImmersive();
   });
 } else {
   overlay.addEventListener('click', () => {
+    if (!startFlow.accept()) return;
     audio.start();
     player.controls.lock();
   });
@@ -250,6 +258,7 @@ function step(t, dt) {
   U.time.value = t;
   if (dt > 0) player.update(dt);
   if (!shot) director.update(t, dt);
+  prelude.update(player.pos.x, player.pos.z, player.level);
   story.update(dt);
   chase.update(dt);
   phone.update(dt);
@@ -270,13 +279,14 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
 if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
   overlay.classList.add('hidden');
+  prelude.enabled = false; // 촬영 자리가 현관 홀이어도 E1 이 끼어들지 않게
   lights.setInspect(shot.inspect);
   if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;

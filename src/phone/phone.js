@@ -80,6 +80,7 @@ export class Phone {
   spend(amount) {
     const s = this.s;
     if (s.battery <= 0 || amount <= 0) return;
+    if (this.freeUntilBegin && !this.begun) return; // 시작 전 탐색 구간: 소모 없음 (setup 이 켬)
     const before = s.battery;
     s.battery = Math.max(0, before - amount);
     for (const lv of this.cfg.WARN_LEVELS) {

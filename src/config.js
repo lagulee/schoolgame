@@ -344,6 +344,13 @@ export const STORY = {
   debugBook: 'dohyeonBook', // J 키(디버그)로 실행하는 상호작용 사건 — 맵 배치 전 earlyBook 확인용
 };
 
+// 시작 흐름 (단계 0c, STORY 12장·15-3): 이름 입력 → 학교 앞 자유 탐색 → 현관 홀에서 E1
+export const START = {
+  nameKey: 'schoolgame.playerName', // 주인공 이름 localStorage 키 (외부 전송 없음)
+  nameMax: 8, // 이름 글자 수 상한 (필수 1자 이상) [가정]
+  hintShow: 6, // 시작 안내 문구 표시 시간 (초)
+};
+
 // 스태미나 (STORY 14-2, 단계 0b-2). 값은 STORY 의 [제안] 그대로
 export const STAMINA = {
   MAX: 100,
