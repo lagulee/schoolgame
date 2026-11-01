@@ -1,6 +1,6 @@
 // 실내 문 (단계 8 본관, 단계 9 신관): 교실·교무실 미닫이 문짝(열면 벽 속으로 밀려 들어감)과 문틀, 잠긴 철문 장식(exit).
 // E 로 연다/닫는다. 잠긴 방은 덜컹거리고 안내만 띄운다 (data/*Interior.json messages). 열쇠 문(key)은 그 플래그가 켜져야 열린다.
-// 처음부터 열려 있는 문(open)은 열린 채 시작한다 (신관 야자 교실 뒷문).
+// 처음부터 열려 있는 문(open)은 열린 채 시작한다 (신관 야자 교실 뒷문). 사건이 잠시 잠그는 방은 setForced (단계 12, E2 의 P1).
 // 문짝은 InstancedMesh 하나, 문틀·연결통로 문은 정적 Batch. 충돌은 plan.js 가 만든 문 박스 핸들(on)을 켜고 끈다.
 import * as THREE from 'three';
 import { INTERIOR, PLAYER } from '../../config.js';
@@ -57,7 +57,7 @@ export class Doors {
       interactions.add({
         id: `door:${d.id}`, pos: d.pos, level: d.L, radius: R, get label() { return label(); },
         onUse: () => {
-          if (d.locked || (d.key && !hasKey(d.key))) {
+          if (d.locked || s.forced || (d.key && !hasKey(d.key))) {
             s.shake = 0.0001;
             s.shakeT = 0;
             doorLocked(audio, s.sound, lockSound(`door:${d.id}`));
@@ -116,6 +116,25 @@ export class Doors {
       any ||= dirty;
     }
     if (any) this.mesh.instanceMatrix.needsUpdate = true;
+  }
+
+  // 사건이 방 문을 잠그거나 푼다 (rooms: 방 id 목록). 잠글 때 열려 있던 문은 닫는다
+  setForced(rooms, on) {
+    for (const s of this.list) {
+      if (!rooms.includes(s.d.room)) continue;
+      s.forced = on;
+      if (on && s.target) {
+        s.target = 0;
+        if (this.audio) doorSlide(this.audio, s.sound, INTERIOR.door.time);
+      }
+    }
+    this.interactions?.refresh();
+  }
+
+  // 그 방의 문이 모두 다 닫혔나 (닫히는 중이면 아직 아님)
+  roomClosed(room) {
+    const own = this.list.filter((s) => s.d.room === room);
+    return own.length > 0 && own.every((s) => s.target === 0 && s.f === 0);
   }
 
   // 열려 있는 문 id (디버그·스모크)

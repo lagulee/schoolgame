@@ -87,7 +87,7 @@ test('점프스케어: 루트마다 3개 이내, 번호가 1부터 차례로', (
 test('이름: 자리표시자만 쓰고, 모든 자리표시자는 characters.json 에 있다', () => {
   const texts = [];
   const pushEvent = (ev) => {
-    texts.push(ev.title, ev.place, ...ev.lines.map((l) => l.text));
+    texts.push(ev.title, ev.place, ...ev.lines.filter((l) => !l.do).map((l) => l.text));
     if (ev.choice) texts.push(ev.choice.prompt, ...ev.choice.options.map((o) => o.label));
   };
   story.events.forEach(pushEvent);
@@ -276,7 +276,7 @@ test('v6 마지막 추격 구조(14-4): 일행이 먼저 죽고, 사망자 메�
   assert.deepEqual(story.undecided, {});
   for (const ev of story.events) {
     assert.ok(!ev.undecided?.length, `${ev.id} undecided`);
-    for (const l of ev.lines) assert.doesNotMatch(l.text, /미확정/, ev.id);
+    for (const l of ev.lines) if (!l.do) assert.doesNotMatch(l.text, /미확정/, ev.id);
   }
   // R1-c 도입부에서 당직 첫 만남 (자기소개가 당직의 첫 대사)
   const c = variant('R1-c', 'R1');

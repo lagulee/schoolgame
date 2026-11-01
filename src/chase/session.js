@@ -74,10 +74,15 @@ export class ChaseSession {
     this.snap = null;
   }
 
+  // 목적지에 먼저 들어섰을 때 (Chase.reach). 결과 처리는 다음 update 에서
+  reach() {
+    this.chase?.reach();
+  }
+
   update(dt) {
     const c = this.chase;
     if (!c) return null;
-    c.update(dt, this.getSpeed());
+    if (!c.done) c.update(dt, this.getSpeed());
     if (!c.done) return null;
     const res = c.result(this.current.atExit);
     this.last = res;

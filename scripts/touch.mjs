@@ -43,7 +43,7 @@ await page.screenshot({ path: 'screenshots/touch_start_name.png' });
 await page.touchscreen.tap(12, 12);
 await page.waitForTimeout(500);
 check('이름 입력 뒤 탭으로 시작 (오버레이 숨김)', await dbg(() => document.getElementById('overlay').classList.contains('hidden') && window.__DEBUG.story.text('{player}') === '하늘'));
-await dbg(() => { window.__DEBUG.prelude.enabled = false; }); // 현관 홀 E1 자동 진입은 smoke 가 점검. 여기서는 메뉴로 사건을 부른다
+await dbg(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; }); // 현관 홀 E1 자동 진입은 smoke 가 점검. 여기서는 메뉴로 사건을 부른다
 
 // 메뉴: 열기 → 품질 Low 로 낮춰 SwiftShader 에서도 빠르게
 await page.tap('.menu-toggle');

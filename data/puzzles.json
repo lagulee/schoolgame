@@ -8,7 +8,11 @@
   },
   "puzzles": [
     { "id": "P1", "name": "{gyuha:과} 함께 숨기", "events": ["E2"], "place": "구관 1층 복도·교실",
-      "pending": true, "clues": [], "answer": null, "wrongLimit": 3, "ghostHooks": ["onStart"] },
+      "clues": [], "answer": "hidden", "wrongLimit": 1, "ghostHooks": ["onStart", "onWrong"],
+      "hide": { "_comment": "단계 12 [가정, 사용자 확인 대기]: 1층 방 4개 중 room 만 열림(나머지 lockedRooms 는 E2 동안 잠김). 숨기 조건 = 그 방의 문이 모두 닫힘 + 라이트 꺼짐 + spot(책상 사이) 안. 추격이 끝난 뒤 prep 초 안에 조건을 맞추면 그림자가 pass 초 동안 문 앞(passFrom→passTo, 복도)을 지나간다. 조건을 다 맞추지 못한 채 prep 이 끝나거나 지나가는 동안 하나라도 깨지면 잡힘(answer 가 아닌 값 → wrongLimit 1 → 퍼즐 시작 지점에서 다시)",
+        "room": "1F-2", "lockedRooms": ["1F-counsel", "1F-1", "1F-admin"],
+        "spot": [-0.6, -61.2, 5.6, -55.4], "prep": 25, "pass": 8, "passFrom": [15, -51.5], "passTo": [-10, -51.5],
+        "hints": { "door": "문을 닫아야 한다", "light": "라이트를 꺼야 한다", "spot": "책상 사이로 몸을 숨기자", "caught": "들켰다. 숨기 전으로 돌아간다" } } },
     { "id": "P2", "name": "당직실 단서 모으기", "events": ["E11", "R1-c"], "place": "구관 4층 당직실",
       "pending": true,
       "clues": [

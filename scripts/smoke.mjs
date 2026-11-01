@@ -55,8 +55,30 @@ await page.waitForTimeout(800);
 await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
 await page.waitForTimeout(1500);
 check('다시 들어와도 E1 은 한 번만', await S(() => window.__DEBUG.story.registry.history.join() === 'E1' && window.__DEBUG.story.mode === 'idle'));
-// 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀에서 E1 이 끼어들지 않게)
-await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
+// E2 (단계 12): 동쪽 복도에 들어서면 E2 → 추격 C1(실루엣·잠긴 방 3개) → 1-2 교실에 들어서면 숨기 P1 → 그림자 통과 → 퇴장·흔적.
+// headless 는 프레임이 느려 걷지 않고 자리를 옮기며, 그림자가 지나가는 8초는 시간을 건너뛴다
+await S(() => window.__DEBUG.player.setView([16.5, 1.6, -25], 180, 0));
+check('E1 뒤 동쪽 복도 → E2 시작', await poll(() => window.__DEBUG.story.event?.id === 'E2'));
+for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
+check('E2 대사 뒤 추격 C1 (경로 진행·귀신 실루엣·다른 방 잠김)', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'chase' && D.chase.active && D.scenes.e2.path && D.scenes.view.ghost.visible && D.interior.doors.list.filter((s) => s.forced).length === 6; }));
+await S(() => window.__DEBUG.player.setView([14.8, 1.6, -52], 180, 0));
+await poll(() => document.getElementById('interact').textContent.includes('행정실')); // 새 자리 첫 프레임(셰이더 준비)을 기다린다
+await press('KeyE', 120);
+check('행정실 문은 잠겨 있다 (추격 중 E = 문)', await poll(() => document.getElementById('toast').textContent.includes('행정실') && window.__DEBUG.story.action?.do === 'chase'));
+await S(() => window.__DEBUG.player.setView([6.3, 1.6, -54], 180, 0));
+check('1-2 교실에 들어서면 추격 도착 → 숨기 시작, 안내 = 라이트 끄기', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'puzzle' && D.scenes.e2.hide.phase === 'prep' && document.getElementById('hide-hint').textContent.includes('라이트'); }));
+await press('KeyR', 120);
+await S(() => window.__DEBUG.player.setView([2.5, 1.6, -58], 0, 0));
+check('라이트 끄고 책상 사이 → 그림자가 지나간다', await poll(() => window.__DEBUG.scenes.e2.hide.phase === 'pass'));
+await S(() => { window.__DEBUG.scenes.e2.hide.t = 7.9; });
+check('다 지나가면 숨기 성공 → 잠금 해제', await poll(() => window.__DEBUG.puzzle.last?.outcome === 'solved' && window.__DEBUG.interior.doors.list.every((s) => !s.forced)));
+for (let i = 0; i < 30 && (await S(() => window.__DEBUG.story.registry.active)) === 'E2'; i++) await press('KeyE', 200);
+await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
+const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
+check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
+await press('KeyR', 120);
+// 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀·복도에서 E1·E2 가 끼어들지 않게)
+await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
 await press('KeyB', 100);
 check('잠금: B(블룸) 무시', await S(() => window.__DEBUG.world.ctx && !window.__DEBUG.player.ghost && !window.__DEBUG.gate.unlocked));
@@ -283,7 +305,12 @@ check('R → 라이트 다시 켬', (await ph()).light);
 await press('KeyE', 120);
 check('E 한 번 더 → 화면 닫힘', !(await ph()).open && (await poll(() => document.getElementById('phone').style.display === 'none')));
 const finishEvent = async () => {
-  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
+  for (let i = 0; i < 20; i++) {
+    const mode = await S(() => window.__DEBUG.story.mode);
+    if (mode === 'action') await S(() => window.__DEBUG.story.resume()); // 추격·숨기(행동 줄)는 위 E2 점검에서 봤으므로 건너뜀
+    else if (mode === 'line') await press('KeyE', 120);
+    else break;
+  }
 };
 const played = [];
 const flagsAfter = {};

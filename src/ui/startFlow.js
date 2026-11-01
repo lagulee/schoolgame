@@ -3,6 +3,7 @@
 // 시작 화면(ESC 로 다시 뜸)은 '계속' 용으로만 쓴다. 안내 문구(story.prelude.hint)는 첫 시작 때 START.hintShow 초 동안 보인다.
 import { START } from '../config.js';
 import { cleanName, loadName, saveName } from './playerName.js';
+import { showNotice } from './notice.js';
 
 const storage = () => {
   try {
@@ -17,9 +18,7 @@ export function setupStartFlow({ overlay, touch, hint, onName }) {
   const input = box.querySelector('input');
   const msg = box.querySelector('.name-msg');
   const startEl = overlay.querySelector('.start');
-  const notice = document.getElementById('notice');
   let started = false;
-  let noticeTimer = 0;
 
   input.value = loadName(storage(), START.nameKey);
   input.maxLength = START.nameMax * 2; // 이모지(UTF-16 두 칸)도 8자까지 칠 수 있게. 실제 상한은 cleanName
@@ -31,14 +30,6 @@ export function setupStartFlow({ overlay, touch, hint, onName }) {
   input.addEventListener('keyup', (e) => e.stopPropagation());
   input.addEventListener('click', (e) => e.stopPropagation());
   input.addEventListener('input', () => (msg.textContent = ''));
-
-  const showHint = () => {
-    if (!hint || !notice) return;
-    notice.textContent = hint;
-    notice.classList.add('show');
-    clearTimeout(noticeTimer);
-    noticeTimer = setTimeout(() => notice.classList.remove('show'), START.hintShow * 1000);
-  };
 
   return {
     get started() {
@@ -60,7 +51,7 @@ export function setupStartFlow({ overlay, touch, hint, onName }) {
       onName(r.name);
       box.hidden = true;
       startEl.textContent = touch ? '화면을 터치하여 계속' : '클릭하여 계속';
-      showHint();
+      showNotice(hint, START.hintShow);
       return true;
     },
   };

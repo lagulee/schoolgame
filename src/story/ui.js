@@ -136,7 +136,8 @@ export function storyKey(runner, code) {
     else return false;
     return true;
   }
-  if (runner.active && (code === 'KeyE' || code === 'Enter' || code === 'Space')) {
+  // 행동 줄(추격·숨기) 동안 E 는 문·물건 상호작용으로 넘긴다 (단계 12)
+  if (runner.active && runner.mode !== 'action' && (code === 'KeyE' || code === 'Enter' || code === 'Space')) {
     runner.advance();
     return true;
   }

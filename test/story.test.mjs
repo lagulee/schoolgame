@@ -13,9 +13,10 @@ const makeRunner = () => new StoryRunner({ story, characters, ui: fakeUI(), timi
 
 // 진행 중인 사건을 끝까지 넘긴다. 선택지는 pick(eventId) 가 고른 항목 id (null 이면 무응답: 제한 시간이 있으면 시간 초과, 없으면 기본값)
 function playEvent(r, pick = () => null) {
-  for (let guard = 0; r.mode === 'line' || r.mode === 'choice'; guard++) {
+  for (let guard = 0; r.busy; guard++) {
     assert.ok(guard < 50, '사건이 끝나지 않음');
     if (r.mode === 'line') r.advance();
+    else if (r.mode === 'action') r.resume(); // 추격·퍼즐(행동 줄)은 건너뛴다 — 실제 진행은 e2-scene.test.mjs
     else {
       const def = r.choice.def;
       const id = pick(r.event.id);

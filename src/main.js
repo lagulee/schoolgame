@@ -22,6 +22,7 @@ import { setupChase } from './chase/setup.js';
 import { setupPuzzle } from './puzzle/setup.js';
 import { Prelude } from './story/prelude.js';
 import { setupStartFlow } from './ui/startFlow.js';
+import { setupScenes } from './scene/setup.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -92,6 +93,8 @@ for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
 // 실내 문·연결문·신관 살펴보기 자리 (E). 열쇠 문은 스토리 플래그(없는 이름이면 잠김), 책상 위 책은 상호작용 사건
 world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner, lockSound: (id) => mapData.lockSound(id) });
+// 사건 연출 (단계 12): E2 자리 진입·추격 C1·숨기 P1·흔적·E1 조작 안내
+const scenes = setupScenes({ scene, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch: touchMode });
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
@@ -260,10 +263,11 @@ function step(t, dt) {
   if (!shot) director.update(t, dt);
   prelude.update(player.pos.x, player.pos.z, player.level);
   story.update(dt);
+  scenes.update(dt); // 추격 진행(경로 투영)을 추격 update 보다 먼저
   chase.update(dt);
   phone.update(dt);
   staminaBar.update(dt, player.stamina);
-  audio.setBreath(audio.muted ? 0 : player.tired);
+  audio.setBreath(audio.muted ? 0 : Math.max(player.tired, scenes.breath));
   touchSync?.();
   world.interior.update(dt, player, camera);
   world.update(t, dt, camera);
@@ -279,7 +283,7 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { mapData, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
@@ -287,6 +291,7 @@ if (shot) {
   // ?shot=1 : 시간 고정, 포인터락 없음, HUD 숨김, 안정된 프레임 후 __READY
   overlay.classList.add('hidden');
   prelude.enabled = false; // 촬영 자리가 현관 홀이어도 E1 이 끼어들지 않게
+  scenes.auto = false;
   lights.setInspect(shot.inspect);
   if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;

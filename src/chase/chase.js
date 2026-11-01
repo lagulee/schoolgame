@@ -122,6 +122,13 @@ export class Chase {
     return h;
   }
 
+  // 경로 끝에 닿기 전에 목적지에 들어섰다 (예: C1 의 목표 교실에 다른 문으로 들어감, 단계 12). 지금 gap 으로 도착 처리
+  reach() {
+    if (this.done || this.locked) return this.phase;
+    this.arrive();
+    return this.phase;
+  }
+
   arrive() {
     this.dist = this.triggerAt ?? this.pathLength;
     this.arrivalGap = this.gap;

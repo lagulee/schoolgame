@@ -1,6 +1,8 @@
 // 스토리 진행기: 사건 하나의 대사를 차례로 보여 주고, 선택지가 있으면 받아서 플래그를 바꾼다.
 // 사건마다 시점(pov: player | mingeon)을 바꾸고, 상호작용 사건(story.interactions)과 체크포인트 저장·복원을 맡는다.
 // DOM 을 직접 다루지 않는다. 화면은 ui(showLine/showChoice/setSelected/setTimer/hide/isTyping/finishTyping/update)에 맡긴다.
+// 행동 줄 { do: 'chase' | 'puzzle' | … } (단계 12): 대사 사이에서 게임 진행(추격·퍼즐)을 기다린다. mode 'action' 동안 화면은 비우고
+// onAction(줄, { restoring }) 을 부른다. 바깥(src/scene/)이 그 행동을 끝내면 resume() 으로 다음 줄로 간다.
 import { Flags, endingForRoute } from './flags.js';
 import { EventRegistry } from './registry.js';
 import { Checkpoints } from './checkpoint.js';
@@ -27,6 +29,7 @@ export class StoryRunner {
     this.onEnding = null; // (endingKey, route) => void
     this.onPov = null; // (pov) => void  핸드폰 전환은 src/phone/setup.js, 시작 위치·카메라는 단계 6 에서 붙인다
     this.onInteract = null; // (interactionId) => void
+    this.onAction = null; // (line, { event, restoring }) => void  행동 줄에 닿았을 때 (체크포인트 복원으로 다시 닿으면 restoring = true)
     this.checkpoints = new Checkpoints();
     this.checkpoints.register('flags', { save: () => this.flags.snapshot(), load: (v) => this.flags.restore(v) });
     this.checkpoints.register('events', { save: () => this.registry.snapshot(), load: (v) => this.registry.restore(v) });
@@ -46,8 +49,18 @@ export class StoryRunner {
     return this.mode === 'choice';
   }
 
+  // 사건 도중 (대사·선택지·행동). 이 동안 다른 사건을 시작하지 않는다
+  get busy() {
+    return this.mode === 'line' || this.mode === 'choice' || this.mode === 'action';
+  }
+
+  // 지금 기다리는 행동 줄 (없으면 null)
+  get action() {
+    return this.mode === 'action' ? this.event.lines[this.lineIdx] : null;
+  }
+
   clear() {
-    this.mode = 'idle'; // idle | line | choice | ending
+    this.mode = 'idle'; // idle | line | choice | action | ending
     this.event = null;
     this.lineIdx = 0;
     this.lineLeft = Infinity; // 자막 자동 넘김까지 남은 시간
@@ -85,8 +98,9 @@ export class StoryRunner {
   // 핸드폰 목표 문구. 엔딩을 본 판이면 objectiveRepeat 우선
   objective() {
     const ev = this.phoneEvent();
-    // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c)
-    const key = ev ? (this.repeat && ev.objectiveRepeat) || ev.objective : this.story.prelude?.objective;
+    // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c). 끝난 사건에 objectiveDone 이 있으면 그것 (단계 12)
+    const done = ev && this.event?.kind !== 'event' && ev.objectiveDone;
+    const key = ev ? (this.repeat && ev.objectiveRepeat) || done || ev.objective : this.story.prelude?.objective;
     const text = key ? this.story.objectives?.[key] : null;
     return text ? this.text(text) : '';
   }
@@ -118,7 +132,7 @@ export class StoryRunner {
   canInteract(id) {
     const def = this.interactions.get(id);
     if (!def) return { ok: false, reason: `없는 상호작용 ${id}` };
-    if (this.mode === 'line' || this.mode === 'choice') return { ok: false, reason: `${this.event.id} 진행 중` };
+    if (this.busy) return { ok: false, reason: `${this.event.id} 진행 중` };
     if (this.used.has(id)) return { ok: false, reason: `${id} 이미 사용` };
     const reg = this.registry;
     const seen = (ev) => reg.history.includes(ev) || reg.done.has(ev); // 시작했거나 (jump 로) 지나간 사건
@@ -142,7 +156,7 @@ export class StoryRunner {
 
   // 순서상 다음 사건. 더 없으면 루트를 판정해 엔딩을 보여 준다
   next() {
-    if (this.mode === 'line' || this.mode === 'choice') {
+    if (this.busy) {
       this.lastReason = `${this.event.id} 진행 중`;
       return false;
     }
@@ -152,11 +166,18 @@ export class StoryRunner {
     return true;
   }
 
-  nextLine() {
+  nextLine(restoring = false) {
     const lines = this.event.lines ?? [];
     this.lineIdx++;
     if (this.lineIdx < lines.length) {
       const line = lines[this.lineIdx];
+      if (line.do) {
+        this.mode = 'action';
+        this.lineLeft = Infinity;
+        this.ui.hide();
+        this.onAction?.(line, { event: this.event, restoring });
+        return;
+      }
       const style = line.style ?? 'dialog';
       const text = this.text(line.text);
       this.mode = 'line';
@@ -232,8 +253,15 @@ export class StoryRunner {
     this.onEnding?.(key, route);
   }
 
+  // 행동 줄이 끝났다 (추격 도착·퍼즐 성공 등). 다른 행동을 기다리는 중이면 무시
+  resume(kind = null) {
+    if (this.mode !== 'action' || (kind && this.action.do !== kind)) return false;
+    this.nextLine();
+    return true;
+  }
+
   close() {
-    if (this.mode === 'line' || this.mode === 'choice') return; // 사건 도중에는 닫지 않는다
+    if (this.busy) return; // 사건 도중에는 닫지 않는다
     this.ui.hide();
     this.clear();
   }
@@ -304,7 +332,7 @@ export class StoryRunner {
   }
 
   saveState() {
-    const ev = this.event && (this.mode === 'line' || this.mode === 'choice') ? this.event : null;
+    const ev = this.event && this.busy ? this.event : null;
     return {
       pov: this.pov,
       used: [...this.used],
@@ -324,6 +352,6 @@ export class StoryRunner {
       this.event = { kind: 'event', ...this.registry.get(s.event.id, this.route) };
     }
     this.lineIdx = s.event.lineIdx - 1;
-    this.nextLine();
+    this.nextLine(true);
   }
 }

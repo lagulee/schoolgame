@@ -41,22 +41,35 @@
     "objective": "goEntrance",
     "hint": "운동장을 둘러볼 수 있다. 준비되면 본관 현관으로 들어가자."
   },
+  "triggers": [
+    { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 }
+  ],
+  "traces": [
+    { "_comment": "단계 12: 사건(after)이 끝난 뒤 생기는 흔적 (살펴보기 E). 물체 모양은 src/scene/traceView.js", "id": "gyuhaPhone", "after": "E2", "level": 0, "pos": [16.2, -1.0], "label": "떨어진 핸드폰 살펴보기", "text": "{gyuha}의 핸드폰이다. 화면이 거미줄처럼 깨져 있다." }
+  ],
   "events": [
     {
       "id": "E1", "title": "진입", "place": "구관 1층 현관", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "goFifth", "grantRoofKey": true,
+      "tutorial": {
+        "keys": "WASD 이동 · Shift 달리기 · E 핸드폰(할 일·위치 확인) · R 라이트",
+        "touch": "조이스틱 이동(끝까지 밀면 달리기) · 📱 핸드폰(할 일·위치 확인) · 💡 라이트"
+      },
       "lines": [
         { "style": "subtitle", "text": "두고 온 책을 찾으러, 밤의 학교에 몰래 들어왔다." },
-        { "who": "gyuha", "text": "빨리 챙기고 나가자. 신관엔 아직 야자하는 애들 있대." }
+        { "who": "gyuha", "text": "빨리 챙기고 나가자. 신관엔 아직 야자하는 애들 있대." },
+        { "who": "gyuha", "text": "어두우니까 핸드폰 라이트 켜. 배터리는 아껴 쓰고." }
       ]
     },
     {
       "id": "E2", "title": "복도의 그것", "place": "구관 1층 복도·교실", "routes": ["R1", "R2", "R3"], "stage": 2,
-      "pov": "player", "objective": "hide", "chase": "C1", "puzzle": "P1",
+      "pov": "player", "objective": "hide", "objectiveDone": "goFifth", "chase": "C1", "puzzle": "P1",
       "lines": [
         { "who": "gyuha", "text": "방금… 저기 뭐 있었어. 봤어?" },
-        { "style": "subtitle", "text": "복도 끝에서 그것이 다가온다. 둘이 함께 달린다." },
-        { "style": "subtitle", "text": "열린 교실에 숨었다. 문 앞을 그림자가 천천히 지나간다." },
+        { "style": "subtitle", "text": "현관 쪽 복도 끝에서 그것이 다가온다. 둘이 함께 달린다." },
+        { "do": "chase" },
+        { "do": "puzzle" },
+        { "style": "subtitle", "text": "발소리가 문 앞에서 멈췄다가, 천천히 멀어진다." },
         { "who": "gyuha", "text": "나 도저히 못 가겠다. 밖에서 기다릴게. 내 책도 좀 부탁해." },
         { "style": "subtitle", "text": "{gyuha:이} 왔던 길로 돌아간다. 발소리가 멀어진다." }
       ]

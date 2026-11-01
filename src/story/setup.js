@@ -80,7 +80,7 @@ export function setupStory({ player, touch, toast }) {
     update(dt) {
       runner.update(dt);
       player.frozen = runner.choosing; // 선택지가 떠 있는 동안 이동 정지 (W/S 가 선택 이동 키)
-      interactions.enabled = !runner.active;
+      interactions.enabled = !runner.active || runner.mode === 'action'; // 추격·숨기 중(행동 줄)에는 문·물건을 쓸 수 있다
       interactions.update(player.pos.x, player.pos.z, player.level);
     },
     hudLines() {

@@ -9,7 +9,7 @@ import { loadStory, fakeUI, memoryStorage } from './helpers.mjs';
 const { story, characters } = loadStory();
 const makeRunner = () => new StoryRunner({ story, characters, ui: fakeUI(), timing: { subtitleBase: 1, subtitlePerChar: 0 } });
 const finish = (r) => {
-  while (r.mode === 'line') r.advance();
+  while (r.busy) if (r.mode === 'action') r.resume(); else r.advance(); // 행동 줄(추격·퍼즐)은 건너뜀
 };
 
 test('체크포인트: 플래그·사건 기록(done/last/history)·시점·상호작용을 되돌린다', () => {
@@ -44,13 +44,27 @@ test('체크포인트: 플래그·사건 기록(done/last/history)·시점·상�
 
 test('체크포인트: 진행 중인 사건은 저장된 줄(선택지면 선택지)부터 다시', () => {
   const r = makeRunner();
-  r.jump('E2', 2);
+  r.jump('E2', 1);
   const mid = r.snapshot();
   finish(r);
   r.restore(mid);
   assert.equal(r.registry.active, 'E2');
-  assert.equal(r.lineIdx, 2);
-  assert.equal(r.ui.shown.text, r.text(story.events[1].lines[2].text));
+  assert.equal(r.lineIdx, 1);
+  assert.equal(r.ui.shown.text, r.text(story.events[1].lines[1].text));
+  // 행동 줄(추격)에서 저장하면 같은 행동 줄로 돌아오고, 복원이라고 알린다 (단계 12)
+  const acts = [];
+  r.onAction = (line, info) => acts.push([line.do, info.restoring]);
+  r.advance();
+  r.update(60);
+  assert.equal(r.action?.do, 'chase');
+  const atChase = r.snapshot();
+  r.resume('chase');
+  assert.equal(r.action?.do, 'puzzle');
+  assert.equal(r.resume('chase'), false, '다른 행동을 기다리는 중이면 무시');
+  r.restore(atChase);
+  assert.equal(r.action?.do, 'chase');
+  assert.deepEqual(acts, [['chase', false], ['puzzle', false], ['chase', true]]);
+  r.onAction = null;
 
   r.jump('E12', 1); // 대사 1줄 뒤 = 선택지
   assert.equal(r.mode, 'choice');
