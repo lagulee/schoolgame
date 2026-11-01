@@ -7,7 +7,7 @@
 
 - 명세 S1~S14 구현 완료, 시각 검증 3회 수행. 스토리 단계 0·0②·0b-1(핸드폰, 손전등 제거)·0b-2(이동·스태미나)·0b-3(추격 엔진)·0b-4(퍼즐 실행기 골격)·1a(외부 확장: 본관 중정형·신관·3층 연결통로·운동장, 필로티는 얕은 입구)·1b(본관 실내 1~5층: 층별 충돌·계단·문·실내 분위기)·1c(신관 실내 1~5층·3층 연결통로·잠긴 연결문)·1d(맵 데이터 `data/map.json`·핸드폰 위치 이름·잠긴 문 소리·보조배터리 9개 배치·성능 점검)·0c(시작 흐름: 이름 입력 → 학교 앞 자유 탐색 → 현관 홀에서 E1, `src/story/prelude.js`·`src/ui/startFlow.js`)까지 main 반영. 큰 충돌·이동 경계는 `src/world/layout.js`, 실내 배치는 `data/mainInterior.json`·`data/annexInterior.json` → `src/world/interior/`(조립 `site.js`, 연결통로 `connector.js`), 충돌의 층은 `Collision` 의 `level`. 맵 데이터 `data/map.json`(로더 `src/world/mapData.js`, 평면에서 만드는 부분은 실내 배치를 바꾼 뒤 `npm run map`). 상세 이력·결정 이유·한계·다음 후보는 [`PROGRESS.md`](PROGRESS.md).
 - 디버그 키·터치 메뉴 디버그 항목은 비밀번호(`DEBUG.password`)로 잠겨 있다(PC `` ` `` 키, 터치는 버전 글자 5번 탭으로 해제, 잠금 중 터치 메뉴 디버그 항목은 숨김). smoke·touch 는 `window.__DEBUG.gate` 나 입력 창으로 해제한 뒤 디버그 키를 쓴다. 새 디버그 키를 만들면 `main.js` 의 잠금 규칙(`FREE_CODES`)을 따른다.
-- 현재 버전 `v1.15` (시작 화면에 `v1.15` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리.
+- 현재 버전 `v1.15.0` (시작 화면에 `v1.15` + 작은 커밋 해시 표시). 번호는 `package.json` 하나로 관리하고 올리는 규칙은 아래 "main 자동 반영 규칙" 3번.
 - 추가 완료: GitHub Pages 배포(`main` 푸시 → `dist/`), 터치 조작(조이스틱·드래그·📱💡·접이식 메뉴), 이 규칙 문서.
 - 테스트: `npm run build` / `test`(스토리·핸드폰·스태미나·추격·퍼즐 단위 테스트, 추격 자동 시뮬레이션) / `smoke`(키보드·충돌·스토리·핸드폰·스태미나·추격·퍼즐·본관 실내·신관) / `touch`(터치·실내 문) / `shots`(스크린샷, 실내 시점 14~34). 모두 통과 상태. `test` 에 이동 경계(`layout.test.mjs`)·층 충돌(`collision-levels.test.mjs`)·본관 실내(`interior.test.mjs`)·신관·연결통로(`annex-interior.test.mjs`)·맵(`map.test.mjs`)·시작 흐름(`start-flow.test.mjs`) 포함. smoke·touch 는 시작 화면에서 이름을 넣어야 시작된다(`#name-input`). 보조 스크립트: `npm run map`(map.json 다시 만들기), `npm run perf`(품질별 프레임·드로우콜), `node scripts/travel.mjs`(이동 시간 표).
 - **미검증**: 실제 폰·GPU 에서의 FPS, 터치 감도, 소리, 실내 밝기. headless 환경에서는 측정할 수 없었다.
@@ -37,7 +37,11 @@
    - `npm run touch` (터치 조작)
    - 외관·조명을 바꿨다면 `npm run build && npm run shots` 로 스크린샷을 찍어 눈으로 확인한다.
 2. **커밋** — 의미 있는 단위로 한국어 메시지, 시스템이 지정한 attribution 줄을 붙인다.
-3. **버전 올리기** — `main` 에 반영할 때마다 시작 화면 버전(`v1.0`)을 올린다. `npm version minor --no-git-tag-version` (큰 기능 추가는 `major`). `package.json` 이 유일한 기준이고 `package-lock.json` 도 같이 바뀐다. 버전 변경은 그 커밋에 함께 넣는다. (작업 브랜치에만 푸시하는 중간 커밋에서는 올리지 않는다.)
+3. **버전 올리기** — `main` 에 반영할 때마다 버전을 올린다. 버전은 `v1.15.0` 처럼 점이 두 개인 `major.minor.patch` 이고, 무엇을 했는지에 따라 올리는 자리가 다르다. (사용자 지시, 2026-11-01)
+   - **버그·자잘한 오류 수정** → 점을 두 번 찍은 셋째 자리(patch)를 올린다: `npm version patch --no-git-tag-version` (예: `v1.15.0` → `v1.15.1` → `v1.15.2`).
+   - **단계 진행 같은 큰 업데이트** → 점을 한 번 찍은 둘째 자리(minor)를 올리고 셋째 자리는 0으로 되돌린다: `npm version minor --no-git-tag-version` (예: `v1.15.2` → `v1.16.0`, 읽을 때는 `v1.16`). 엄청나게 큰 개편만 `major`.
+   - 둘이 섞인 작업이면 큰 쪽(minor)을 따른다. `package.json` 이 유일한 기준이고 `package-lock.json` 도 같이 바뀐다. 버전 변경은 그 커밋에 함께 넣는다. (작업 브랜치에만 푸시하는 중간 커밋에서는 올리지 않는다.)
+   - 참고: 시작 화면 큰 글씨는 현재 `major.minor`(`v1.15`)만 보여 주고 patch 는 `package.json` 과 커밋 해시로 구분한다.
 4. **main 병합** — 작업 브랜치에서 `main` 으로 병합한다.
    - `git fetch origin main` 후 `git merge origin/main` 으로 작업 브랜치에 먼저 합친다. rebase·amend·force-push 는 하지 않는다.
    - 충돌은 양쪽 의도를 보존해 해결한다. 같은 로직을 서로 다르게 바꾼 충돌은 임의로 고르지 말고 묻는다.
