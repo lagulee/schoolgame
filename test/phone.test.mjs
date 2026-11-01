@@ -207,6 +207,7 @@ test('보조배터리 줍기: from 사건 이후에만, 주우면 상호작용 �
   assert.equal(banks.debugPlaceNext(0, 0), 'PB2');
   assert.equal(banks.debugPlaceNext(1, 0), 'PB3');
   assert.equal(banks.pick('PB3').reason, 'early', 'PB3 은 E4 이후');
+  assert.equal(toasts.at(-1), '교감석 서랍이 잠겨 있다', '이르면 게임 속 잠김 문구 (사건 id 노출 없음)');
   // 복원으로 주운 상태가 되면 월드에서 뺌
   p.picked.add('PB2');
   banks.sync();

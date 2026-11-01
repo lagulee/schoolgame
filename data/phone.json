@@ -21,7 +21,7 @@
     "bankLabel": "보조배터리 줍기",
     "bankPicked": "보조배터리 +{n}% (배터리 {level}%)",
     "bankPov": "지금은 보조배터리를 쓸 수 없다",
-    "bankTooEarly": "{id}: 아직 주울 수 없음 ({event} 이후)",
+    "bankTooEarly": "지금은 열 수 없다",
     "bankNone": "남은 보조배터리 없음",
     "bankPlaced": "{id} 놓음 (디버그) — 앞으로 가서 E"
   }

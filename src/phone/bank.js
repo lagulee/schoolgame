@@ -1,6 +1,6 @@
 // 보조배터리 PB1~PB9 줍기 (data/powerbanks.json). 단계 10 부터 데이터 좌표(level·pos)에 placeAll() 로 놓고 E 상호작용으로 줍는다.
 // 디버그 U 키(터치 메뉴)는 아직 줍지 않은 다음 보조배터리를 플레이어 앞으로 옮긴다. 물체 그리기는 bankView.js (at 을 따라감).
-// 줍는 시점: from 의 사건 중 하나가 시작된 뒤부터 (그 전에는 줍지 못하고 안내만).
+// 줍는 시점: from 의 사건 중 하나가 시작된 뒤부터 (그 전에는 줍지 못하고 def.locked 문구만, 예: 교감석 서랍 = E4 교무실 사건부터).
 import { fmt } from './ui.js';
 
 // 사건이 시작됐거나 (jump 로) 지나갔는지
@@ -40,7 +40,8 @@ export class PowerBanks {
     const def = this.defs.get(id);
     if (!def) return { ok: false, reason: 'unknown' };
     if (!bankOpen(def, this.seen)) {
-      this.toast?.(fmt(this.msgs.bankTooEarly, { id, event: def.from.join('/') }));
+      // 플레이어에게는 게임 속 문구만 (예: "교감석 서랍이 잠겨 있다"). 사건 id 는 HUD·디버그에서만 본다
+      this.toast?.(def.locked ?? fmt(this.msgs.bankTooEarly, { id, event: def.from.join('/') }));
       return { ok: false, reason: 'early' };
     }
     const r = this.phone.pickBank(id);
