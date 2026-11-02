@@ -1,6 +1,6 @@
 // 사건 연출 조립 (단계 12·13): 자리 진입 사건(triggers) + E2(추격 C1·숨기 P1) + 흔적(traces) + 화면(e2View) + E1 조작 안내
 // + 사건 안 작은 행동(steps: 줍기·소리·원경 귀신, 단계 13 E3~E6 / 자리 도착·정전·점프스케어, 단계 14 E7)
-// + P3 교실 수색(p3·p3View, 단계 14 E8).
+// + P3 교실 수색(p3·p3View, 단계 14 E8) + 기절·각성(faint·faintView)과 P2 당직실 단서(p2·p2View, 단계 15 E10~E12).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
 import { PLAYER, SCENE } from '../config.js';
 import { EventTriggers } from '../story/triggers.js';
@@ -11,6 +11,10 @@ import { StorySteps } from './steps.js';
 import { StepsView } from './stepsView.js';
 import { P3Search } from './p3.js';
 import { P3View } from './p3View.js';
+import { Faint } from './faint.js';
+import { FaintView } from './faintView.js';
+import { P2Duty } from './p2.js';
+import { P2View } from './p2View.js';
 import { showNotice } from '../ui/notice.js';
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
@@ -49,6 +53,10 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   const stepsView = new StepsView({ scene, steps, collision, audio, camera, player, story: data, threatEl, light: phone.light });
   const p3 = new P3Search({ runner, puzzle: puzzle.session, pose: e2.pose, where, locate, interactions: story.interactions, toast, text: (t) => runner.text(t), cfg: SCENE.p3 });
   const p3View = new P3View({ scene, p3, collision, audio, camera, player, map: mapData, threatEl });
+  const faint = new Faint({ runner, story: data, pose: e2.pose, cfg: SCENE.faint });
+  const faintView = new FaintView({ faint, player, camera, audio, veilEl: document.getElementById('veil') });
+  const p2 = new P2Duty({ runner, puzzle: puzzle.session, interactions: story.interactions, toast, text: (t) => runner.text(t), cfg: SCENE.duty });
+  const p2View = new P2View({ scene, p2, collision, audio, camera, player });
   // E1 이 끝나면 조작 안내 (사건 데이터 tutorial)
   const prevEvent = runner.onEvent;
   runner.onEvent = (id, phase) => {
@@ -66,8 +74,12 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     stepsView,
     p3,
     p3View,
+    faint,
+    faintView,
+    p2,
+    p2View,
     get breath() {
-      return view.breath;
+      return Math.max(view.breath, faint.breath);
     },
     // 촬영 모드·자동 점검에서 자리 진입 사건을 끈다
     set auto(on) {
@@ -82,6 +94,9 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       stepsView.update();
       if (p3.update(dt)) p3View.knock();
       p3View.update();
+      faint.update(dt);
+      faintView.update();
+      p2View.update(dt);
       world.interior.atmo.powerOut = steps.powerOut;
     },
   };

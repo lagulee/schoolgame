@@ -147,8 +147,10 @@ export class E2Scene {
   get ghost() {
     const c = this.chase.chase;
     if (this.path && c) {
-      const [x, z] = this.path.path.at(this.path.base + c.ghostPos);
-      return { mode: 'chase', x, z, level: this.path.def.path.level ?? 0, gap: c.gap };
+      const at = this.path.base + c.ghostPos;
+      const [x, z] = this.path.path.at(at);
+      // hideBefore: 귀신 자리가 경로 시작 앞(아직 건물 밖)이면 실루엣은 그리지 않고 발소리만 (C2, 단계 15). stalled: 지형 지연으로 멈춰 서 있음
+      return { mode: 'chase', x, z, level: this.path.def.path.level ?? 0, gap: c.gap, stalled: c.stall > 0 && !!this.path.def.path.stallBang, hidden: !!this.path.def.path.hideBefore && at < 0 };
     }
     if (this.hide?.active && this.hideDef) {
       const d = this.hideDef;

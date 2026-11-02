@@ -23,6 +23,7 @@ export class Player {
     this.fov = PLAYER.fov;
     this.onStep = null; // (surface, running) => void
     this.frozen = false;
+    this.eyeDrop = 0; // 눈높이를 낮추는 양 (m, 기절해 누웠을 때 — 단계 15)
     this.analog = null;
     this.touchRun = false;
     this.speed = 0;
@@ -130,7 +131,7 @@ export class Player {
     const sy = tw * Math.sin(2 * Math.PI * sh.freq[1] * this.tiredT + 1.3);
     this.camera.position.set(
       this.pos.x + this._right.x * (b.x + sx),
-      this.floorY + PLAYER.eye + b.y + sy,
+      this.floorY + PLAYER.eye - this.eyeDrop + b.y + sy,
       this.pos.z + this._right.z * (b.x + sx),
     );
 
