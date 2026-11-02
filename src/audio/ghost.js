@@ -61,3 +61,60 @@ export function ghostBang(audio, pos, gain = 0.8) {
     return 1.0;
   }, { ref: 6, rolloff: 0.8, max: 60 });
 }
+
+// 점프스케어 #1 (단계 14, E7): 날카로운 쇳소리 — 어긋난 두 높은 음 + 쓸어 내리는 노이즈. 밝기 변화 없이 소리로만 놀라게 한다
+export function ghostSting(audio, pos, gain = 0.9) {
+  audio.oneShot(pos, (ctx, out, t) => {
+    for (const [f, d] of [[1180, -260], [1243, -300]]) {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.linearRampToValueAtTime(f + d, t + 0.8);
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1500;
+      bp.Q.value = 2;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(gain * 0.5, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      o.connect(bp).connect(g).connect(out);
+      o.start(t);
+      o.stop(t + 0.95);
+    }
+    const n = ctx.createBufferSource();
+    n.buffer = audio.noise;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(3000, t);
+    hp.frequency.exponentialRampToValueAtTime(600, t + 0.6);
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.0001, t);
+    ng.gain.exponentialRampToValueAtTime(gain * 0.4, t + 0.01);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+    n.connect(hp).connect(ng).connect(out);
+    n.start(t, Math.random() * 1.5);
+    n.stop(t + 0.7);
+    return 1.0;
+  }, { ref: 3, rolloff: 1, max: 30 });
+}
+
+// 문 두드리는 소리 (단계 14, P3): 나무 문을 세 번 똑똑똑
+export function ghostKnock(audio, pos, gain = 0.7) {
+  audio.oneShot(pos, (ctx, out, t) => {
+    for (let i = 0; i < 3; i++) {
+      const s = t + i * 0.22;
+      const o = ctx.createOscillator();
+      o.frequency.setValueAtTime(190, s);
+      o.frequency.exponentialRampToValueAtTime(110, s + 0.06);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.exponentialRampToValueAtTime(gain, s + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.12);
+      o.connect(g).connect(out);
+      o.start(s);
+      o.stop(s + 0.14);
+    }
+    return 0.8;
+  }, { ref: 3, rolloff: 1, max: 30 });
+}

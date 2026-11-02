@@ -50,12 +50,24 @@
     { "event": "E4", "after": "E3", "rect": [15, -34, 18, -24], "level": 1 },
     { "event": "E4", "after": "E3", "rect": [-18, -53, 8, -50], "level": 1 },
     { "event": "E5", "after": "E4", "space": "3F-bridge", "level": 2 },
-    { "event": "E6", "after": "E5", "space": "AC", "level": 4 }
+    { "event": "E6", "after": "E5", "space": "AC", "level": 4 },
+    { "_comment": "단계 14: E7 = 신관 2층 야자 교실(3-7)에 들어설 때, E8 = E7 이 끝난 자리(신관 2층 복도, 배전반 앞)에서 바로, E9 = E8 끝(3층 3-10)에서 복도로 나올 때. 그 루트에 없는 사건(R1 의 E8)·생략 사건(earlyBook 의 E9)은 걸리지 않는다", "event": "E7", "after": "E6", "space": "A2F-3", "level": 1 },
+    { "event": "E8", "after": "E7", "space": "AC", "level": 1 },
+    { "event": "E9", "after": "E8", "space": "AC", "level": 2 }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
-    { "id": "myBook", "spot": "myDesk" }
+    { "id": "myBook", "spot": "myDesk" },
+    { "_comment": "단계 14: E9 — 신관 4층 2-10 {dohyeon} 책상 위 책 (E5~E7 사이에 챙겼으면 earlyBook 이라 E9 가 생략된다)", "id": "dohyeonBookE9", "spot": "dohyeonDesk" }
   ],
+  "reaches": {
+    "_comment": "단계 14: 행동 줄 { do: reach, id } — 플레이어가 그 자리(사각형 rect [x0, z0, x1, z1], 층 level)에 들어설 때까지 기다린다",
+    "switchboard": { "level": 1, "rect": [-10.6, -92.4, -7.4, -90.15] }
+  },
+  "scares": {
+    "_comment": "단계 14: 행동 줄 { do: scare, id } — 점프스케어. 실루엣이 시선 정면(SCENE.scare.dist)에 갑자기 나타나 날카로운 소리와 함께 잠깐 머물다 흐려진다 (번쩍임 없음, 수치는 config SCENE.scare). clamp = 실루엣이 벗어나지 않을 사각형(복도 안), level = 층. 사건의 jumpscare 번호와 같은 번호(n)",
+    "J1": { "n": 1, "event": "E7", "level": 1, "clamp": [-11.05, -93.65, 17.05, -90.15] }
+  },
   "sightings": [
     { "_comment": "단계 13: 원경 귀신 (STORY E4, 점프스케어 아님). 사건(event) 동안 그 자리에 발소리 없이 서 있고, 줍기(after)를 마친 뒤 플레이어가 고개를 돌리면(시야 밖) fade 초 동안 흐려져 사라진다. 시야 안에 계속 두면 maxStay 초 뒤에 흐려진다", "id": "staffGhost", "event": "E4", "after": "connectorKey", "level": 1, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 }
   ],
@@ -135,12 +147,17 @@
     },
     {
       "id": "E7", "title": "정전", "place": "신관 2층", "routes": ["R1", "R2", "R3"], "stage": 3,
-      "pov": "player", "objective": "power", "jumpscare": 1,
+      "pov": "player", "objective": "power", "objectiveDone": "findFriends", "jumpscare": 1,
       "lines": [
         { "who": "mingeon", "text": "너네 이 시간에 여기서 뭐 해?" },
+        { "who": "dohyeon", "text": "책 찾으러 왔다고? 빨리 챙기고 같이 나가자." },
+        { "do": "blackout" },
         { "style": "subtitle", "text": "불이 딱 꺼진다." },
-        { "who": "dohyeon", "text": "배전반 쪽으로 가 보자." },
-        { "style": "subtitle", "text": "어둠 속에서 무언가가 나타났다. 일행이 {dohyeon:과} 나, {gyuha:과} {mingeon}, 둘씩 갈라졌다." }
+        { "who": "dohyeon", "text": "정전인가… 배전반이 복도 서쪽에 있어. 가 보자." },
+        { "do": "reach", "id": "switchboard" },
+        { "do": "scare", "id": "J1" },
+        { "style": "subtitle", "text": "어둠 속에서 무언가가 나타났다. 비명과 함께 모두 흩어진다." },
+        { "style": "subtitle", "text": "정신을 차려 보니 곁에는 {dohyeon}뿐이다. {gyuha:과} {mingeon:이} 보이지 않는다." }
       ]
     },
     {
@@ -161,18 +178,24 @@
     },
     {
       "id": "E8", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R2", "R3"], "stage": 3,
-      "pov": "player", "objective": "findFriends", "puzzle": "P3",
+      "pov": "player", "objective": "findFriends", "objectiveDone": "dohyeonBook", "puzzle": "P3",
       "lines": [
-        { "who": "mingeon", "text": "우리 먼저 구관으로 나가 있을게." },
-        { "who": "gyuha", "text": "…응. 먼저 가 있을게." }
+        { "who": "dohyeon", "text": "멀리 못 갔을 거야. 근처 교실부터 찾아보자. 아무 데나 막 들어가진 말고." },
+        { "do": "puzzle" },
+        { "style": "subtitle", "text": "교실 구석에 {gyuha:과} {mingeon:이} 웅크리고 있다." },
+        { "who": "mingeon", "text": "왔구나… 우리 먼저 구관으로 나가 있을게." },
+        { "who": "gyuha", "text": "…응. 먼저 가 있을게." },
+        { "style": "subtitle", "text": "둘이 계단 쪽으로 사라진다. 발소리는 하나뿐이었다." }
       ]
     },
     {
       "id": "E9", "title": "{dohyeon}의 책", "place": "신관 4층", "routes": ["R1", "R2", "R3"], "stage": 3,
-      "pov": "player", "objective": "dohyeonBook", "skipIf": "earlyBook",
+      "pov": "player", "objective": "dohyeonBook", "objectiveDone": "goOld", "skipIf": "earlyBook",
       "lines": [
-        { "who": "dohyeon", "text": "내 책 4층에 있어. 같이 가 줘." },
-        { "style": "subtitle", "text": "{dohyeon}의 책을 챙겼다." }
+        { "who": "dohyeon", "text": "나가기 전에 내 책 좀. 4층 2-10이야. 같이 가 줘." },
+        { "do": "take", "id": "dohyeonBookE9" },
+        { "style": "subtitle", "text": "{dohyeon}의 책을 챙겼다." },
+        { "who": "dohyeon", "text": "됐다. 우리도 구관으로 가자." }
       ]
     },
     {

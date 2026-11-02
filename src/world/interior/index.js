@@ -79,7 +79,8 @@ export function buildInterior(scene, M, col, ctx, renderer) {
   groups.Aextra = extraA;
 
   const entrance = new EntranceDoor(P, handles.get('entrance'), MI, M, ctx.entrance.group);
-  const atmo = new Atmosphere({ site, renderer, lights: ctx.lights, scene, outdoor: ctx.root, groups });
+  const glow = [MI.fixtureLit, M.glassYaja, M.glassLeak].filter(Boolean).map((mat) => ({ mat, base: mat.emissiveIntensity }));
+  const atmo = new Atmosphere({ site, renderer, lights: ctx.lights, scene, outdoor: ctx.root, groups, glow });
   let audio = null;
   let runner = null;
 
