@@ -34,6 +34,7 @@
     "exitKeyPlan": "출구 열쇠를 어떻게 가져올지 정한다",
     "findExitKey": "교무실 열쇠함에서 번호가 맞는 열쇠를 찾는다",
     "wait": "{mingeon:과} {duty:을} 기다린다",
+    "waitDuty": "{duty:을} 기다린다",
     "runExit": "열쇠를 들고 현관으로 달린다",
     "exit": "현관 문을 열고 나간다"
   },
@@ -46,14 +47,17 @@
   },
   "triggers": [
     { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 },
-    { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 열쇠를 챙긴 뒤 다시 온 3층 연결문 앞(연결통로에 들어가기 전, 가짜 {gyuha}가 나타난다), E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
+    { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 열쇠를 챙긴 뒤 다시 온 3층 연결문 앞(연결문을 열고 넘어간다; 가짜 {gyuha}는 E3 에서 연결통로에 가기 전에 만난다), E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
     { "event": "E4", "after": "E3", "rect": [15, -34, 18, -24], "level": 1 },
     { "event": "E4", "after": "E3", "rect": [-18, -53, 8, -50], "level": 1 },
     { "event": "E5", "after": "E4", "space": "3F-bridge", "level": 2 },
     { "event": "E6", "after": "E5", "space": "AC", "level": 4 },
     { "_comment": "단계 14: E7 = 신관 2층 야자 교실(3-7)에 들어설 때, E8 = E7 이 끝난 자리(신관 2층 복도, 배전반 앞)에서 바로, E9 = E8 끝(3층 3-10)에서 복도로 나올 때. 그 루트에 없는 사건(R1 의 E8)·생략 사건(earlyBook 의 E9)은 걸리지 않는다", "event": "E7", "after": "E6", "space": "A2F-3", "level": 1 },
     { "event": "E8", "after": "E7", "space": "AC", "level": 1 },
-    { "event": "E9", "after": "E8", "space": "AC", "level": 2 }
+    { "event": "E9", "after": "E8", "space": "AC", "level": 2 },
+    { "_comment": "단계 15: E10 = 구관 현관 홀에 들어설 때(E9 뒤, R3·R2 만), E11 = 기절에서 깨어난 4층 동쪽 복도 자리(faints.wake4F, E10 이 끝나면 바로), E12 = P2 를 푼 당직실 안(E11 이 끝나면 바로)", "event": "E10", "after": "E9", "space": "lobby", "level": 0 },
+    { "event": "E11", "after": "E10", "rect": [15, -36, 18, -28], "level": 3 },
+    { "event": "E12", "after": "E11", "space": "4F-duty", "level": 3 }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
@@ -66,7 +70,12 @@
   },
   "scares": {
     "_comment": "단계 14: 행동 줄 { do: scare, id } — 점프스케어. 실루엣이 시선 정면(SCENE.scare.dist)에 갑자기 나타나 날카로운 소리와 함께 잠깐 머물다 흐려진다 (번쩍임 없음, 수치는 config SCENE.scare). clamp = 실루엣이 벗어나지 않을 사각형(복도 안), level = 층. 사건의 jumpscare 번호와 같은 번호(n)",
-    "J1": { "n": 1, "event": "E7", "level": 1, "clamp": [-11.05, -93.65, 17.05, -90.15] }
+    "J1": { "n": 1, "event": "E7", "level": 1, "clamp": [-11.05, -93.65, 17.05, -90.15] },
+    "J2": { "n": 2, "event": "E10", "level": 0, "clamp": [-18, -53, 18, -50] }
+  },
+  "faints": {
+    "_comment": "단계 15: 행동 줄 { do: faint, id } — 기절·각성. 화면이 어두워진 동안 pos [x, z]·level·yaw(도, −90 = 동쪽을 봄) 로 옮기고 누운 채 눈을 뜬다 (수치는 config SCENE.faint). wake4F = 구관 4층 동쪽 복도, 당직실 문(x 18, z ≈ −34.4) 맞은편",
+    "wake4F": { "pos": [16.5, -31.5], "level": 3, "yaw": -90 }
   },
   "sightings": [
     { "_comment": "단계 13: 원경 귀신 (STORY E4, 점프스케어 아님). 사건(event) 동안 그 자리에 발소리 없이 서 있고, 줍기(after)를 마친 뒤 플레이어가 고개를 돌리면(시야 밖) fade 초 동안 흐려져 사라진다. 시야 안에 계속 두면 maxStay 초 뒤에 흐려진다", "id": "staffGhost", "event": "E4", "after": "connectorKey", "level": 1, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 }
@@ -109,7 +118,10 @@
       "id": "E3", "title": "잠긴 연결문", "place": "구관↔신관 연결문", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "findConnectorKey",
       "lines": [
-        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." }
+        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." },
+        { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
+        { "style": "subtitle", "text": "{gyuha:이} 다가오는데, 발소리가 들리지 않았다." },
+        { "_comment": "[가정] 사용자 요청(2026-11-02): 잠김을 확인하면 {gyuha} 가 열쇠를 가져가자고 한다. 문구 임시. 실제로는 둔갑한 귀신이라 '같이'를 강조하고 어디서 왔는지 설명하지 않는다", "who": "gyuha", "text": "잠겼네… 교무실에 열쇠함이 있을 거야. 열쇠를 가져가자. 같이." }
       ]
     },
     {
@@ -125,11 +137,9 @@
       "set": { "hasConnectorKey": true }
     },
     {
-      "id": "E5", "title": "돌아온 {gyuha}, 신관 계단", "place": "구관 3층 연결문 앞→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "id": "E5", "title": "신관 계단", "place": "구관 3층 연결문 앞→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "climb", "objectiveRepeat": "climbRepeat",
       "lines": [
-        { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
-        { "style": "subtitle", "text": "{gyuha:이} 다가오는데, 발소리가 들리지 않았다." },
         { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어가자. 계단은 위로 이어진다." }
       ]
     },
@@ -203,21 +213,27 @@
       "pov": "player", "objective": "goOld", "chase": "C2", "jumpscare": 2,
       "lines": [
         { "style": "subtitle", "text": "구관에 왔지만 {mingeon}도 {gyuha}도 없다." },
-        { "style": "subtitle", "text": "등 뒤에서 {mingeon:이} 달려온다. …뭔가 이상하다." }
+        { "style": "subtitle", "text": "등 뒤에서 {mingeon:이} 달려온다. …뭔가 이상하다." },
+        { "do": "chase" },
+        { "style": "subtitle", "text": "[임시] 복도 끝, 어둠 속에 누군가 서 있다. 같은 얼굴이다." },
+        { "do": "scare", "id": "J2" },
+        { "do": "faint", "id": "wake4F" }
       ]
     },
     {
       "id": "E11", "title": "각성", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
-      "pov": "player", "objective": "findClue", "puzzle": "P2",
+      "pov": "player", "objective": "findClue", "objectiveDone": "exitKeyPlan", "puzzle": "P2",
       "lines": [
         { "style": "subtitle", "text": "정신을 차리니 구관 4층 바닥에 누워 있다." },
         { "who": "dohyeon", "text": "깼어? 아저씨가 같이 옮겨 줬어." },
-        { "who": "duty", "text": "출구 열쇠 번호부터 알아내야 한다. 당직실에 단서가 있을 거다." }
+        { "who": "duty", "text": "출구 열쇠 번호부터 알아내야 한다. 당직실에 단서가 있을 거다." },
+        { "do": "puzzle" },
+        { "who": "duty", "text": "47번. 교무실 열쇠함에 달린 번호표다. 틀림없어." }
       ]
     },
     {
       "id": "E12", "title": "열쇠를 가지러", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
-      "pov": "player", "objective": "exitKeyPlan",
+      "pov": "player", "objective": "exitKeyPlan", "objectiveDone": "waitDuty",
       "lines": [
         { "who": "duty", "text": "출구는 잠겨 있다. 내가 교무실에 가서 열쇠를 가져오마. 여기 있어라." }
       ],

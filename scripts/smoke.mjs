@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 import { mapSmoke } from './smokeMap.mjs';
 import { e7e9Smoke } from './smokeE7.mjs';
+import { e10e12Smoke } from './smokeE10.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -78,10 +79,10 @@ await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
 const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
 check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
 await press('KeyR', 120);
-// E3~E6 (단계 13): 3층 연결문 앞 E3 → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 열쇠 들고 다시 온 3층 연결문 앞 E5(가짜 {gyuha}) → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
+// E3~E6 (단계 13): 3층 연결문 앞 E3(가짜 {gyuha} 등장) → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 열쇠 들고 다시 온 3층 연결문 앞 E5 → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
 const busyDone = async (id) => { for (let i = 0; i < 40 && (await S((e) => window.__DEBUG.story.registry.active === e && window.__DEBUG.story.mode !== 'action', id)); i++) await press('KeyE', 150); return poll((e) => window.__DEBUG.story.registry.done.has(e), id); };
 await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
-check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
+check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인, 가짜 {gyuha} 등장은 e3e6 단위 테스트)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
 await S(() => window.__DEBUG.player.setView([16.5, 1.6, -30], 0, 0, 1));
 check('2층 동쪽 복도 → E4, 복도 모퉁이에 원경 귀신', await poll(() => window.__DEBUG.story.event?.id === 'E4' && window.__DEBUG.scenes.stepsView.ghosts[0].m.visible));
 for (let i = 0; i < 40 && (await S(() => window.__DEBUG.story.action?.do)) !== 'take'; i++) await press('KeyE', 150); // 자막 넘기기
@@ -90,12 +91,13 @@ check('교무실 열쇠함 살펴보기', await poll(() => document.getElementBy
 await press('KeyE', 120);
 check('열쇠함 E → 연결문 열쇠(hasConnectorKey), E4 끝', await poll(() => window.__DEBUG.story.flags.values.hasConnectorKey) && (await busyDone('E4')));
 await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
-check('열쇠 들고 3층 연결문 앞(연결통로 전) → E5, 가짜 {gyuha} 대사', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await poll(() => document.body.textContent.includes('무서워서 다시 왔어'))) && (await busyDone('E5')));
+check('열쇠 들고 3층 연결문 앞 → E5 (문 열고 넘어감)', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await busyDone('E5')));
 await S(() => window.__DEBUG.player.setView([3, 1.6, -91.9], 0, 0, 4));
 check('신관 5층 복도 → E6', await poll(() => window.__DEBUG.story.registry.history.includes('E6')) && (await busyDone('E6')));
 const e6 = await S(() => ({ obj: window.__DEBUG.story.objective(), book: window.__DEBUG.story.used.has('take:myBook'), key: window.__DEBUG.story.flags.values.hasClassKey }));
 check('E6 끝(1회차): 책은 못 챙김, 목표 = 신관 2층으로', !e6.book && !e6.key && e6.obj.includes('2층'), JSON.stringify(e6));
 await e7e9Smoke({ S, check, poll, press });
+await e10e12Smoke({ S, check, poll, press });
 // 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀·복도에서 E1·E2 가 끼어들지 않게)
 await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다

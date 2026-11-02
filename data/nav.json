@@ -30,6 +30,7 @@
     "exitKeyPlan": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "findExitKey": [{ "to": "2F-staff", "text": "구관 교무실 열쇠함" }],
     "wait": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
+    "waitDuty": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "runExit": [{ "to": "lobby", "text": "구관 현관 홀" }],
     "exit": [{ "to": "lobby", "text": "구관 현관 홀" }]
   }

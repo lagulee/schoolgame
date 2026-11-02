@@ -92,7 +92,9 @@ test('데이터: 자리 진입 E3~E6, 줍기·원경 귀신·소리, E4·E6 행�
   assert.ok(ev.E6.lines.some((l) => l.do === 'take' && l.id === 'myBook' && l.if === 'hasClassKey'));
   assert.ok(ev.E6.lines.some((l) => l.do === 'sound' && story.sounds[l.id]));
   // 가짜 {gyuha}는 연결통로에 들어가기 전(E5, 3층 연결문 앞)에 만난다. 5층(E6)에는 나오지 않는다 (사용자 정정 2026-11-02)
-  assert.ok(ev.E5.lines.some((l) => l.who === 'gyuha' && /무서워서 다시 왔어/.test(l.text)), 'E5 가짜 {gyuha}');
+  assert.ok(ev.E3.lines.some((l) => l.who === 'gyuha' && /무서워서 다시 왔어/.test(l.text)), 'E3 가짜 {gyuha} 등장(연결통로 가기 전)');
+  assert.ok(ev.E3.lines.some((l) => l.who === 'gyuha' && /같이/.test(l.text)), 'E3 열쇠 대사');
+  assert.ok(!ev.E5.lines.some((l) => l.who === 'gyuha'), 'E5 에는 {gyuha} 대사 없음');
   assert.ok(!ev.E6.lines.some((l) => l.who === 'gyuha'), 'E6 에는 {gyuha} 대사 없음');
   assert.equal(story.triggers.find((t) => t.event === 'E5').space, '3F-bridge');
   for (const l of [...ev.E4.lines, ...ev.E6.lines].filter((x) => x.do === 'take')) assert.ok(story.pickups.some((p) => p.id === l.id), l.id);

@@ -10,7 +10,9 @@
     {
       "id": "C2", "name": "{mingeon}(귀신)의 추격", "events": ["E10"], "place": "구관 현관 홀 → 계단",
       "ghostSpeed": 3.0, "startGap": 20, "pathLength": 60, "companionKillDelay": 0, "unlockTime": 0,
-      "delays": [{ "at": 22, "seconds": 3, "what": "방화문을 닫음 (문 두드림)" }, { "at": 42, "seconds": 1.5, "what": "계단참에서 시야가 끊김" }]
+      "delays": [{ "at": 22, "seconds": 3, "what": "[가정] 실제 방화문이 없어 귀신이 멈칫하며 벽을 두드림 (K7: 방화문 3초)" }, { "at": 42, "seconds": 1.5, "what": "[가정] 계단참 대신 복도 모퉁이 앞에서 시야가 끊김 (K7: 계단참 1.5초)" }],
+      "path": { "_comment": "단계 15 [가정]: 실제 1층 경로 — 현관 홀 서쪽 끝에서 동쪽 복도를 북쪽 끝까지 달려 북쪽 복도 안으로 (점 0 = 귀신이 나타나는 현관 홀 남쪽 끝, startAt = 현관 유리문을 막 지난 자리 ≈ 7.5 m, 끝까지 60 m = K7 확정값). stallBang: 지형 지연 동안 귀신이 멈춰 벽을 두드리는 소리(쿵)를 낸다. hideBefore: 귀신 자리가 경로 시작 앞(= 아직 건물 밖)이면 실루엣을 그리지 않고 발소리만. 경로 끝에 닿으면 도착 → 점프스케어 #2 → 기절",
+        "points": [[16.5, 6.5], [16.5, -51.5], [4, -51.5]], "startAt": 7.5, "level": 0, "hideBefore": true, "stallBang": true }
     },
     {
       "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관", "final": true,
