@@ -1,4 +1,5 @@
 // 추격 경로 (단계 12, three 없음): chases.json 의 path.points 꺾은선 위에서 위치 ↔ 경로 거리를 바꾼다.
+// 점은 [x, z] 또는 [x, z, 층] (단계 16: 계단을 내려가는 C4 — 셋째 값이 있으면 at() 이 층도 돌려준다).
 // 플레이어 진행은 경로에 투영한 거리이고 앞으로만 늘어난다 (뒤로 가거나 옆길로 새면 진행 0 → gap 이 줄어든다).
 // 한 프레임에 늘어날 수 있는 거리는 maxStep 으로 막는다 (순간이동·투영 점프로 경로를 건너뛰지 않게).
 export class ChasePath {
@@ -8,10 +9,10 @@ export class ChasePath {
     this.seg = [];
     let acc = 0;
     for (let i = 0; i + 1 < points.length; i++) {
-      const [ax, az] = points[i];
-      const [bx, bz] = points[i + 1];
+      const [ax, az, al] = points[i];
+      const [bx, bz, bl] = points[i + 1];
       const len = Math.hypot(bx - ax, bz - az);
-      this.seg.push({ ax, az, bx, bz, len, from: acc });
+      this.seg.push({ ax, az, bx, bz, al, bl, len, from: acc });
       acc += len;
     }
     this.length = acc;
@@ -34,13 +35,14 @@ export class ChasePath {
     return best;
   }
 
-  // 경로 거리 → (x, z). 0 미만·길이 초과는 끝점에서 멈춘다
+  // 경로 거리 → [x, z, 층]. 0 미만·길이 초과는 끝점에서 멈춘다. 층은 점에 셋째 값이 있을 때만(없으면 undefined)
   at(dist) {
     const d = Math.max(0, Math.min(this.length, dist));
     for (const s of this.seg) {
       if (d <= s.from + s.len || s === this.seg.at(-1)) {
         const t = s.len > 0 ? (d - s.from) / s.len : 0;
-        return [s.ax + (s.bx - s.ax) * t, s.az + (s.bz - s.az) * t];
+        const lv = s.al === undefined || s.bl === undefined ? undefined : s.al + (s.bl - s.al) * t;
+        return [s.ax + (s.bx - s.ax) * t, s.az + (s.bz - s.az) * t, lv];
       }
     }
     return [...this.points[0]];

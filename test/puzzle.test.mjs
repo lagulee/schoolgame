@@ -75,7 +75,7 @@ test('틀린 시도가 wrongLimit 에 닿으면 실패, wrongLimit 은 퍼즐 �
 });
 
 test('정답이 없는(pending) 퍼즐은 번호 확인을 거부', () => {
-  const p = new Puzzle(raw.puzzles.find((q) => q.pending), PUZZLE);
+  const p = new Puzzle({ id: 'PX', pending: true, clues: [], answer: null, wrongLimit: 3 }, PUZZLE); // P1~P4 는 모두 채워져 있어 임시 정의로 확인 (단계 16)
   assert.throws(() => p.check(1), /pending/);
 });
 

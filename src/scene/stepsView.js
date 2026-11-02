@@ -52,8 +52,9 @@ export class StepsView {
     _dir.y = 0;
     if (_dir.lengthSq() < 1e-6) _dir.set(0, 0, -1);
     _dir.normalize();
-    let x = this.camera.position.x + _dir.x * S.dist;
-    let z = this.camera.position.z + _dir.z * S.dist;
+    const dist = sc.def.dist ?? S.dist; // 장면마다 거리를 달리할 수 있다 (J3: 복도 저편)
+    let x = this.camera.position.x + _dir.x * dist;
+    let z = this.camera.position.z + _dir.z * dist;
     const r = sc.def.clamp;
     if (r) {
       x = Math.min(r[2] - S.inset, Math.max(r[0] + S.inset, x));
@@ -101,7 +102,9 @@ export class StepsView {
   sound(def) {
     if (!def || !this.audio.started) return;
     const p = this.player.pos;
-    ghostBang(this.audio, new THREE.Vector3(p.x + (def.dx ?? 0), this.camera.position.y + (def.dy ?? 0), p.z + (def.dz ?? 0)), SCENE.bangGain);
+    const at = new THREE.Vector3(p.x + (def.dx ?? 0), this.camera.position.y + (def.dy ?? 0), p.z + (def.dz ?? 0));
+    if (def.kind === 'sting') ghostSting(this.audio, at, def.gain ?? SCENE.scare.gain); // 날카로운 소리 (단계 16, 등 뒤 가까이)
+    else ghostBang(this.audio, at, SCENE.bangGain);
   }
 
   update() {

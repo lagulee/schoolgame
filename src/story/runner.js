@@ -242,6 +242,7 @@ export class StoryRunner {
     }
     const id = this.registry.end();
     this.onEvent?.(id, 'end');
+    if (ev.ending) this.showEnding(ev.ending); // 마지막 사건(E15): 사건이 끝나면 바로 그 엔딩 카드 (단계 16)
   }
 
   // key 를 주면 그 엔딩을 바로 보여 준다 (촬영·디버그)

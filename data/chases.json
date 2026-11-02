@@ -20,7 +20,9 @@
     },
     {
       "id": "C4", "name": "열쇠를 들고 현관으로", "events": ["E14"], "place": "교무실 → 복도 → 계단 → 현관 홀", "final": true,
-      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": [], "triggerBeforeExit": 5
+      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": [], "triggerBeforeExit": 5,
+      "path": { "_comment": "단계 16 [가정]: 실제 경로 — 2층 동쪽 복도(점 0·1 = 추격이 시작되는 복도 남쪽 z −31 앞뒤, startAt = 점 1 의 경로 위치 9 m) → 현관 쪽 계단(북쪽 줄 내려감 → 계단참 → 남쪽 줄 내려감) → 1층 동쪽 복도 → 현관 홀 → 유리문 앞. 점의 셋째 값 = 층(0.5 = 계단참, 귀신 실루엣 높이용). 교무실~현관 57 m 중 계단 쪽 마지막 40 m(STORY 14-4 의 40 m)만 추격이고, 시작 앞의 9 m 는 귀신이 처음 서 있는 자리(복도 뒤쪽)다. 끝에서 약 2 m 더 가는 점은 도착 거리(40 m)가 유리문 앞 1.5 m 안에서 끝나게 하는 여유",
+        "points": [[17.0, -40.0, 1], [17.0, -31.0, 1], [17.3, -20.25, 1], [23.4, -20.25, 0.5], [23.4, -18.5, 0.5], [19.0, -18.5, 0], [16.7, -17.0, 0], [16.7, -0.6, 0]], "startAt": 9, "level": 1 }
     }
   ]
 }

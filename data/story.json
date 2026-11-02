@@ -57,7 +57,10 @@
     { "event": "E9", "after": "E8", "space": "AC", "level": 2 },
     { "_comment": "단계 15: E10 = 구관 현관 홀에 들어설 때(E9 뒤, R3·R2 만), E11 = 기절에서 깨어난 4층 동쪽 복도 자리(faints.wake4F, E10 이 끝나면 바로), E12 = P2 를 푼 당직실 안(E11 이 끝나면 바로)", "event": "E10", "after": "E9", "space": "lobby", "level": 0 },
     { "event": "E11", "after": "E10", "rect": [15, -36, 18, -28], "level": 3 },
-    { "event": "E12", "after": "E11", "space": "4F-duty", "level": 3 }
+    { "event": "E12", "after": "E11", "space": "4F-duty", "level": 3 },
+    { "_comment": "단계 16 [가정]: routes = 이 루트에서만 건다(R2 의 E13~E14 는 단계 17). wait = 앞 사건이 끝난 뒤 그 시간(초)이 지나면 자리와 상관없이 시작(E13: 당직이 돌아오지 않는 시간). E13 = E12 뒤 45초, E14 = 교무실을 나와 2층 동쪽 복도 남쪽(z −31, C4 경로 시작 — 추격이 시작된 자리에서 40 m 뒤가 현관 유리문 앞), E15 = 현관 유리문 앞(추격 도착 자리)", "event": "E13", "after": "E12", "wait": 45, "routes": ["R3"] },
+    { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R3"] },
+    { "event": "E15", "after": "E14", "rect": [15, -6, 18, 2], "level": 0, "routes": ["R3"] }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
@@ -66,12 +69,23 @@
   ],
   "reaches": {
     "_comment": "단계 14: 행동 줄 { do: reach, id } — 플레이어가 그 자리(사각형 rect [x0, z0, x1, z1], 층 level)에 들어설 때까지 기다린다",
-    "switchboard": { "level": 1, "rect": [-10.6, -92.4, -7.4, -90.15] }
+    "switchboard": { "level": 1, "rect": [-10.6, -92.4, -7.4, -90.15] },
+    "staffRack": { "_comment": "단계 16: E13 — 교무실 서쪽 벽 열쇠 걸이 앞 (P4 가 시작되는 자리)", "level": 1, "rect": [18.3, -47.4, 20.8, -42.0] }
   },
   "scares": {
     "_comment": "단계 14: 행동 줄 { do: scare, id } — 점프스케어. 실루엣이 시선 정면(SCENE.scare.dist)에 갑자기 나타나 날카로운 소리와 함께 잠깐 머물다 흐려진다 (번쩍임 없음, 수치는 config SCENE.scare). clamp = 실루엣이 벗어나지 않을 사각형(복도 안), level = 층. 사건의 jumpscare 번호와 같은 번호(n)",
     "J1": { "n": 1, "event": "E7", "level": 1, "clamp": [-11.05, -93.65, 17.05, -90.15] },
-    "J2": { "n": 2, "event": "E10", "level": 0, "clamp": [-18, -53, 18, -50] }
+    "J2": { "n": 2, "event": "E10", "level": 0, "clamp": [-18, -53, 18, -50] },
+    "J3": { "_comment": "단계 16 [가정]: E14 — 돌아본 복도 북쪽 3.2 m 앞(dist)에 그것이 서 있다. 점프스케어 3번째(한 판 3개 이내)", "n": 3, "event": "E14", "level": 1, "dist": 3.2, "clamp": [15.2, -50, 17.8, -24] }
+  },
+  "looks": {
+    "_comment": "단계 16: 행동 줄 { do: look, id } — 조작이 멈춘 채 시선을 time 초에 걸쳐 돌린다. yaw(도, 0 = 북(−z), 180 = 남, −90 = 동) 또는 at [x, z] (그 점을 바라봄). 끝나면 다음 줄로",
+    "north": { "yaw": 0, "time": 0.5 },
+    "south": { "yaw": 180, "time": 0.45 }
+  },
+  "collapses": {
+    "_comment": "단계 16 [가정, 사용자 확인 대기]: 행동 줄 { do: collapse, id } — 엔딩 C. at [x, z] 의 현관 문 쪽으로 돌아선 뒤 몸이 주저앉으며 시야 가장자리부터 붉은 막이 한 방향으로만 번지고(깜빡임 0회), 어두워졌다 암전. 피·비명·시체는 그리지 않는다 (수치는 config SCENE.collapse)",
+    "door": { "at": [15, -1] }
   },
   "faints": {
     "_comment": "단계 15: 행동 줄 { do: faint, id } — 기절·각성. 화면이 어두워진 동안 pos [x, z]·level·yaw(도, −90 = 동쪽을 봄) 로 옮기고 누운 채 눈을 뜬다 (수치는 config SCENE.faint). wake4F = 구관 4층 동쪽 복도, 당직실 문(x 18, z ≈ −34.4) 맞은편",
@@ -82,7 +96,9 @@
   ],
   "sounds": {
     "_comment": "단계 13: 행동 줄 { do: sound, id } 이 내는 소리. kind = 소리 종류(scene/stepsView.js), dy = 플레이어 기준 높이(m, 음수 = 아래층)",
-    "below": { "kind": "bang", "dy": -9, "dx": -6 }
+    "below": { "kind": "bang", "dy": -9, "dx": -6 },
+    "behind": { "_comment": "단계 16: E14 — 복도 북쪽(등 뒤)에서 쿵", "kind": "bang", "dz": -7 },
+    "cry": { "_comment": "단계 16: E14 — 등 뒤 가까이서 날카로운 소리({dohyeon} 이 붙잡힌 소리의 대용, 목소리 합성은 없음)", "kind": "sting", "dz": -3.5, "gain": 0.5 }
   },
   "traces": [
     { "_comment": "단계 12: 사건(after)이 끝난 뒤 생기는 흔적 (살펴보기 E). 물체 모양은 src/scene/traceView.js", "id": "gyuhaPhone", "after": "E2", "level": 0, "pos": [16.2, -1.0], "label": "떨어진 핸드폰 살펴보기", "text": "{gyuha}의 핸드폰이다. 화면이 거미줄처럼 깨져 있다." }
@@ -248,13 +264,18 @@
     },
     {
       "id": "E13", "title": "돌아오지 않는 {duty}", "place": "구관 2층 교무실", "routes": ["R3"], "stage": 4,
-      "pov": "player", "objective": "findExitKey", "puzzle": "P4",
+      "pov": "player", "objective": "findExitKey", "objectiveDone": "runExit", "puzzle": "P4",
       "deaths": ["duty"],
       "lines": [
         { "style": "subtitle", "text": "{duty:은} 돌아오지 않는다." },
-        { "who": "dohyeon", "text": "우리가 직접 찾으러 가자. 교무실에 있을 거야." },
-        { "style": "subtitle", "text": "교무실 안쪽에서 무언가가 다가온다." }
-      ]
+        { "who": "dohyeon", "text": "너무 오래 걸려. 우리가 직접 찾으러 가자. 교무실에 있을 거야." },
+        { "do": "reach", "id": "staffRack" },
+        { "style": "subtitle", "text": "교무실 안쪽에서 무언가가 다가온다. …발소리가 느리다." },
+        { "who": "dohyeon", "text": "47번이야. 라이트로 번호표를 비춰 봐. 서둘러!" },
+        { "do": "puzzle" },
+        { "style": "subtitle", "text": "47번 열쇠다. 출구 열쇠를 챙겼다." }
+      ],
+      "set": { "hasExitKey": true }
     },
     {
       "id": "E13", "title": "셋이서 교무실로", "place": "구관 2층 교무실", "routes": ["R2"], "stage": 5,
@@ -267,14 +288,18 @@
     {
       "id": "E14", "title": "{dohyeon}", "place": "교무실→복도→계단→현관 홀", "routes": ["R3"], "stage": 4,
       "pov": "player", "objective": "runExit", "chase": "C4", "jumpscare": 3,
+      "freezeUntil": "chase",
       "deaths": ["dohyeon"],
       "finale": { "companion": "dohyeon", "fleeing": ["player"], "atExit": "collapse" },
       "lines": [
-        { "style": "subtitle", "text": "그것이 다시 나타났다. {dohyeon:을} 덮친다." },
-        { "style": "subtitle", "text": "{dohyeon:이} 붙잡혀 있는 사이, 열쇠를 쥐고 혼자 뛴다." },
-        { "style": "subtitle", "text": "등 뒤의 발소리가 점점 빨라진다." }
-      ],
-      "set": { "hasExitKey": true }
+        { "do": "sound", "id": "behind" },
+        { "do": "look", "id": "north" },
+        { "do": "scare", "id": "J3" },
+        { "do": "sound", "id": "cry" },
+        { "style": "subtitle", "text": "[임시] 그것이 {dohyeon:을} 덮친다. \"도망쳐! 열쇠 들고 먼저 가!\"" },
+        { "do": "look", "id": "south" },
+        { "do": "chase" }
+      ]
     },
     {
       "id": "E14", "title": "쫓아오는 것", "place": "교무실→복도→계단→현관 홀", "routes": ["R2"], "stage": 5,
@@ -291,12 +316,13 @@
     },
     {
       "id": "E15", "title": "현관", "place": "구관 1층 현관", "routes": ["R3"], "stage": 4,
-      "pov": "player", "objective": "exit",
+      "pov": "player", "objective": "exit", "objectiveDone": "exit",
+      "freezeUntil": "collapse", "threat": 0.7, "ending": "C",
       "deaths": ["player"],
       "lines": [
-        { "style": "subtitle", "text": "그것이 바로 뒤까지 따라붙은 채, 처음 들어왔던 현관에 닿았다." },
-        { "style": "subtitle", "text": "문 앞에 깨진 핸드폰이 떨어져 있다. {gyuha}의 것이다." },
-        { "style": "subtitle", "text": "문을 열기도 전에 눈앞이 붉게 번진다." }
+        { "style": "subtitle", "text": "[임시] 그것이 바로 뒤까지 따라붙은 채, 처음 들어왔던 현관에 닿았다. 문 앞에 깨진 핸드폰이 떨어져 있다. {gyuha}의 것이다." },
+        { "style": "subtitle", "text": "[임시] 손잡이에 손을 뻗는 순간, 등 뒤의 차가운 것이 시야를 붉게 덮는다." },
+        { "do": "collapse", "id": "door" }
       ]
     },
     {

@@ -3,7 +3,7 @@
 export const SCENE = {
   ghost: { h: 1.95, w: 0.8, opacity: 0.9, color: 0x2c3038 }, // 실루엣 판 크기(m)·불투명도·색(빛 없이 그리는 판이라 완전 검정이면 어둠에 묻혀 안 보인다)
   steps: { near: 0.3, far: 0.8, nearGap: 3, farGap: 20, prep: 0.95, pass: 0.75, gain: 0.55 }, // 발소리 간격(초): 가까울수록 빠름
-  threat: { startGap: 9, rangeGap: 7, max: 0.55, pass: 0.3 }, // 화면 가장자리 어둡게: gap 이 startGap 아래로 줄면 rangeGap 동안 0 → max
+  threat: { startGap: 9, rangeGap: 7, max: 0.55, pass: 0.3, unlock: 0.9 }, // 화면 가장자리 어둡게: gap 이 startGap 아래로 줄면 rangeGap 동안 0 → max
   breath: { prep: 0.35, pass: 0.8 }, // 숨는 동안 숨소리 크기 (0~1)
   smoke: { size: 1.3, max: 0.55 }, // 그림자가 지나갈 때 문틈으로 번지는 검은 연기 (판 크기 m·최대 불투명도)
   trace: { size: [0.075, 0.009, 0.155], turn: 0.6 }, // 떨어진 핸드폰 크기(m)·돌림
@@ -19,5 +19,8 @@ export const SCENE = {
   p3: { pullAfter: 1.6, knockEvery: 3.2, knockGain: 0.7, smokeRise: 1.4, smokeSize: 1.6, smokeMax: 0.6, printSize: [0.13, 0.3], printOpacity: 0.75, farDist: 4 }, // P3: 틀린 교실에 들어선 뒤 끌려 나오기까지(초)·노크 간격(초)·크기·연기 오르는 높이(m)·판 크기·불투명도·발자국 판 크기(m)·불투명도·틀린 교실 실루엣(far)이 서는 시선 앞 거리(m)
   // 단계 15 (E10~E12) [가정, 사용자 확인 대기]. 모든 밝기 변화는 부드럽게 한 방향으로만 (깜빡임 0회), 피·비명·붉은 화면 없음
   faint: { out: 2.5, black: 2.5, in: 4, riseFrom: 1, rise: 3, eyeDrop: 1.1, pitch: 1.1, breath: 0.8, bang: 0.5 }, // 기절: 어두워지는 시간(초)·완전히 어두운 시간·밝아지는 시간·일어나기 시작하는 때(밝아지기 시작 뒤 초)·일어나는 데 걸리는 시간·누웠을 때 눈 낮춤(m)·천장을 올려다보는 각도(rad)·숨소리 크기·쓰러지는 소리 크기
+  // 단계 16 (E13~E15) [가정, 사용자 확인 대기]. 모든 밝기·붉은 막 변화는 한 방향으로만 (깜빡임 0회), 피·비명·시체는 그리지 않는다
+  p4: { gain: 0.6, wrongGain: 0.55, caughtGain: 0.9, opacity: 0.85, tag: [0.13, 0.075] }, // P4 열쇠 교무실: 귀신 발소리·열쇠 소리 크기·잡혔을 때 쿵 크기·실루엣 불투명도·번호표 크기(m)
+  collapse: { turn: 0.6, sag: 3.6, dark: 2.4, hold: 1.6, recover: 2.5, eyeDrop: 1.3, pitch: 0.75, blood: 0.85, breath: 0.9 }, // 엔딩 C: 문 쪽으로 돌아서는 시간·주저앉는 시간(붉은 막이 번지는 시간)·암전으로 가는 시간·완전한 암전을 유지하는 시간(초)·엔딩 카드를 닫은 뒤 되돌아오는 시간·눈 낮춤(m)·고개 숙임(rad)·붉은 막 최대 불투명도·숨소리 크기
   duty: { gap: 90, stay: 7, fade: 1.6, opacity: 0.85, gain: 0.7, view: 40, range: 14 }, // P2 당직실: 귀신이 나타나는 최소 간격(초, STORY 9장)·머무는 최대 시간·흐려지는 시간(초)·불투명도·소리 크기·'보인다'고 볼 시야 반각(도)·거리(m)
 };

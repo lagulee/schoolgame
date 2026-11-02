@@ -130,7 +130,8 @@ export class E2View {
     }
     // 화면 가장자리: 추격 중 가까워질수록, 지나가는 동안 조금
     const T = SCENE.threat;
-    const threat = g?.mode === 'chase' ? T.max * clamp01((T.startGap - g.gap) / T.rangeGap) : g?.mode === 'pass' ? T.pass : 0;
+    let threat = g?.mode === 'chase' ? T.max * clamp01((T.startGap - g.gap) / T.rangeGap) : g?.mode === 'pass' ? T.pass : 0;
+    if (g?.locked) threat = T.max + (T.unlock - T.max) * g.unlockK; // 마지막 추격: 출구를 여는 1초 동안 가장자리가 빠르게 어두워진다 (한 방향)
     this.threatEl.style.opacity = threat.toFixed(3);
     // 숨소리 (main.js 가 지친 숨과 큰 쪽을 쓴다)
     this.breath = g?.mode === 'pass' ? SCENE.breath.pass : g?.mode === 'prep' ? SCENE.breath.prep : 0;
