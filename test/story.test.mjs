@@ -122,7 +122,9 @@ test('진행기: 자막은 시간이 지나면 저절로 넘어간다', () => {
   r.jump('E3');
   assert.equal(r.ui.shown.style, 'subtitle');
   r.update(1.1);
-  assert.equal(r.mode, 'idle');
+  // E3: 잠김 자막이 저절로 넘어가면 {gyuha} 의 열쇠 대사가 이어진다 (대사는 입력을 기다림)
+  assert.notEqual(r.ui.shown.style, 'subtitle');
+  assert.match(r.ui.shown.text, /열쇠/);
 });
 
 test('전체 진행: 기본 선택 → R3 · 엔딩 C, 열쇠 플래그 획득', () => {

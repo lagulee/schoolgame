@@ -109,7 +109,8 @@
       "id": "E3", "title": "잠긴 연결문", "place": "구관↔신관 연결문", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "findConnectorKey",
       "lines": [
-        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." }
+        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." },
+        { "_comment": "[가정] 사용자 요청(2026-11-02): 잠김을 확인하면 {gyuha} 가 열쇠를 가져가자고 한다. 문구 임시. 실제로는 둔갑한 귀신이라 '같이'를 강조하고 어디서 왔는지 설명하지 않는다", "who": "gyuha", "text": "잠겼네… 교무실에 열쇠함이 있을 거야. 열쇠를 가져가자. 같이." }
       ]
     },
     {
