@@ -1,4 +1,4 @@
-// 단계 13(2b): E3 연결문 잠김 → E4 교무실 열쇠(원경 귀신) → E5 연결통로·신관 계단(4층 책 = earlyBook) → E6 5층(가짜 {gyuha}·아래층 소리).
+// 단계 13(2b): E3 연결문 잠김 → E4 교무실 열쇠(원경 귀신) → E5 열쇠 들고 다시 온 3층 연결문 앞(연결통로 전, 가짜 {gyuha})·신관 계단(4층 책 = earlyBook) → E6 5층(2-13·아래층 소리).
 // 5층 내 책(2-13)은 1회차엔 잠겨 못 챙기고, 2회차(엔딩을 본 판)는 E1 시작 때 2-13 열쇠를 받아 E6 에서 챙긴다 (사용자 결정 2026-11-02).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -74,7 +74,9 @@ function runE3toE6(w, { book }) {
   assert.ok(runner.registry.done.has('E4'));
   assert.equal(runner.objectiveKey(), 'openConnector');
   tick(DT, mid('bridge@2'));
-  assert.equal(runner.event?.id, 'E5', '연결문 너머 통로 → E5');
+  assert.equal(runner.event, null, '연결통로 안으로 바로 가면 E5 가 시작되지 않는다 (연결통로 전에 만난다)');
+  tick(DT, mid('3F-bridge@2'));
+  assert.equal(runner.event?.id, 'E5', '열쇠 들고 다시 온 3층 연결문 앞 → E5');
   play();
   assert.equal(runner.objectiveKey(), runner.repeat ? 'climbRepeat' : 'climb');
   if (book) assert.ok(runner.interact('dohyeonBook'), '4층 책상 위 책');
@@ -89,6 +91,10 @@ test('데이터: 자리 진입 E3~E6, 줍기·원경 귀신·소리, E4·E6 행�
   assert.ok(ev.E4.lines.some((l) => l.do === 'take' && l.id === 'connectorKey'));
   assert.ok(ev.E6.lines.some((l) => l.do === 'take' && l.id === 'myBook' && l.if === 'hasClassKey'));
   assert.ok(ev.E6.lines.some((l) => l.do === 'sound' && story.sounds[l.id]));
+  // 가짜 {gyuha}는 연결통로에 들어가기 전(E5, 3층 연결문 앞)에 만난다. 5층(E6)에는 나오지 않는다 (사용자 정정 2026-11-02)
+  assert.ok(ev.E5.lines.some((l) => l.who === 'gyuha' && /무서워서 다시 왔어/.test(l.text)), 'E5 가짜 {gyuha}');
+  assert.ok(!ev.E6.lines.some((l) => l.who === 'gyuha'), 'E6 에는 {gyuha} 대사 없음');
+  assert.equal(story.triggers.find((t) => t.event === 'E5').space, '3F-bridge');
   for (const l of [...ev.E4.lines, ...ev.E6.lines].filter((x) => x.do === 'take')) assert.ok(story.pickups.some((p) => p.id === l.id), l.id);
   const s = story.sightings.find((x) => x.event === 'E4');
   assert.ok(s && !ev.E4.jumpscare, '원경 귀신, 점프스케어 아님');
