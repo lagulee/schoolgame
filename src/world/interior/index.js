@@ -71,7 +71,8 @@ export function buildInterior(scene, M, col, ctx, renderer) {
     m.rotation.y = 0.12; // 반듯하지 않게
     m.castShadow = true;
     extraA.add(m);
-    return { id: s.id, mesh: m, interaction: annexData.spots.find((t) => t.id === s.id)?.interaction };
+    const d = annexData.spots.find((t) => t.id === s.id);
+    return { id: s.id, mesh: m, interaction: d?.interaction, take: d?.take };
   });
   root.add(extra, extraA);
   groups.extra = extra;
@@ -96,7 +97,8 @@ export function buildInterior(scene, M, col, ctx, renderer) {
     atmo,
     // 상호작용(E)·소리 연결 (main.js 에서 스토리 준비 뒤). hasKey(플래그 이름) = 열쇠 문, runner = 상호작용 사건(책),
     // lockSound(상호작용 id) = 잠긴 문 소리 종류 (data/map.json, 단계 10)
-    attach({ interactions, toast, audio: a, player, hasKey, runner: r, lockSound }) {
+    // take(id) = 사건이 기다리는 줍기(단계 13, 예: E6 내 책) — 줍었으면 true
+    attach({ interactions, toast, audio: a, player, hasKey, runner: r, lockSound, take }) {
       audio = a;
       runner = r ?? null;
       const ctx = { interactions, toast, audio, player, hasKey, lockSound };
@@ -122,6 +124,7 @@ export function buildInterior(scene, M, col, ctx, renderer) {
           id: `spot:${s.id}`, pos: at, level: f ? f.L : s.level, label: s.label,
           onUse: () => {
             if (s.interaction && runner?.interact(s.interaction)) return;
+            if (s.take && take?.(s.take)) return;
             toast(s.text);
           },
         });
@@ -133,7 +136,7 @@ export function buildInterior(scene, M, col, ctx, renderer) {
       connector.update(dt);
       entrance.update(dt, player, audio);
       atmo.update(dt, player, camera);
-      for (const b of books) b.mesh.visible = !(b.interaction && runner?.used?.has(b.interaction));
+      for (const b of books) b.mesh.visible = !((b.interaction && runner?.used?.has(b.interaction)) || (b.take && runner?.used?.has(`take:${b.take}`)));
     },
     // 스크린샷 모드: 문·분위기를 바로 최종 상태로
     snap(player, camera) {

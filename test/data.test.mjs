@@ -154,7 +154,7 @@ const speeds = { walk: PLAYER.walk, run: PLAYER.run };
 const variant = (id, route) => story.events.find((e) => e.id === id && e.routes.includes(route));
 
 test('v6 hasRoofKey: 5번째 플래그, A·B·C 를 모두 본 새 판의 E1 에서만 켜진다 (D 는 무관)', () => {
-  assert.equal(FLAG_NAMES.length, 5);
+  assert.equal(FLAG_NAMES.length, 6); // 6번째 hasClassKey (단계 13, 2회차 2-13 열쇠)
   assert.equal(FLAG_NAMES[4], 'hasRoofKey');
   assert.equal(story.flags.hasRoofKey, false);
   assert.ok(earnsRoofKey(['C', 'A', 'B']));

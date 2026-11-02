@@ -10,14 +10,17 @@
   "goals": {
     "goEntrance": [{ "to": "lobby", "text": "본관 현관 홀" }],
     "goFifth": [
-      { "if": "!hasConnectorKey", "to": "2F-staff", "text": "구관 교무실 (연결문 열쇠)" },
-      { "to": "A5F-2", "text": "신관 5층 2-13 교실" }
+      { "if": "!hasConnectorKey", "to": "3F-bridge@2", "text": "구관 3층 연결문" },
+      { "if": "hasClassKey", "to": "A5F-2", "text": "신관 5층 2-13 교실" },
+      { "to": "AC@4", "text": "신관 5층 복도" }
     ],
     "hide": [{ "to": "1F-2", "text": "구관 1층 1-2 교실" }],
     "findConnectorKey": [{ "to": "2F-staff", "text": "구관 교무실" }],
-    "climb": [{ "to": "A5F-2", "text": "신관 5층 2-13 교실" }],
+    "climb": [{ "if": "hasClassKey", "to": "A5F-2", "text": "신관 5층 2-13 교실" }, { "to": "AC@4", "text": "신관 5층 복도" }],
     "climbRepeat": [{ "to": "A4F-2", "text": "신관 4층 2-10 교실" }],
-    "takeBook": [{ "to": "A5F-2", "text": "신관 5층 2-13 교실" }],
+    "takeBook": [{ "if": "hasClassKey", "to": "A5F-2", "text": "신관 5층 2-13 교실" }, { "to": "AC@4", "text": "신관 5층 복도" }],
+    "openConnector": [{ "to": "3F-bridge@2", "text": "구관 3층 연결문" }],
+    "goYaja": [{ "to": "AC@1", "text": "신관 2층 복도" }],
     "power": [{ "point": [-9, -91.2, 1], "text": "신관 2층 배전반" }],
     "findFriends": [{ "to": "AC@1", "text": "신관 2층 복도" }],
     "dohyeonBook": [{ "to": "A4F-2", "text": "신관 4층 2-10 교실" }],

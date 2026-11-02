@@ -128,6 +128,7 @@ export class StoryRunner {
     this.lineIdx = -1;
     this.setPov(this.event.pov ?? 'player');
     if (this.event.grantRoofKey && this.allEndings) this.flags.set('hasRoofKey', true);
+    if (this.event.grantClassKey && this.repeat) this.flags.set('hasClassKey', true); // 2회차: 5층 2-13 열쇠 (단계 13)
     this.onEvent?.(id, 'start');
     this.nextLine();
     return true;
@@ -176,6 +177,7 @@ export class StoryRunner {
     this.lineIdx++;
     if (this.lineIdx < lines.length) {
       const line = lines[this.lineIdx];
+      if (line.if && !this.test(line.if)) return this.nextLine(restoring); // 조건 줄 (단계 13): 'repeat'·플래그 이름, 앞에 ! 면 반대
       if (line.do) {
         this.mode = 'action';
         this.lineLeft = Infinity;
@@ -256,6 +258,13 @@ export class StoryRunner {
       text: e ? this.text(e.summary) : '이 루트의 엔딩이 정의되지 않았다',
     });
     this.onEnding?.(key, route);
+  }
+
+  // 줄 조건: 'repeat'(엔딩을 본 판) 또는 플래그 이름, '!' 로 뒤집는다
+  test(cond) {
+    const not = cond.startsWith('!');
+    const k = not ? cond.slice(1) : cond;
+    return (k === 'repeat' ? this.repeat : this.flags.get(k)) !== not;
   }
 
   // 행동 줄이 끝났다 (추격 도착·퍼즐 성공 등). 다른 행동을 기다리는 중이면 무시

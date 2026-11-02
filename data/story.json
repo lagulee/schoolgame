@@ -1,12 +1,13 @@
 {
-  "_comment": "사건 E1~E15·R1-a~R1-h 뼈대 (기준: docs/story/STORY.md v6). 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. 배열 순서 = 진행 순서. 같은 id 를 루트별 변형으로 여러 번 쓸 수 있다(routes 가 겹치지 않을 때, 예: E13·E14). lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계. objective/objectiveRepeat: objectives 의 키(핸드폰 목표, 엔딩을 본 판이면 objectiveRepeat 우선). pov: player | mingeon (조작 시점). puzzle: data/puzzles.json id. chase: data/chases.json id. jumpscare: 점프스케어 번호(한 판 3개 이내). undecided: 아래 undecided 의 키(사용자 확인 전). resolved: 해소된 미확정 항목과 결정. grantRoofKey: A·B·C 를 모두 본 판이면 이 사건 시작 때 hasRoofKey. deaths: 이 사건에서 죽는 인물(순서대로). finale: 마지막 추격(STORY 14-4) 구조 — companion 먼저 죽는 일행, fleeing 도망치는 사람(첫째가 조작), atExit 출구에서의 결과(escape 탈출 / playerCaught 주인공이 입구 직전에 붙잡히고 나머지 탈출 / collapse 문을 열기 전에 쓰러짐).",
+  "_comment": "사건 E1~E15·R1-a~R1-h 뼈대 (기준: docs/story/STORY.md v6). 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. 배열 순서 = 진행 순서. 같은 id 를 루트별 변형으로 여러 번 쓸 수 있다(routes 가 겹치지 않을 때, 예: E13·E14). lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계. objective/objectiveRepeat: objectives 의 키(핸드폰 목표, 엔딩을 본 판이면 objectiveRepeat 우선). pov: player | mingeon (조작 시점). puzzle: data/puzzles.json id. chase: data/chases.json id. jumpscare: 점프스케어 번호(한 판 3개 이내). undecided: 아래 undecided 의 키(사용자 확인 전). resolved: 해소된 미확정 항목과 결정. grantRoofKey: A·B·C 를 모두 본 판이면 이 사건 시작 때 hasRoofKey. grantClassKey: 엔딩을 하나라도 본 판(2회차)이면 이 사건 시작 때 hasClassKey(신관 5층 2-13 열쇠, 사용자 결정 2026-11-02). deaths: 이 사건에서 죽는 인물(순서대로). finale: 마지막 추격(STORY 14-4) 구조 — companion 먼저 죽는 일행, fleeing 도망치는 사람(첫째가 조작), atExit 출구에서의 결과(escape 탈출 / playerCaught 주인공이 입구 직전에 붙잡히고 나머지 탈출 / collapse 문을 열기 전에 쓰러짐).",
   "draft": true,
   "flags": {
     "hasConnectorKey": false,
     "earlyBook": false,
     "dutyCompanion": false,
     "hasExitKey": false,
-    "hasRoofKey": false
+    "hasRoofKey": false,
+    "hasClassKey": false
   },
   "undecided": {},
   "resolved": {
@@ -22,6 +23,8 @@
     "climb": "연결문을 열고 신관 5층으로 올라간다",
     "climbRepeat": "신관 5층으로 올라간다. 4층을 지나며 {dohyeon}의 책을 챙긴다",
     "takeBook": "5층에서 내 책을 챙긴다",
+    "openConnector": "3층 연결문을 열고 신관으로 넘어간다",
+    "goYaja": "아래층에서 난 소리 쪽, 신관 2층으로 내려간다",
     "power": "불을 켜러 배전반으로 간다",
     "findFriends": "흩어진 {gyuha:과} {mingeon:을} 찾는다",
     "dohyeonBook": "{dohyeon}의 책을 챙기러 신관 4층으로 간다",
@@ -42,15 +45,31 @@
     "hint": "운동장을 둘러볼 수 있다. 준비되면 본관 현관으로 들어가자."
   },
   "triggers": [
-    { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 }
+    { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 },
+    { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 연결문 너머 통로, E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
+    { "event": "E4", "after": "E3", "rect": [15, -34, 18, -24], "level": 1 },
+    { "event": "E4", "after": "E3", "rect": [-18, -53, 8, -50], "level": 1 },
+    { "event": "E5", "after": "E4", "space": "bridge", "level": 2 },
+    { "event": "E6", "after": "E5", "space": "AC", "level": 4 }
   ],
+  "pickups": [
+    { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
+    { "id": "myBook", "spot": "myDesk" }
+  ],
+  "sightings": [
+    { "_comment": "단계 13: 원경 귀신 (STORY E4, 점프스케어 아님). 사건(event) 동안 그 자리에 발소리 없이 서 있고, 줍기(after)를 마친 뒤 플레이어가 고개를 돌리면(시야 밖) fade 초 동안 흐려져 사라진다. 시야 안에 계속 두면 maxStay 초 뒤에 흐려진다", "id": "staffGhost", "event": "E4", "after": "connectorKey", "level": 1, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 }
+  ],
+  "sounds": {
+    "_comment": "단계 13: 행동 줄 { do: sound, id } 이 내는 소리. kind = 소리 종류(scene/stepsView.js), dy = 플레이어 기준 높이(m, 음수 = 아래층)",
+    "below": { "kind": "bang", "dy": -9, "dx": -6 }
+  },
   "traces": [
     { "_comment": "단계 12: 사건(after)이 끝난 뒤 생기는 흔적 (살펴보기 E). 물체 모양은 src/scene/traceView.js", "id": "gyuhaPhone", "after": "E2", "level": 0, "pos": [16.2, -1.0], "label": "떨어진 핸드폰 살펴보기", "text": "{gyuha}의 핸드폰이다. 화면이 거미줄처럼 깨져 있다." }
   ],
   "events": [
     {
       "id": "E1", "title": "진입", "place": "구관 1층 현관", "routes": ["R1", "R2", "R3"], "stage": 2,
-      "pov": "player", "objective": "goFifth", "grantRoofKey": true,
+      "pov": "player", "objective": "goFifth", "grantRoofKey": true, "grantClassKey": true,
       "tutorial": {
         "keys": "WASD 이동 · Shift 달리기 · E 핸드폰(할 일·위치 확인) · R 라이트",
         "touch": "조이스틱 이동(끝까지 밀면 달리기) · 📱 핸드폰(할 일·위치 확인) · 💡 라이트"
@@ -86,8 +105,11 @@
       "pov": "player", "objective": "findConnectorKey",
       "lines": [
         { "style": "subtitle", "text": "복도 끝에 무언가 서 있다. …움직이지 않는다." },
+        { "style": "subtitle", "text": "교무실 벽에 열쇠함이 있을 것이다. 그쪽은 보지 말자." },
+        { "do": "take", "id": "connectorKey" },
         { "style": "subtitle", "text": "연결문 열쇠를 챙겼다." }
       ],
+      "objectiveDone": "openConnector",
       "set": { "hasConnectorKey": true }
     },
     {
@@ -99,10 +121,15 @@
     },
     {
       "id": "E6", "title": "5층, 돌아온 {gyuha}", "place": "신관 5층", "routes": ["R1", "R2", "R3"], "stage": 2,
-      "pov": "player", "objective": "takeBook",
+      "pov": "player", "objective": "takeBook", "objectiveDone": "goYaja",
       "lines": [
-        { "style": "subtitle", "text": "내 책을 챙겼다." },
+        { "if": "!hasClassKey", "style": "subtitle", "text": "2-13 교실 문이 잠겨 있다. 내 책은 저 안에 있는데…" },
+        { "if": "hasClassKey", "style": "subtitle", "text": "주머니 속 2-13 열쇠가 손에 잡힌다. 이번에는 열 수 있다." },
+        { "if": "hasClassKey", "do": "take", "id": "myBook" },
+        { "if": "hasClassKey", "style": "subtitle", "text": "내 책을 챙겼다." },
         { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
+        { "style": "subtitle", "text": "{gyuha:이} 다가오는데, 발소리가 들리지 않았다." },
+        { "do": "sound", "id": "below" },
         { "style": "subtitle", "text": "어디선가, 아래층에서 소리가 난다." }
       ]
     },

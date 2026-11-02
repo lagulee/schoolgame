@@ -8,7 +8,7 @@ import { ghostStep } from '../audio/ghost.js';
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 // 사람 모양의 흐릿한 검은 실루엣 (머리·어깨·몸통, 가장자리는 부드럽게)
-function silhouetteTexture() {
+export function silhouetteTexture() {
   const c = document.createElement('canvas');
   c.width = 128;
   c.height = 320;

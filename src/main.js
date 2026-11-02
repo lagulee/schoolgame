@@ -109,9 +109,9 @@ audio.addLedBuzz(world.ctx.sur.sign.group.position);
 for (const l of lights.yardLamps) audio.addLampBuzz(l);
 player.onStep = (surface, running) => audio.step(surface, running);
 // 실내 문·연결문·신관 살펴보기 자리 (E). 열쇠 문은 스토리 플래그(없는 이름이면 잠김), 책상 위 책은 상호작용 사건
-world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner, lockSound: (id) => mapData.lockSound(id) });
+world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner, lockSound: (id) => mapData.lockSound(id), take: (id) => scenes.steps.take(id) });
 // 사건 연출 (단계 12): E2 자리 진입·추격 C1·숨기 P1·흔적·E1 조작 안내
-const scenes = setupScenes({ scene, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch: touchMode });
+const scenes = setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch: touchMode });
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],

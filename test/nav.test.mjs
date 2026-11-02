@@ -53,17 +53,20 @@ test('시작 지점 → 현관 홀: 길이 있고 마지막이 홀 안, 거리�
   assert.ok(g.cache.cum.at(-1) <= open.dist(...LOBBY) * 1.05, `길이 ${g.cache.cum.at(-1)}`);
 });
 
-test('연결문 열쇠가 없으면 goFifth 는 교무실이 먼저, 열쇠가 있으면 신관 5층 2-13', () => {
+test('goFifth: 연결문 열쇠가 없으면 먼저 3층 연결문(E3), 열쇠가 있으면 신관 5층 복도, 2-13 열쇠(2회차)까지 있으면 2-13 (단계 13)', () => {
   const [x, z, l] = LOBBY;
   const a = mk().update(0, x, z, l, 'goFifth');
   assert.equal(a.state, 'path');
-  assert.match(a.text, /교무실/);
-  assert.match(a.step, /2층/, '교무실은 2층: 계단 안내');
+  assert.match(a.text, /연결문/);
+  assert.match(a.step, /층까지/, '연결문은 3층: 계단 안내');
   const b = mk({ hasConnectorKey: true }).update(0, x, z, l, 'goFifth');
   assert.equal(b.state, 'path');
-  assert.match(b.text, /5층 2-13/);
+  assert.match(b.text, /5층 복도/);
   assert.match(b.step, /층까지/);
   assert.ok(b.dist > 100, `현관 홀에서 신관 5층까지 멀다: ${b.dist}`);
+  const c = mk({ hasConnectorKey: true, hasClassKey: true }).update(0, x, z, l, 'goFifth');
+  assert.match(c.text, /5층 2-13/);
+  assert.equal(mk({ hasConnectorKey: true }).update(0, ...at('2F-staff'), 'findConnectorKey').state, 'arrived');
 });
 
 test('열쇠 없이 신관 5층 안내(교무실 다리가 없는 목표)는 연결문 때문에 막히면 느슨한 길로 방향을 준다', () => {

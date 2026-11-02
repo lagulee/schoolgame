@@ -30,3 +30,34 @@ export function ghostStep(audio, pos, gain = 0.5) {
     return 0.45;
   }, { ref: 3, rolloff: 1.2, max: 45 });
 }
+
+// 아래층에서 무언가 넘어지는 쿵 소리 (단계 13, E6): 낮고 긴 울림 + 짧은 덜컹 두 번
+export function ghostBang(audio, pos, gain = 0.8) {
+  audio.oneShot(pos, (ctx, out, t) => {
+    const o = ctx.createOscillator();
+    o.frequency.setValueAtTime(70, t);
+    o.frequency.exponentialRampToValueAtTime(32, t + 0.6);
+    const og = ctx.createGain();
+    og.gain.setValueAtTime(0.0001, t);
+    og.gain.exponentialRampToValueAtTime(gain, t + 0.015);
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    o.connect(og).connect(out);
+    o.start(t);
+    o.stop(t + 0.95);
+    for (const [dt, g] of [[0.02, 0.6], [0.32, 0.3]]) {
+      const n = ctx.createBufferSource();
+      n.buffer = audio.noise;
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 600;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.0001, t + dt);
+      ng.gain.exponentialRampToValueAtTime(gain * g, t + dt + 0.01);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.25);
+      n.connect(lp).connect(ng).connect(out);
+      n.start(t + dt, Math.random() * 1.5);
+      n.stop(t + dt + 0.3);
+    }
+    return 1.0;
+  }, { ref: 6, rolloff: 0.8, max: 60 });
+}

@@ -1,6 +1,7 @@
 // 스토리 플래그와 루트 판정. 플래그 이름과 판정 규칙은 docs/story/STORY.md 6장·9장 그대로.
 
-export const FLAG_NAMES = ['hasConnectorKey', 'earlyBook', 'dutyCompanion', 'hasExitKey', 'hasRoofKey'];
+export const FLAG_NAMES = ['hasConnectorKey', 'earlyBook', 'dutyCompanion', 'hasExitKey', 'hasRoofKey', 'hasClassKey'];
+// hasClassKey: 신관 5층 2-13(내 책 교실) 열쇠. STORY 에 없는 플래그 — 사용자 결정(2026-11-02): 1회차엔 못 얻고 2회차에 받는다
 
 // 엔딩 키. A·B·C 는 루트 엔딩, D 는 A·B·C 를 모두 본 뒤에만 가는 숨겨진 엔딩 (STORY 16장)
 export const MAIN_ENDINGS = ['A', 'B', 'C'];

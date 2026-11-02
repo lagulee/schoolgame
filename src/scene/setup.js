@@ -1,13 +1,16 @@
-// 사건 연출 조립 (단계 12): 자리 진입 사건(triggers) + E2(추격 C1·숨기 P1) + 흔적(traces) + 화면(e2View) + E1 조작 안내.
+// 사건 연출 조립 (단계 12·13): 자리 진입 사건(triggers) + E2(추격 C1·숨기 P1) + 흔적(traces) + 화면(e2View) + E1 조작 안내
+// + 사건 안 작은 행동(steps: 줍기·소리·원경 귀신, 단계 13 E3~E6).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
 import { PLAYER, SCENE } from '../config.js';
 import { EventTriggers } from '../story/triggers.js';
 import { E2Scene } from './e2.js';
 import { E2View } from './e2View.js';
 import { Traces } from './traces.js';
+import { StorySteps } from './steps.js';
+import { StepsView } from './stepsView.js';
 import { showNotice } from '../ui/notice.js';
 
-export function setupScenes({ scene, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
+export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
   const runner = story.runner;
   const data = runner.story;
   const locate = (x, z, l) => mapData.locate(x, z, l);
@@ -36,6 +39,8 @@ export function setupScenes({ scene, story, chase, puzzle, player, phone, world,
     scene, e2, collision, audio, doors, traces, traceDefs: data.traces ?? [],
     threatEl: document.getElementById('threat'), hintEl: document.getElementById('hide-hint'),
   });
+  const steps = new StorySteps({ runner, story: data, interactions: story.interactions, toast });
+  const stepsView = new StepsView({ scene, steps, collision, audio, camera, player, story: data });
   // E1 이 끝나면 조작 안내 (사건 데이터 tutorial)
   const prevEvent = runner.onEvent;
   runner.onEvent = (id, phase) => {
@@ -49,6 +54,8 @@ export function setupScenes({ scene, story, chase, puzzle, player, phone, world,
     e2,
     traces,
     view,
+    steps,
+    stepsView,
     get breath() {
       return view.breath;
     },
@@ -61,6 +68,8 @@ export function setupScenes({ scene, story, chase, puzzle, player, phone, world,
       e2.update(dt);
       traces.update();
       view.update(dt);
+      steps.update(dt, (def) => stepsView.inView(def));
+      stepsView.update();
     },
   };
 }
