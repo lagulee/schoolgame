@@ -15,6 +15,8 @@ export class EventTriggers {
   armed(def) {
     const reg = this.runner.registry;
     if (reg.history.includes(def.event) || reg.done.has(def.event)) return false;
+    // 그 루트에 없거나 생략 조건(skipIf)에 걸린 사건은 걸지 않는다 (단계 14: R1 의 E8, earlyBook 의 E9)
+    if (!reg.isAvailable(def.event, this.runner.flags.values, this.runner.route)) return false;
     return !def.after || reg.done.has(def.after);
   }
 

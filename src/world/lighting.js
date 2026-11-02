@@ -86,14 +86,19 @@ export function buildLighting(scene, ctx) {
   const mix = (a, b) => a + (b - a) * indoor;
   const sky = [new THREE.Color(PALETTE.hemiSky), new THREE.Color(I.hemiSky)];
   const ground = [new THREE.Color(PALETTE.hemiGround), new THREE.Color(I.hemiGround)];
+  let dark = 1; // 정전 뒤 실내 하늘빛 배율 (단계 14, atmosphere.js)
   const applyHemi = () => {
-    hemi.intensity = mix(L.hemi, I.hemi) * (inspectOn ? L.inspectBoost : 1);
+    hemi.intensity = mix(L.hemi, I.hemi * dark) * (inspectOn ? L.inspectBoost : 1);
     hemi.color.lerpColors(sky[0], sky[1], indoor);
     hemi.groundColor.lerpColors(ground[0], ground[1], indoor);
   };
   out.setInspect = (on) => {
     inspectOn = on;
     inspect.intensity = on ? 1.6 : 0;
+    applyHemi();
+  };
+  out.setDark = (f) => {
+    dark = f;
     applyHemi();
   };
   // 실내: 하늘빛을 STORY 15-2 값으로, 달·가로등·붉은 LED 번짐은 배율로 줄인다 (벽을 뚫고 비치지 않게)

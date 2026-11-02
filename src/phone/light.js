@@ -22,6 +22,7 @@ export class PhoneLight {
     this.tmp = new THREE.Vector3();
     this.low = false;
     this.flicker = { dim: false, left: c.flicker.every[0] };
+    this.dim = 1; // 사건 연출 배율 (단계 14 점프스케어: 실루엣이 나타나는 동안 한 번 어두워졌다 돌아옴, 깜빡임 아님)
     this.setOn(false);
     this.snap();
   }
@@ -57,6 +58,6 @@ export class PhoneLight {
       if (dt > 0) this.flicker = flickerStep(this.flicker, dt, this.rng, c.flicker);
       f = c.lowDim * (this.flicker.dim ? c.flicker.dip : 1);
     }
-    this.spot.intensity = c.intensity * f;
+    this.spot.intensity = c.intensity * f * this.dim;
   }
 }

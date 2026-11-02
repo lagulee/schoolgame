@@ -4,13 +4,23 @@
 //   주운 기록은 runner.used 의 'take:<id>' (체크포인트·스토리 초기화를 그대로 따른다).
 // - { do: 'sound', id } : 소리를 한 번 내고 바로 다음 줄로.
 // - sightings: 원경 귀신 (STORY E4). 사건 동안 서 있다가, 줍기(after)를 마치고 시야에서 벗어나면 흐려져 사라진다.
+// - { do: 'reach', id } (단계 14): 플레이어가 그 자리(story.reaches)에 들어설 때까지 기다린다.
+// - { do: 'blackout' } (단계 14, E7): 정전. 기록 'power:off' 를 남기고 바로 다음 줄로 (화면은 atmosphere 가 powerOut 을 읽는다).
+// - { do: 'scare', id } (단계 14): 점프스케어 (story.scares). rise+hold+fade 초가 지나면 다음 줄로. 화면은 stepsView 가 scare 를 읽어 그린다.
 // 모든 판단은 update() 에서 지금 상태(runner.action·기록)를 보고 하므로 체크포인트 복원 뒤에도 따로 맞출 것이 없다.
 const usedKey = (id) => `take:${id}`;
+const POWER_OFF = 'power:off';
+const inRect = (r, x, z) => x >= r[0] && x <= r[2] && z >= r[1] && z <= r[3];
 
 export class StorySteps {
   // story = story.json, interactions = Interactions, sound(def) = 소리 내기 (stepsView 가 연결)
-  constructor({ runner, story, interactions, toast = () => {}, sound = () => {} }) {
-    Object.assign(this, { runner, interactions, toast, sound });
+  // where() = { x, z, level } 플레이어 자리, scareTime = 점프스케어 전체 길이(초, SCENE.scare 의 rise+hold+fade)
+  constructor({ runner, story, interactions, toast = () => {}, sound = () => {}, where = () => null, scareTime = 2 }) {
+    Object.assign(this, { runner, interactions, toast, sound, where, scareTime });
+    this.reaches = story.reaches ?? {};
+    this.scares = story.scares ?? {};
+    this.scare = null; // 진행 중인 점프스케어 { id, def, t, line }
+    runner.checkpoints.register('steps', { save: () => 0, load: () => (this.scare = null) }); // 복원하면 점프스케어는 처음부터
     this.pickups = new Map((story.pickups ?? []).map((p) => [p.id, p]));
     this.sounds = story.sounds ?? {};
     this.sightings = (story.sightings ?? []).map((def) => ({ def, phase: 'off', alpha: 0, t: 0 }));
@@ -78,13 +88,42 @@ export class StorySteps {
     }
   }
 
+  // 정전 뒤인가 (E7 의 blackout 줄을 지났거나, E7 을 이미 지나간 판)
+  get powerOut() {
+    const reg = this.runner.registry;
+    return this.runner.used.has(POWER_OFF) || reg.done.has('E7');
+  }
+
   update(dt, inView = () => true) {
     this.syncPickups();
     const a = this.runner.action;
     if (a?.do === 'sound') {
       this.sound(this.sounds[a.id] ?? null);
       this.runner.resume('sound');
+    } else if (a?.do === 'blackout') {
+      this.runner.used.add(POWER_OFF);
+      this.runner.resume('blackout');
+    } else if (a?.do === 'reach') {
+      const r = this.reaches[a.id];
+      const p = this.where();
+      if (!r) this.runner.resume('reach'); // 자리가 없으면 막히지 않게 넘긴다
+      else if (p && Math.abs(p.level - (r.level ?? 0)) < 1e-6 && inRect(r.rect, p.x, p.z)) this.runner.resume('reach');
     }
+    this.updateScare(dt);
     this.updateSightings(dt, inView);
+  }
+
+  updateScare(dt) {
+    const a = this.runner.action;
+    if (a?.do !== 'scare') {
+      this.scare = null;
+      return;
+    }
+    if (this.scare?.line !== a) this.scare = { id: a.id, def: this.scares[a.id] ?? {}, t: 0, line: a }; // 처음 닿음·체크포인트 복원
+    else this.scare.t += dt;
+    if (this.scare.t >= this.scareTime) {
+      this.scare = null;
+      this.runner.resume('scare');
+    }
   }
 }

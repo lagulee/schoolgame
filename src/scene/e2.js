@@ -28,9 +28,9 @@ export class E2Scene {
     };
     puzzle.hooks.register('onStart', ({ puzzle: id }) => this.beginHide(id));
     runner.checkpoints.register('hide', {
-      save: () => (this.runner.action?.do === 'puzzle' ? { pose: this.pose.get() } : null), // 퍼즐 시작 체크포인트 = 숨기 시작 위치
+      save: () => (this.hidePuzzle() ? { pose: this.pose.get() } : null), // 퍼즐 시작 체크포인트 = 숨기 시작 위치 (숨기 퍼즐만, P3 는 p3.js)
       load: (v) => {
-        if (v && this.runner.action?.do === 'puzzle') {
+        if (v && this.hidePuzzle()) {
           this.pose.set(v.pose);
           this.hide?.begin();
         } else this.hide?.stop();
@@ -38,6 +38,12 @@ export class E2Scene {
     });
     const prevGet = chase.getSpeed;
     chase.getSpeed = () => (this.path ? this.path.progress.speed : prevGet());
+  }
+
+  // 지금 기다리는 퍼즐 줄이 숨기 퍼즐(P1)인가
+  hidePuzzle() {
+    const ev = this.runner.event;
+    return this.runner.action?.do === 'puzzle' && !!this.puzzle.defs.get(ev?.puzzle)?.hide;
   }
 
   action(line, { event, restoring }) {

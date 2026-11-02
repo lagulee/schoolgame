@@ -2,8 +2,10 @@
 // 바깥 광원(달·하늘빛·가로등·붉은 LED)을 줄인다. 가까운 비상구 유도등·소화전 표시등 몇 개에만 점광원을 붙이고
 // (서서히 옮겨 붙음, 깜빡임 없음), 실내·바깥 묶음을 보이거나 숨겨 그리는 양을 줄인다.
 // 신관 2층에 있으면 야자 교실 창 밖의 번짐 광원을 교실 천장 아래로 옮긴다 (광원 수 그대로, 깜빡임 없음).
+// 정전(단계 14, E7): powerOut 이 켜지면 야자 교실 형광등·창 빛이 SCENE.blackout.off 초 만에 한 번 꺼지고(깜빡임 0회),
+// 신관·연결통로 안에서는 SCENE.blackout.fade 초에 걸쳐 노출·하늘빛을 더 낮춘다. 다시 켜지지 않는다.
 import * as THREE from 'three';
-import { INTERIOR, LIGHTS, DIM, ANNEX, YAJA_LIGHT } from '../../config.js';
+import { INTERIOR, LIGHTS, DIM, ANNEX, YAJA_LIGHT, SCENE } from '../../config.js';
 import { locate } from './site.js';
 import { yAt } from './plan.js';
 import { contains } from './rects.js';
@@ -13,7 +15,12 @@ const PICK_EVERY = 0.25;
 const BUILDING = { main: '', annex: '신관 ', bridge: '' }; // HUD 앞머리 (본관은 단계 8 그대로 없음)
 
 export class Atmosphere {
-  constructor({ site, renderer, lights, scene, outdoor, groups }) {
+  // glow = 정전 때 끌 빛나는 재질 [{ mat, base }] (야자 교실 형광등·창)
+  constructor({ site, renderer, lights, scene, outdoor, groups, glow = [] }) {
+    this.glow = glow;
+    this.powerOut = false; // 바깥(scene/setup.js)이 매 프레임 정한다
+    this.lit = 1; // 형광등 1 = 켜짐 → 0
+    this.dark = 0; // 정전 어둠 (신관 안에서만 1 쪽으로)
     this.site = site;
     this.P = site.main;
     this.renderer = renderer;
@@ -65,9 +72,14 @@ export class Atmosphere {
     if (snap || this.k < 0) this.t = target;
     else this.t = target > this.t ? Math.min(1, this.t + dt / INTERIOR.inside.fade) : Math.max(0, this.t - dt / INTERIOR.inside.fade);
     this.k = this.t * this.t * (3 - 2 * this.t); // 부드럽게
-    if (this.k !== prev) {
-      this.renderer.toneMappingExposure = LIGHTS.exposure + (INTERIOR.inside.exposure - LIGHTS.exposure) * this.k;
+    const darkPrev = this.dark;
+    this.blackout(dt, snap);
+    if (this.k !== prev || this.dark !== darkPrev) {
+      const B = SCENE.blackout;
+      const inside = INTERIOR.inside.exposure + (B.exposure - INTERIOR.inside.exposure) * this.dark;
+      this.renderer.toneMappingExposure = LIGHTS.exposure + (inside - LIGHTS.exposure) * this.k;
       this.lights.setIndoor(this.k);
+      this.lights.setDark?.(1 + (B.hemi - 1) * this.dark);
     }
     this.lights.freezeMoon(this.k > 0.98);
     this.near.position.copy(camera.position);
@@ -144,7 +156,21 @@ export class Atmosphere {
       l.position.copy(inRoom ? this.yajaIn : this.yajaOut);
       l.distance = inRoom ? Y.distance : YAJA_LIGHT.distance;
     }
-    l.intensity = inRoom ? Y.intensity : YAJA_LIGHT.intensity * (1 + (INTERIOR.inside.lamps - 1) * this.k);
+    l.intensity = (inRoom ? Y.intensity : YAJA_LIGHT.intensity * (1 + (INTERIOR.inside.lamps - 1) * this.k)) * this.lit;
+  }
+
+  // 정전: 형광등은 한 번에 꺼지고(되돌아가지 않음), 신관·연결통로 안의 어둠은 천천히
+  blackout(dt, snap) {
+    const B = SCENE.blackout;
+    const litT = this.powerOut ? 0 : 1;
+    const darkT = this.powerOut && (this.where === 'annex' || this.where === 'bridge') ? 1 : 0;
+    const step = (v, t, sec) => (snap ? t : t > v ? Math.min(t, v + dt / sec) : Math.max(t, v - dt / sec));
+    const lit = step(this.lit, litT, B.off);
+    this.dark = step(this.dark, darkT, B.fade);
+    if (lit === this.lit && this.litApplied) return;
+    this.lit = lit;
+    this.litApplied = true;
+    for (const g of this.glow) g.mat.emissiveIntensity = g.base * lit;
   }
 
   hudLine(player) {
@@ -152,6 +178,6 @@ export class Atmosphere {
     const lv = player.level ?? 0;
     const floor = Number.isInteger(lv) ? `${lv + 1}층` : `${Math.floor(lv) + 1}층 위 계단참`;
     const where = `${BUILDING[this.where] ?? ''}${floor} ${s?.name ?? '현관 문턱'}`;
-    return `실내: ${this.inside ? where : '바깥'}  노출 ${this.renderer.toneMappingExposure.toFixed(2)}  표시등 ${this.pool.filter((p) => p.l.intensity > 0).length}/${this.pool.length}`;
+    return `실내: ${this.inside ? where : '바깥'}${this.powerOut ? ' 정전' : ''}  노출 ${this.renderer.toneMappingExposure.toFixed(2)}  표시등 ${this.pool.filter((p) => p.l.intensity > 0).length}/${this.pool.length}`;
   }
 }

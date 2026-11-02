@@ -22,13 +22,24 @@
       ],
       "answer": null, "wrongLimit": 3, "ghostHooks": ["onClue", "onComplete"] },
     { "id": "P3", "name": "흩어진 일행 찾기", "events": ["E8", "R1-b"], "place": "신관 2층 인근 교실 4개",
-      "pending": true,
       "clues": [
-        { "id": "belongings", "name": "소지품", "where": "신관 교실" },
-        { "id": "footprints", "name": "젖은 발자국", "where": "신관 복도" },
-        { "id": "knock", "name": "문 두드리는 소리", "where": "신관 교실" }
+        { "id": "belongings", "name": "소지품", "where": "신관 2층 3-5 교실" },
+        { "id": "footprints", "name": "젖은 발자국", "where": "신관 2층 복도 → 서쪽 계단 → 3층 복도" },
+        { "id": "knock", "name": "문 두드리는 소리", "where": "신관 3층 3-10 교실 문" }
       ],
-      "answer": null, "wrongLimit": 3, "ghostHooks": ["onWrong"] },
+      "answer": "A3F-3", "wrongLimit": 3, "ghostHooks": ["onWrong"],
+      "search": { "_comment": "단계 14 [가정, 사용자 확인 대기]: 교실 4개 = 2층 3-5·3-6 + 3층 3-9·3-10 (2층 야자 교실 3-7 은 출발점). 단서 순서 = 소지품(3-5, 살펴보기) → 젖은 발자국(소지품 뒤에 보임, 가까이 가면 단서) → 노크(발자국 뒤 3-10 문에서 들림, 가까이 가면 단서). 정답 방(answer = map.json 방 id)에 들어서면 단서 수와 상관없이 성공. wrong 방에 들어서면 검은 연기·실루엣(shows 를 차례로, 같은 연출을 잇달아 쓰지 않음) → SCENE.p3.pullAfter 초 뒤 {dohyeon:이} 복도(pullTo [x, z, 바라보는 쪽 도])로 끌어냄 = 틀림 1회, wrongLimit 이면 퍼즐 시작 지점으로. 좌표 단위 m",
+        "rooms": ["A2F-1", "A2F-2", "A3F-2", "A3F-3"],
+        "wrong": ["A2F-2", "A3F-2"],
+        "pullTo": { "A2F-2": [1.5, -91.9, 90], "A3F-2": [1.5, -91.9, 90] },
+        "shows": ["far", "sound", "near"],
+        "belongings": { "level": 1, "pos": [-9.4, -89.2], "label": "떨어진 가방 살펴보기", "text": "[임시] {mingeon}의 가방이다. 지퍼가 열린 채 젖어 있다. 문 밖 바닥이 축축하다." },
+        "footprints": { "radius": 1.6, "step": 0.75, "paths": [
+          { "level": 1, "points": [[-9.4, -90.5], [-10.4, -91.6], [-12.4, -91.9]] },
+          { "level": 2, "points": [[-12.4, -91.9], [6.8, -91.9], [7.6, -90.6]] }
+        ], "text": "[임시] 젖은 발자국이 서쪽 계단 위로 이어진다." },
+        "knock": { "level": 2, "pos": [7.6, -90.3], "radius": 5, "text": "[임시] 문 두드리는 소리… 3층 동쪽 교실 쪽이다." },
+        "texts": { "pulled": "[임시] {dohyeon:이} 팔을 잡아 복도로 끌어냈다. \"여기 아니야!\"", "failed": "[임시] 너무 많이 헤맸다. 처음 자리로 돌아간다." } } },
     { "id": "P4", "name": "교무실 열쇠 찾기", "events": ["E13", "R1-e"], "place": "구관 2층 교무실",
       "pending": true, "clues": [], "answer": null, "wrongLimit": 3, "ghostHooks": ["onWrong", "onFail"] }
   ],

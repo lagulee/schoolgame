@@ -1,16 +1,18 @@
 // 사건 안 작은 행동의 화면·소리 (단계 13): 교무실 열쇠함(pickups mesh), 원경 귀신 실루엣(sightings), 아래층 소리(sounds).
 // 귀신 판은 E2 와 같은 실루엣 텍스처. 사라질 때는 천천히 흐려진다(번쩍임 없음).
+// 단계 14: 점프스케어(steps.scare) — 시선 정면에 어두운 실루엣이 나타나고 날카로운 소리. 화면을 밝히는 연출은 없다.
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { silhouetteTexture } from './e2View.js';
-import { ghostBang } from '../audio/ghost.js';
+import { ghostBang, ghostSting } from '../audio/ghost.js';
 
 const _dir = new THREE.Vector3();
 const _to = new THREE.Vector3();
 
 export class StepsView {
-  constructor({ scene, steps, collision, audio, camera, player, story }) {
-    Object.assign(this, { steps, collision, audio, camera, player });
+  // light = 핸드폰 라이트 (PhoneLight, dim 배율)
+  constructor({ scene, steps, collision, audio, camera, player, story, threatEl = null, light = null }) {
+    Object.assign(this, { steps, collision, audio, camera, player, threatEl, light });
     const G = SCENE.ghost;
     this.ghosts = steps.sightings.map((s) => {
       const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: 0, depthWrite: false }));
@@ -34,6 +36,54 @@ export class StepsView {
       scene.add(box);
     }
     steps.sound = (def) => this.sound(def);
+    this.scareMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: SCENE.scare.color, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+    this.scareMesh.scale.set(G.w, G.h, 1);
+    this.scareMesh.renderOrder = 10; // 라이트 번짐(반투명) 위에, 벽 소품(배전반 등)에 묻히지 않게 깊이 검사 없이 그린다 (2초 동안 바로 앞에만 있음)
+    this.scareMesh.visible = false;
+    this.scareMesh.name = 'scareSilhouette';
+    scene.add(this.scareMesh);
+    this.scareSeen = null; // 자리를 정한 점프스케어 (steps.scare 객체)
+  }
+
+  // 점프스케어 실루엣 자리: 시선 정면 dist m, clamp 사각형 안으로
+  placeScare(sc) {
+    const S = SCENE.scare;
+    this.camera.getWorldDirection(_dir);
+    _dir.y = 0;
+    if (_dir.lengthSq() < 1e-6) _dir.set(0, 0, -1);
+    _dir.normalize();
+    let x = this.camera.position.x + _dir.x * S.dist;
+    let z = this.camera.position.z + _dir.z * S.dist;
+    const r = sc.def.clamp;
+    if (r) {
+      x = Math.min(r[2] - S.inset, Math.max(r[0] + S.inset, x));
+      z = Math.min(r[3] - S.inset, Math.max(r[1] + S.inset, z));
+    }
+    const lv = sc.def.level ?? this.player.level;
+    this.scareMesh.position.set(x, this.collision.floorHeight(x, z, lv) + SCENE.ghost.h / 2, z);
+    if (this.audio.started) ghostSting(this.audio, this.scareMesh.position.clone(), S.gain);
+  }
+
+  // 점프스케어 불투명도: rise 동안 나타나고 hold 동안 머문 뒤 fade 동안 흐려진다 (0~1)
+  static scareAlpha(t) {
+    const S = SCENE.scare;
+    if (t < S.rise) return t / S.rise;
+    if (t < S.rise + S.hold) return 1;
+    return Math.max(0, 1 - (t - S.rise - S.hold) / S.fade);
+  }
+
+  updateScare() {
+    const sc = this.steps.scare;
+    if (sc && this.scareSeen !== sc) {
+      this.scareSeen = sc;
+      this.placeScare(sc);
+    }
+    if (!sc) this.scareSeen = null;
+    const a = sc ? StepsView.scareAlpha(sc.t) : 0;
+    this.scareMesh.visible = a > 0;
+    this.scareMesh.material.opacity = SCENE.scare.opacity * a;
+    if (this.light) this.light.dim = 1 - SCENE.scare.lightDip * a;
+    if (sc && this.threatEl) this.threatEl.style.opacity = Math.max(+this.threatEl.style.opacity || 0, SCENE.scare.threat * a).toFixed(3);
   }
 
   // 그 자리가 지금 화면 안(시야 반각·거리 안, 같은 층)인가
@@ -55,6 +105,7 @@ export class StepsView {
   }
 
   update() {
+    this.updateScare();
     for (const { s, m } of this.ghosts) {
       m.visible = s.alpha > 0;
       m.material.opacity = SCENE.ghost.opacity * s.alpha;
