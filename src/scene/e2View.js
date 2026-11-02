@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { canvasTexture } from '../materials/texgen.js';
-import { ghostStep } from '../audio/ghost.js';
+import { ghostBang, ghostStep } from '../audio/ghost.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
@@ -100,6 +100,7 @@ export class E2View {
       this.traceMeshes.set(d.id, { d, m });
     }
     this.stepLeft = 0;
+    this.wasStalled = false;
     this.hintShown = '';
     this.breath = 0;
   }
@@ -108,7 +109,7 @@ export class E2View {
     const g = this.e2.ghost;
     const S = SCENE.steps;
     // 실루엣: 추격 중·문 앞을 지나갈 때만 (숨기 준비 중에는 소리만)
-    const show = !!g && g.mode !== 'prep';
+    const show = !!g && g.mode !== 'prep' && !g.hidden;
     this.ghost.visible = show;
     if (g) {
       const y = this.collision.floorHeight(g.x, g.z, g.level) + SCENE.ghost.h / 2;
@@ -118,9 +119,15 @@ export class E2View {
       this.stepLeft -= dt;
       if (this.stepLeft <= 0) {
         this.stepLeft = every;
-        if (this.audio.started) ghostStep(this.audio, new THREE.Vector3(g.x, y - SCENE.ghost.h / 2 + 0.1, g.z), S.gain);
+        if (this.audio.started && !g.stalled) ghostStep(this.audio, new THREE.Vector3(g.x, y - SCENE.ghost.h / 2 + 0.1, g.z), S.gain);
       }
-    } else this.stepLeft = 0;
+      // 지형 지연(C2): 귀신이 멈칫하며 벽을 두드린다 — 멈추는 순간 쿵 한 번
+      if (g.stalled && !this.wasStalled && this.audio.started) ghostBang(this.audio, new THREE.Vector3(g.x, y, g.z), SCENE.bangGain * 0.7);
+      this.wasStalled = !!g.stalled;
+    } else {
+      this.stepLeft = 0;
+      this.wasStalled = false;
+    }
     // 화면 가장자리: 추격 중 가까워질수록, 지나가는 동안 조금
     const T = SCENE.threat;
     const threat = g?.mode === 'chase' ? T.max * clamp01((T.startGap - g.gap) / T.rangeGap) : g?.mode === 'pass' ? T.pass : 0;
