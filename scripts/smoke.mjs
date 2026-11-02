@@ -80,10 +80,10 @@ await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
 const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
 check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
 await press('KeyR', 120);
-// E3~E6 (단계 13): 3층 연결문 앞 E3 → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 연결통로 E5 → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
+// E3~E6 (단계 13): 3층 연결문 앞 E3(가짜 {gyuha} 등장) → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 열쇠 들고 다시 온 3층 연결문 앞 E5 → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
 const busyDone = async (id) => { for (let i = 0; i < 40 && (await S((e) => window.__DEBUG.story.registry.active === e && window.__DEBUG.story.mode !== 'action', id)); i++) await press('KeyE', 150); return poll((e) => window.__DEBUG.story.registry.done.has(e), id); };
 await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
-check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
+check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인, 가짜 {gyuha} 등장은 e3e6 단위 테스트)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
 await S(() => window.__DEBUG.player.setView([16.5, 1.6, -30], 0, 0, 1));
 check('2층 동쪽 복도 → E4, 복도 모퉁이에 원경 귀신', await poll(() => window.__DEBUG.story.event?.id === 'E4' && window.__DEBUG.scenes.stepsView.ghosts[0].m.visible));
 for (let i = 0; i < 40 && (await S(() => window.__DEBUG.story.action?.do)) !== 'take'; i++) await press('KeyE', 150); // 자막 넘기기
@@ -91,8 +91,8 @@ await S(() => window.__DEBUG.player.setView([18.9, 1.6, -43], 90, 0, 1));
 check('교무실 열쇠함 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('열쇠함')));
 await press('KeyE', 120);
 check('열쇠함 E → 연결문 열쇠(hasConnectorKey), E4 끝', await poll(() => window.__DEBUG.story.flags.values.hasConnectorKey) && (await busyDone('E4')));
-await S(() => window.__DEBUG.player.setView([18.5, 1.6, -75], 0, 0, 2));
-check('연결문 너머 통로 → E5', await poll(() => window.__DEBUG.story.registry.history.includes('E5')) && (await busyDone('E5')));
+await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
+check('열쇠 들고 3층 연결문 앞 → E5 (문 열고 넘어감)', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await busyDone('E5')));
 await S(() => window.__DEBUG.player.setView([3, 1.6, -91.9], 0, 0, 4));
 check('신관 5층 복도 → E6', await poll(() => window.__DEBUG.story.registry.history.includes('E6')) && (await busyDone('E6')));
 const e6 = await S(() => ({ obj: window.__DEBUG.story.objective(), book: window.__DEBUG.story.used.has('take:myBook'), key: window.__DEBUG.story.flags.values.hasClassKey }));

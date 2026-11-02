@@ -47,10 +47,10 @@
   },
   "triggers": [
     { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 },
-    { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 연결문 너머 통로, E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
+    { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 열쇠를 챙긴 뒤 다시 온 3층 연결문 앞(연결문을 열고 넘어간다; 가짜 {gyuha}는 E3 에서 연결통로에 가기 전에 만난다), E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
     { "event": "E4", "after": "E3", "rect": [15, -34, 18, -24], "level": 1 },
     { "event": "E4", "after": "E3", "rect": [-18, -53, 8, -50], "level": 1 },
-    { "event": "E5", "after": "E4", "space": "bridge", "level": 2 },
+    { "event": "E5", "after": "E4", "space": "3F-bridge", "level": 2 },
     { "event": "E6", "after": "E5", "space": "AC", "level": 4 },
     { "_comment": "단계 14: E7 = 신관 2층 야자 교실(3-7)에 들어설 때, E8 = E7 이 끝난 자리(신관 2층 복도, 배전반 앞)에서 바로, E9 = E8 끝(3층 3-10)에서 복도로 나올 때. 그 루트에 없는 사건(R1 의 E8)·생략 사건(earlyBook 의 E9)은 걸리지 않는다", "event": "E7", "after": "E6", "space": "A2F-3", "level": 1 },
     { "event": "E8", "after": "E7", "space": "AC", "level": 1 },
@@ -134,7 +134,10 @@
       "id": "E3", "title": "잠긴 연결문", "place": "구관↔신관 연결문", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "findConnectorKey",
       "lines": [
-        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." }
+        { "style": "subtitle", "text": "연결문이 잠겨 있다. 열쇠가 필요하다." },
+        { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
+        { "style": "subtitle", "text": "{gyuha:이} 다가오는데, 발소리가 들리지 않았다." },
+        { "_comment": "[가정] 사용자 요청(2026-11-02): 잠김을 확인하면 {gyuha} 가 열쇠를 가져가자고 한다. 문구 임시. 실제로는 둔갑한 귀신이라 '같이'를 강조하고 어디서 왔는지 설명하지 않는다", "who": "gyuha", "text": "잠겼네… 교무실에 열쇠함이 있을 거야. 열쇠를 가져가자. 같이." }
       ]
     },
     {
@@ -150,22 +153,20 @@
       "set": { "hasConnectorKey": true }
     },
     {
-      "id": "E5", "title": "신관 계단", "place": "연결문→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "id": "E5", "title": "신관 계단", "place": "구관 3층 연결문 앞→신관 계단", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "climb", "objectiveRepeat": "climbRepeat",
       "lines": [
-        { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어왔다. 계단이 위로 이어진다." }
+        { "style": "subtitle", "text": "열쇠로 연결문을 열고 신관으로 넘어가자. 계단은 위로 이어진다." }
       ]
     },
     {
-      "id": "E6", "title": "5층, 돌아온 {gyuha}", "place": "신관 5층", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "id": "E6", "title": "5층, 잠긴 교실", "place": "신관 5층", "routes": ["R1", "R2", "R3"], "stage": 2,
       "pov": "player", "objective": "takeBook", "objectiveDone": "goYaja",
       "lines": [
         { "if": "!hasClassKey", "style": "subtitle", "text": "2-13 교실 문이 잠겨 있다. 내 책은 저 안에 있는데…" },
         { "if": "hasClassKey", "style": "subtitle", "text": "주머니 속 2-13 열쇠가 손에 잡힌다. 이번에는 열 수 있다." },
         { "if": "hasClassKey", "do": "take", "id": "myBook" },
         { "if": "hasClassKey", "style": "subtitle", "text": "내 책을 챙겼다." },
-        { "who": "gyuha", "text": "그냥… 무서워서 다시 왔어." },
-        { "style": "subtitle", "text": "{gyuha:이} 다가오는데, 발소리가 들리지 않았다." },
         { "do": "sound", "id": "below" },
         { "style": "subtitle", "text": "어디선가, 아래층에서 소리가 난다." }
       ]
