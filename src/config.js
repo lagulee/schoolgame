@@ -283,7 +283,7 @@ export const PHONE = {
   LIGHT_COST_PER_SEC: 1 / 20, // 라이트 20초당 −1%
   BANK_GAIN: 15, // 보조배터리 1개
   BATTERY_MAX: 100,
-  MINGEON_START: 55, // 태민 시점(pov mingeon)의 핸드폰
+  MINGEON_START: 55, MINGEON_LIGHT: true, // 태민 시점(pov mingeon)의 핸드폰: 시작 배터리·처음 쓸 때 라이트 켜짐 [가정, 단계 19: 어두운 계단을 내려온 직후]
   WARN_LEVELS: [20, 10], // 이 값에 처음 닿을 때 한 번씩 알림
   LOW_LEVEL: 10, // 이하이면 라이트가 더 어둡고 가끔 흐려짐
   WARN_SHOW: 3, // 경고 알림 표시 시간 (초)

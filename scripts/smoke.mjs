@@ -8,6 +8,7 @@ import { e10e12Smoke } from './smokeE10.mjs';
 import { e13e15Smoke } from './smokeE13.mjs';
 import { e17Smoke } from './smokeE17.mjs';
 import { r1Smoke } from './smokeR1.mjs';
+import { r1ehSmoke, toMingeonLine } from './smokeR1eh.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -104,6 +105,7 @@ await e10e12Smoke({ S, check, poll, press });
 await e13e15Smoke({ S, check, poll });
 await e17Smoke({ S, check, poll });
 await r1Smoke({ S, check, poll });
+await r1ehSmoke({ S, check, poll });
 // 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀·복도에서 E1·E2 가 끼어들지 않게)
 await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
@@ -373,8 +375,7 @@ for (let i = 0; i < 15; i++) {
     check('R1-e 태민 시점 전환', st.pov === 'mingeon', JSON.stringify(st));
     const mp = await S(() => ({ pov: window.__DEBUG.phone.pov, bat: window.__DEBUG.phone.battery }));
     check('R1-e 태민 핸드폰 55% 에서 시작', mp.pov === 'mingeon' && mp.bat > 53 && mp.bat <= 55, JSON.stringify(mp));
-    await press('KeyE', 120); // 타자 효과 끝내기
-    await press('KeyE', 120); // 둘째 줄 = 태민 대사
+    await toMingeonLine({ S, press }); // 첫 줄 = 시점 전환(행동 줄, 단계 19) → 태민 대사 줄까지 넘긴다
     const nm = await S(() => ({ line: window.__DEBUG.story.lineIdx, who: window.__DEBUG.story.event.lines[window.__DEBUG.story.lineIdx].who, shown: getComputedStyle(document.querySelector('.story-name')).display !== 'none' }));
     check('태민 시점: 태민 대사는 이름 없이', nm.who === 'mingeon' && !nm.shown, JSON.stringify(nm));
   }

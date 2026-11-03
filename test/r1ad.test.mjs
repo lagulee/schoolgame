@@ -193,9 +193,7 @@ test('자동 진행 R1-a~R1-d: E8·E9·E10~E12 를 건너뛰고 구관 4층에�
   assert.deepEqual(w.runner.registry.history, ['E7', 'R1-a', 'R1-b', 'R1-c', 'R1-d']);
   for (const id of ['E8', 'E9', 'E10', 'E11', 'E12']) assert.ok(!w.runner.registry.history.includes(id), `${id} 없음`);
   assert.equal(w.runner.route, 'R1', '끝까지 R1');
-  assert.equal(w.runner.registry.nextId(w.runner.flags.values, w.runner.route), 'R1-e', '다음은 R1-e (단계 19)');
-  w.tick(5);
-  assert.ok(!w.runner.busy, 'R1-e 는 아직 자리 진입이 없다 (단계 19)');
+  assert.equal(w.runner.registry.nextId(w.runner.flags.values, w.runner.route), 'R1-e', '다음은 R1-e (단계 19, R1-d 뒤 5초 — r1eh.test)');
 });
 
 test('검은 연기는 깜빡이지 않는다: 한 번 짙어졌다 옅어지기만 한다', () => {

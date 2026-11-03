@@ -20,8 +20,10 @@ export class PowerBanks {
     this.moved = new Set(); // 디버그로 옮긴 것
   }
 
-  // 데이터 좌표가 있는 것 중 아직 줍지도 놓지도 않은 것을 전부 놓는다 (시작·초기화·체크포인트 복원 뒤)
+  // 데이터 좌표가 있는 것 중 아직 줍지도 놓지도 않은 것을 전부 놓는다 (시작·초기화·체크포인트 복원·시점 전환 뒤).
+  // 태민 시점(pov mingeon)에는 보조배터리가 없으므로(STORY 8-4) 놓인 것을 모두 뺀다 (단계 19)
   placeAll() {
+    if (this.phone.pov !== 'player') return this.suspend();
     for (const d of this.defs.values()) if (d.pos && !this.placed.has(d.id)) this.place(d.id, d.pos, d.level ?? 0);
   }
 
@@ -80,6 +82,14 @@ export class PowerBanks {
       }
     }
     this.placeAll();
+  }
+
+  // 월드에서 모두 뺀다 (줍지 않은 것은 그대로 남아 placeAll 이 다시 놓는다)
+  suspend() {
+    for (const id of this.placed) this.interactions.remove(id);
+    this.placed.clear();
+    this.at.clear();
+    this.moved.clear();
   }
 
   clear() {

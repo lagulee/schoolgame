@@ -1,5 +1,5 @@
 // 핸드폰 조립: 상태(phone.js) + 라이트(light.js) + 화면(ui.js) + 보조배터리(bank.js) + 스토리 연결.
-// - E1(PHONE.BEGIN_EVENT) 시작 때 시작 배터리 확정, 시점(pov) 전환 때 핸드폰 교체, 체크포인트 'phone' 저장·복원.
+// - E1(PHONE.BEGIN_EVENT) 시작 때 시작 배터리 확정, 시점(pov) 전환 때 핸드폰 교체(태민 시점엔 보조배터리를 빼 둔다, 단계 19), 체크포인트 'phone' 저장·복원.
 // - 위치 표시 (단계 10): where() = 지금 서 있는 곳(data/map.json)이 먼저, 모르는 곳이면 사건의 place, 둘 다 없으면 '-'.
 // - 가는 길 (길 안내): guide(dt) → 화면의 화살표·거리. 화면이 열려 있을 때만 부른다 (main.js 가 NavGuide 를 연결).
 // - 보조배터리 (단계 10): powerbanks.json 좌표에 놓고(placeAll) 물체를 그린다(bankView.js).
@@ -35,6 +35,7 @@ export function setupPhone({ scene, camera, story, touch, toast, collision, wher
   const prevPov = runner.onPov;
   runner.onPov = (pov) => {
     phone.usePov(pov);
+    banks.placeAll(); // 태민 시점에는 보조배터리가 없다 (STORY 8-4) → 월드에서 뺐다가 주인공 시점으로 돌아오면 다시 놓는다
     prevPov?.(pov);
   };
   runner.checkpoints.register('phone', {

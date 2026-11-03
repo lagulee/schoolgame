@@ -1,5 +1,5 @@
 {
-  "_comment": "사건 E1~E15·R1-a~R1-h 뼈대 (기준: docs/story/STORY.md v6). 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. 배열 순서 = 진행 순서. 같은 id 를 루트별 변형으로 여러 번 쓸 수 있다(routes 가 겹치지 않을 때, 예: E13·E14). lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계. objective/objectiveRepeat: objectives 의 키(핸드폰 목표, 엔딩을 본 판이면 objectiveRepeat 우선). pov: player | mingeon (조작 시점). puzzle: data/puzzles.json id. chase: data/chases.json id. jumpscare: 점프스케어 번호(한 판 3개 이내). undecided: 아래 undecided 의 키(사용자 확인 전). resolved: 해소된 미확정 항목과 결정. grantRoofKey: A·B·C 를 모두 본 판이면 이 사건 시작 때 hasRoofKey. grantClassKey: 엔딩을 하나라도 본 판(2회차)이면 이 사건 시작 때 hasClassKey(신관 5층 2-13 열쇠, 사용자 결정 2026-11-02). deaths: 이 사건에서 죽는 인물(순서대로). finale: 마지막 추격(STORY 14-4) 구조 — companion 먼저 죽는 일행, fleeing 도망치는 사람(첫째가 조작), atExit 출구에서의 결과(escape 탈출 / playerCaught 주인공이 입구 직전에 붙잡히고 나머지 탈출 / collapse 문을 열기 전에 쓰러짐).",
+  "_comment": "사건 E1~E15·R1-a~R1-h 뼈대 (기준: docs/story/STORY.md v6). 대사는 모두 임시 문구(draft)이며 이름은 {id} 자리표시자로만 쓴다. 배열 순서 = 진행 순서. 같은 id 를 루트별 변형으로 여러 번 쓸 수 있다(routes 가 겹치지 않을 때, 예: E13·E14). lines[].style: dialog(기본, 대화창·수동 넘김) | subtitle(자막·자동 넘김) | sms(문자). routes: 이 사건이 나오는 루트. skipIf: 이 플래그가 참이면 생략. set: 사건이 끝날 때 바꾸는 플래그. stage: 연출을 붙일 구현 단계. objective/objectiveRepeat: objectives 의 키(핸드폰 목표, 엔딩을 본 판이면 objectiveRepeat 우선). pov: player | mingeon (조작 시점). puzzle: data/puzzles.json id. chase: data/chases.json id. jumpscare: 점프스케어 번호(한 판 3개 이내). undecided: 아래 undecided 의 키(사용자 확인 전). resolved: 해소된 미확정 항목과 결정. grantRoofKey: A·B·C 를 모두 본 판이면 이 사건 시작 때 hasRoofKey. grantClassKey: 엔딩을 하나라도 본 판(2회차)이면 이 사건 시작 때 hasClassKey(신관 5층 2-13 열쇠, 사용자 결정 2026-11-02). deaths: 이 사건에서 죽는 인물(순서대로). finale: 마지막 추격(STORY 14-4) 구조 — companion 먼저 죽는 일행, fleeing 도망치는 사람(첫째가 조작), atExit 출구에서의 결과(escape 탈출 / playerCaught 주인공이 입구 직전에 붙잡히고 나머지 탈출 / collapse 문을 열기 전에 쓰러짐). freezeUntil: 이 행동 줄(do 이름) 앞까지 조작 정지, 사건에 없는 이름(예: end)이면 사건 내내. freezeAfter: 이 행동 줄 뒤도 사건 끝까지 정지. threat: 사건 동안 화면 가장자리 어둡게(0~1). ending: 사건이 끝나면 바로 이 엔딩 카드. withDuty: 이 사건의 P4 안내를 당직 말투(textsDuty)로 (단계 19 R1-e). pov 가 바뀌는 사건의 첫 줄 { do: switch } 가 암전 속 자리 이동을 맡는다(switches).",
   "draft": true,
   "flags": {
     "hasConnectorKey": false,
@@ -37,6 +37,7 @@
     "wait": "{mingeon:과} {duty:을} 기다린다",
     "followDuty": "{duty:을} 따라 교무실로 간다",
     "waitDuty": "{duty:을} 기다린다",
+    "keyToLobby": "열쇠를 들고 현관으로 간다",
     "runExit": "열쇠를 들고 현관으로 달린다",
     "exit": "현관 문을 열고 나간다"
   },
@@ -68,7 +69,11 @@
     { "_comment": "단계 18 [가정]: R1(책 선점). R1-a = E7 이 끝난 자리(신관 2층 복도, 배전반 앞)에서 바로, R1-b = R1-a 가 끝난 자리에서 바로(E8 과 같은 P3), R1-c = 구관 4층 당직실(4F-duty)에 들어설 때(R1-b 뒤 — 신관 3층 3-10 에서 3층 연결통로 → 구관 계단으로 올라간다), R1-d = R1-c 가 끝난 당직실에서 바로. R1 은 E9 이 생략돼 done 에 들어가지 않으므로 after 를 E9 로 두지 않는다", "event": "R1-a", "after": "E7", "space": "AC", "level": 1, "routes": ["R1"] },
     { "event": "R1-b", "after": "R1-a", "space": "AC", "level": 1, "routes": ["R1"] },
     { "event": "R1-c", "after": "R1-b", "space": "4F-duty", "level": 3, "routes": ["R1"] },
-    { "event": "R1-d", "after": "R1-c", "space": "4F-duty", "level": 3, "routes": ["R1"] }
+    { "event": "R1-d", "after": "R1-c", "space": "4F-duty", "level": 3, "routes": ["R1"] },
+    { "_comment": "단계 19 [가정]: R1-e = R1-d 가 끝나고 5초 뒤(자리와 상관없이, {mingeon} 시점으로 전환), R1-f = {mingeon} 이 교무실을 나와 2층 동쪽 복도 남쪽(z −31, E14 와 같은 자리 = C3 경로 시작)에 닿을 때, R1-g = R1-f 가 끝나면 바로(추격 C3), R1-h = R1-g 가 끝나면 바로(현관, 주인공 시점으로 복귀)", "event": "R1-e", "after": "R1-d", "wait": 5, "routes": ["R1"] },
+    { "event": "R1-f", "after": "R1-e", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R1"] },
+    { "event": "R1-g", "after": "R1-f", "wait": 0, "routes": ["R1"] },
+    { "event": "R1-h", "after": "R1-g", "wait": 0, "routes": ["R1"] }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
@@ -84,17 +89,29 @@
     "_comment": "단계 14: 행동 줄 { do: scare, id } — 점프스케어. 실루엣이 시선 정면(SCENE.scare.dist)에 갑자기 나타나 날카로운 소리와 함께 잠깐 머물다 흐려진다 (번쩍임 없음, 수치는 config SCENE.scare). clamp = 실루엣이 벗어나지 않을 사각형(복도 안), level = 층. 사건의 jumpscare 번호와 같은 번호(n)",
     "J1": { "n": 1, "event": "E7", "level": 1, "clamp": [-11.05, -93.65, 17.05, -90.15] },
     "J2": { "n": 2, "event": "E10", "level": 0, "clamp": [-18, -53, 18, -50] },
-    "J3": { "_comment": "단계 16 [가정]: E14 — 돌아본 복도 북쪽 3.2 m 앞(dist)에 그것이 서 있다. 점프스케어 3번째(한 판 3개 이내)", "n": 3, "event": "E14", "level": 1, "dist": 3.2, "clamp": [15.2, -50, 17.8, -24] }
+    "J3": { "_comment": "단계 16 [가정]: E14 — 돌아본 복도 북쪽 3.2 m 앞(dist)에 그것이 서 있다. 점프스케어 3번째(한 판 3개 이내)", "n": 3, "event": "E14", "level": 1, "dist": 3.2, "clamp": [15.2, -50, 17.8, -24] },
+    "J4": { "_comment": "단계 19 [가정]: R1-f — {mingeon} 이 돌아본 복도 북쪽, 검은 연기가 흩어진 자리에서 {gyuha}의 모습을 한 그것이 덮쳐 온다. R1 의 점프스케어 2번째(E7 #1 다음)", "n": 2, "event": "R1-f", "level": 1, "dist": 3.2, "clamp": [15.2, -50, 17.8, -24] }
   },
   "looks": {
     "_comment": "단계 16: 행동 줄 { do: look, id } — 조작이 멈춘 채 시선을 time 초에 걸쳐 돌린다. yaw(도, 0 = 북(−z), 180 = 남, −90 = 동) 또는 at [x, z] (그 점을 바라봄). 끝나면 다음 줄로",
     "north": { "yaw": 0, "time": 0.5 },
     "south": { "yaw": 180, "time": 0.45 },
-    "gyuhaSpot": { "_comment": "단계 18: R1-d — {gyuha}(가짜)가 서 있던 당직실 앞 벽(칠판) 서쪽 자리로 돌아본다", "at": [19.6, -30.4], "time": 0.9 }
+    "gyuhaSpot": { "_comment": "단계 18: R1-d — {gyuha}(가짜)가 서 있던 당직실 앞 벽(칠판) 서쪽 자리로 돌아본다", "at": [19.6, -30.4], "time": 0.9 },
+    "gyuhaPhone": { "_comment": "단계 19: R1-h — 현관 문 앞 바닥의 {gyuha} 핸드폰(traces gyuhaPhone)을 내려다본다. pitch = 고개 각도(도, 음수 = 아래)", "at": [16.2, -1.0], "pitch": -42, "time": 1.1 }
   },
   "vanishes": {
     "_comment": "단계 18 [가정]: 행동 줄 { do: vanish, id } — 그 자리(pos [x, z], level)에서 검은 연기가 피어올라 흩어진다(실루엣 없음, 점프스케어로 세지 않음). 연기 짙기는 한 번 짙어졌다 옅어지기만 한다(깜빡임 0회). 시간·크기는 config SCENE.vanish. 끝나면 다음 줄",
-    "gyuhaR1d": { "level": 3, "pos": [19.6, -30.4] }
+    "gyuhaR1d": { "level": 3, "pos": [19.6, -30.4] },
+    "gyuhaR1f": { "_comment": "단계 19 [가정]: R1-f — 거꾸로 '나타남'에 쓴다. {mingeon} 이 돌아본 복도 북쪽 약 4 m 에서 연기가 피어올랐다 흩어지고, 바로 그 자리에서 점프스케어(J4)", "level": 1, "pos": [16.5, -35.2] }
+  },
+  "switches": {
+    "_comment": "단계 19 [가정, 사용자 확인 대기]: 행동 줄 { do: switch, id } — 시점 전환(STORY 12장 pov). 어두워짐 → 암전(이때 몸을 바꿈: 떠나는 시점의 자리·스태미나를 저장하고 pos [x, z]·level·yaw(도) 로 옮김) → 밝아짐 (시간은 config SCENE.pov, 항목의 out·black·in 이 덮어씀). 논리상 시점·핸드폰은 사건 시작 때 이미 사건의 pov 로 바뀐다. card = 암전 동안 보일 글자(없으면 표시 없음, 대사도 없음)",
+    "toMingeon": { "_comment": "R1-e: 구관 2층 교무실 남쪽 문 안쪽, 열쇠 걸이(서쪽 벽) 쪽(북)을 봄", "pov": "mingeon", "level": 1, "pos": [19.6, -38.8], "yaw": 0, "card": null },
+    "toPlayer": { "_comment": "R1-h: 구관 1층 현관 홀, 유리문 가까이(자동문이 열린 채 남는 거리) — {dohyeon:과} 기다리던 자리. 추격 직후라 짧게", "pov": "player", "level": 0, "pos": [17.2, -2.0], "yaw": 90, "out": 0.6, "black": 0.9, "in": 1.0, "card": null }
+  },
+  "escapes": {
+    "_comment": "단계 19 [가정]: 행동 줄 { do: escape, id } — 엔딩 A. at [x, z] 의 문 쪽으로 돌아선 뒤 문을 지나 to [x, z](level)까지 걸어 나가며 어두워지고 암전(붉은 막·쓰러짐 없음, 깜빡임 0회). 수치는 config SCENE.escape",
+    "frontDoor": { "at": [15, -1.0], "to": [12.4, -1.0], "level": 0 }
   },
   "collapses": {
     "_comment": "단계 16 [가정, 사용자 확인 대기]: 행동 줄 { do: collapse, id } — 엔딩 C. at [x, z] 의 현관 문 쪽으로 돌아선 뒤 몸이 주저앉으며 시야 가장자리부터 붉은 막이 한 방향으로만 번지고(깜빡임 0회), 어두워졌다 암전. 피·비명·시체는 그리지 않는다 (수치는 config SCENE.collapse)",
@@ -395,38 +412,57 @@
     },
     {
       "id": "R1-e", "title": "교무실 열쇠함", "place": "구관 2층 교무실", "routes": ["R1"], "stage": 6,
-      "pov": "mingeon", "objective": "findExitKey", "puzzle": "P4",
+      "pov": "mingeon", "objective": "findExitKey", "objectiveDone": "keyToLobby", "puzzle": "P4", "withDuty": true, "freezeUntil": "reach",
+      "_comment": "단계 19 [가정, 대사 임시]: R1-d 뒤 5초. {mingeon} 시점으로 전환(switches.toMingeon: 암전 동안 교무실로, 핸드폰은 {mingeon} 것 55%·보조배터리 없음) → {duty:과} 함께 P4(R2 와 같은 열쇠 걸이, withDuty = 당직 말투 textsDuty) → 열쇠 → 주인공에게 문자. 전환 중·첫 대사까지 조작 정지",
       "lines": [
-        { "who": "duty", "text": "번호표를 비춰 봐라. 틀린 걸 꽂으면 소리가 난다." },
-        { "who": "mingeon", "text": "찾았어요. 이거예요." }
+        { "do": "switch", "id": "toMingeon" },
+        { "who": "duty", "text": "[임시] {mingeon:아}, 열쇠함은 서쪽 벽이다. 번호표를 비춰 봐라. 틀린 걸 꽂으면 소리가 난다." },
+        { "do": "reach", "id": "staffRack" },
+        { "style": "subtitle", "text": "[임시] 교무실 안쪽에서 무언가가 다가온다. …발소리가 느리다." },
+        { "who": "duty", "text": "[임시] 47번이다. 내가 뒤를 보마. 서둘러라." },
+        { "do": "puzzle" },
+        { "who": "mingeon", "text": "[임시] 찾았어요. 이거예요." },
+        { "who": "mingeon", "style": "sms", "text": "[임시] {player}에게 보낸 문자: 열쇠 찾았어. {dohyeon:이랑} 현관으로 내려와." }
       ],
       "set": { "hasExitKey": true }
     },
     {
       "id": "R1-f", "title": "복도의 {gyuha}", "place": "교무실 앞 복도", "routes": ["R1"], "stage": 6,
-      "pov": "mingeon", "objective": "runExit", "jumpscare": 2,
+      "pov": "mingeon", "objective": "keyToLobby", "objectiveDone": "runExit", "jumpscare": 2, "freezeUntil": "end",
       "deaths": ["duty"],
+      "_comment": "단계 19 [가정, 대사 임시]: 교무실을 나와 2층 동쪽 복도 남쪽(E14 와 같은 자리). 등 뒤에서 {gyuha}의 목소리 → 북쪽을 돌아봄 → 검은 연기(vanishes.gyuhaR1f, R1-d 에서 사라진 연기가 다시) → 점프스케어 #2(J4) → {duty:이} 붙잡힘 → 남쪽(현관 쪽)으로 돌아섬. freezeUntil 이 없는 행동 이름(end)이라 사건 내내 조작 정지. 일행 처리 4초는 C3 의 companionKillDelay",
       "lines": [
-        { "who": "gyuha", "text": "왜 이렇게 늦어?" },
-        { "style": "subtitle", "text": "{gyuha}의 모습을 한 그것이 {duty:을} 덮친다." },
-        { "style": "subtitle", "text": "{duty:이} 붙잡혀 있는 사이, 열쇠를 쥐고 돌아선다." }
+        { "who": "gyuha", "text": "[임시] 왜 이렇게 늦어?" },
+        { "do": "look", "id": "north" },
+        { "do": "vanish", "id": "gyuhaR1f" },
+        { "do": "scare", "id": "J4" },
+        { "do": "sound", "id": "cry" },
+        { "style": "subtitle", "text": "[임시] {gyuha}의 모습을 한 그것이 {duty:을} 덮친다." },
+        { "style": "subtitle", "text": "[임시] \"가라! 열쇠 들고 현관으로!\" {duty:이} 붙잡혀 있는 사이, 열쇠를 쥐고 돌아선다." },
+        { "do": "look", "id": "south" }
       ]
     },
     {
       "id": "R1-g", "title": "도망", "place": "교무실 앞→복도→현관", "routes": ["R1"], "stage": 6,
-      "pov": "mingeon", "objective": "runExit", "chase": "C3",
+      "pov": "mingeon", "objective": "runExit", "chase": "C3", "freezeUntil": "chase", "freezeAfter": "chase",
       "finale": { "companion": "duty", "fleeing": ["mingeon"], "atExit": "escape" },
+      "_comment": "단계 19 [가정, 대사 임시]: R1-f 가 끝나면 바로 마지막 추격 C3(C4 와 같은 실제 경로 40 m: 2층 동쪽 복도 → 현관 쪽 계단 → 1층 → 현관 유리문). 도착 거리 4.9 m 이상이면 열쇠로 문을 여는 1초 뒤 통과(escape), 아니면 잡혀 추격 시작 자리에서 다시. 통과 뒤 끝까지 조작 정지",
       "lines": [
-        { "style": "subtitle", "text": "열쇠를 쥐고 달린다. 등 뒤로 발소리가 빠르게 따라붙는다." },
-        { "style": "subtitle", "text": "현관이 보인다. 숨소리가 귀 바로 뒤에서 들린다." }
+        { "do": "chase" },
+        { "style": "subtitle", "text": "[임시] 열쇠가 돌아가고 유리문이 열린다. 현관에 {player:과} {dohyeon:이} 있다." }
       ]
     },
     {
       "id": "R1-h", "title": "출구", "place": "구관 1층 현관", "routes": ["R1"], "stage": 6,
-      "pov": "player", "objective": "exit",
+      "pov": "player", "objective": "exit", "objectiveDone": "exit", "freezeUntil": "end", "threat": 0.45, "ending": "A",
+      "_comment": "단계 19 [가정, 대사 임시]: R1-g 가 끝나면 바로. 주인공 시점으로 복귀(switches.toPlayer: 짧은 암전, 현관 홀 유리문 앞) → 문 앞 바닥의 {gyuha} 핸드폰(traces gyuhaPhone, STORY 13-2 기본값 깨진 핸드폰)을 내려다봄 → 셋이 문을 지나 밖으로(escapes.frontDoor) → 엔딩 A. 사건 내내 조작 정지, 화면 가장자리 약간 어둡게(threat)",
       "lines": [
-        { "who": "mingeon", "text": "열쇠 있어! 빨리 열어!" },
-        { "style": "subtitle", "text": "문 앞에 깨진 핸드폰이 떨어져 있다. {gyuha}의 것이다." }
+        { "do": "switch", "id": "toPlayer" },
+        { "who": "mingeon", "text": "[임시] 열었어! 뒤에 온다, 빨리 나가!" },
+        { "do": "look", "id": "gyuhaPhone" },
+        { "style": "subtitle", "text": "[임시] 문 앞에 깨진 핸드폰이 떨어져 있다. {gyuha}의 것이다." },
+        { "style": "subtitle", "text": "[임시] {gyuha:은} 처음부터 이 문을 나가지 못했다." },
+        { "do": "escape", "id": "frontDoor" }
       ]
     }
   ],

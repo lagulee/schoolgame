@@ -1,14 +1,16 @@
 // 마지막 장면 화면 (단계 16): 시선 돌리기·쓰러짐 동안 조작을 멈추고, 쓰러짐의 붉은 막(#blood)·검은 막(#veil)·눈높이·고개·쓰러지는 소리를 그린다.
 // E14·E15 의 freezeUntil(행동 줄 이름 앞 줄까지 조작 정지)과 E15 의 threat(화면 가장자리 어둡게)도 여기서 맡는다.
+// 단계 19: 시점 전환(pov.js)·탈출(escape.js)의 검은 막과 조작 정지, 전환 암전 동안의 글자(card, 있을 때만 #notice)도 여기서 그린다.
 // 번쩍임 없음: 막은 한 방향으로 부드럽게만 변한다. FaintView 가 #veil·eyeDrop 을 매 프레임 덮어쓰므로 이 뷰는 그 뒤에 불러 더 큰 값을 쓴다.
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { ghostBang } from '../audio/ghost.js';
+import { showNotice } from '../ui/notice.js';
 
 export class FinaleView {
-  // runner: StoryRunner, bloodEl·veilEl·threatEl: DOM
-  constructor({ runner, look, collapse, player, camera, audio, bloodEl, veilEl, threatEl }) {
-    Object.assign(this, { runner, look, collapse, player, camera, audio, bloodEl, veilEl, threatEl });
+  // runner: StoryRunner, bloodEl·veilEl·threatEl: DOM, pov: PovSwitch, escape: Escape (없어도 됨), text(s) = 자리표시자 채우기
+  constructor({ runner, look, collapse, pov = null, escape = null, player, camera, audio, bloodEl, veilEl, threatEl, text = (s) => s }) {
+    Object.assign(this, { runner, look, collapse, pov, escape, player, camera, audio, bloodEl, veilEl, threatEl, text });
     this.lastPhase = 'idle';
   }
 
@@ -26,9 +28,17 @@ export class FinaleView {
 
   update() {
     const c = this.collapse;
-    if (this.look.active || c.frozen || this.frozenByEvent()) this.player.frozen = true; // story.update 가 매 프레임 frozen 을 정한 뒤에 덮어쓴다
+    const pv = this.pov;
+    const es = this.escape;
+    const held = pv?.active || es?.frozen;
+    if (this.look.active || c.frozen || held || this.frozenByEvent()) this.player.frozen = true; // story.update 가 매 프레임 frozen 을 정한 뒤에 덮어쓴다
     this.bloodEl.style.opacity = c.blood.toFixed(3);
-    if (c.veil > 0) this.veilEl.style.opacity = Math.max(+this.veilEl.style.opacity || 0, c.veil).toFixed(3);
+    const veil = Math.max(c.veil, pv?.veil ?? 0, es?.veil ?? 0);
+    if (veil > 0) this.veilEl.style.opacity = Math.max(+this.veilEl.style.opacity || 0, veil).toFixed(3);
+    if (pv?.card) {
+      showNotice(this.text(pv.card), pv.time('black') + pv.time('in') / 2); // 암전 동안 작은 글자 (#notice 는 검은 막 위)
+      pv.card = null;
+    }
     if (c.sink > 0) this.player.eyeDrop = Math.max(this.player.eyeDrop, c.eyeDrop);
     if (c.pitch !== null) this.camera.rotation.x = c.pitch;
     const t = this.runner.busy && this.runner.event?.threat;

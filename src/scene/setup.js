@@ -2,7 +2,7 @@
 // + 사건 안 작은 행동(steps: 줍기·소리·원경 귀신, 단계 13 E3~E6 / 자리 도착·정전·점프스케어, 단계 14 E7)
 // + P3 교실 수색(p3·p3View, 단계 14 E8) + 기절·각성(faint·faintView)과 P2 당직실 단서(p2·p2View, 단계 15 E10~E12)
 // + P4 교무실 열쇠(p4·p4View)와 마지막 장면(finale·finaleView: 시선 돌리기·쓰러짐·엔딩 C, 단계 16 E13~E15)
-// + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d).
+// + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d) + 시점 전환(pov)·탈출(escape, 단계 19 R1-e~R1-h, 화면은 finaleView).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
 import { PLAYER, SCENE } from '../config.js';
 import { EventTriggers } from '../story/triggers.js';
@@ -23,6 +23,8 @@ import { Look, Collapse } from './finale.js';
 import { FinaleView } from './finaleView.js';
 import { Vanish } from './vanish.js';
 import { VanishView } from './vanishView.js';
+import { PovSwitch } from './pov.js';
+import { Escape } from './escape.js';
 import { showNotice } from '../ui/notice.js';
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
@@ -69,8 +71,10 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   const p4View = new P4View({ scene, p4, collision, audio, camera });
   const look = new Look({ runner, story: data, pose: e2.pose });
   const collapse = new Collapse({ runner, story: data, pose: e2.pose, cfg: SCENE.collapse, ready: () => e2.ghostArrived });
+  const pov = new PovSwitch({ runner, story: data, pose: e2.pose, stamina: player.stamina, cfg: SCENE.pov });
+  const escape = new Escape({ runner, story: data, pose: e2.pose, cfg: SCENE.escape });
   const finaleView = new FinaleView({
-    runner, look, collapse, player, camera, audio,
+    runner, look, collapse, pov, escape, player, camera, audio, text: (t) => runner.text(t),
     bloodEl: document.getElementById('blood'), veilEl: document.getElementById('veil'), threatEl,
   });
   const vanish = new Vanish({ runner, story: data, cfg: SCENE.vanish });
@@ -100,6 +104,8 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     p4View,
     look,
     collapse,
+    pov,
+    escape,
     finaleView,
     vanish,
     vanishView,
@@ -125,6 +131,8 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       p4View.update(dt);
       look.update(dt);
       collapse.update(dt);
+      pov.update(dt);
+      escape.update(dt);
       finaleView.update();
       vanish.update(dt);
       vanishView.update();

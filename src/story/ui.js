@@ -55,7 +55,7 @@ export class StoryUI {
     } else {
       this.sub.classList.toggle('sms', style === 'sms');
       this.target = this.sub;
-      this.subPrefix = style === 'sms' ? `📱 ${speaker}: ` : '';
+      this.subPrefix = style === 'sms' ? (speaker ? `📱 ${speaker}: ` : '📱 ') : ''; // 지금 시점 인물이 보낸 문자는 이름 없이 (단계 19)
       this.sub.style.display = '';
     }
     this.render();

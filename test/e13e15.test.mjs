@@ -337,6 +337,6 @@ test('다른 루트·사건은 그대로: R3 의 E14~E15 트리거는 E13 전에
   w.me.z = -31.1;
   w.tick();
   assert.equal(w.runner.event, null, 'E13 전에는 E14 가 걸리지 않는다');
-  assert.deepEqual(story.events.filter((e) => e.ending).map((e) => `${e.id}/${e.ending}`), ['E14/B', 'E15/C'], '엔딩 B 는 R2 의 E14, C 는 R3 의 E15 (단계 17)');
+  assert.deepEqual(story.events.filter((e) => e.ending).map((e) => `${e.id}/${e.ending}`), ['E14/B', 'E15/C', 'R1-h/A'], '엔딩 B 는 R2 의 E14, C 는 R3 의 E15 (단계 17), A 는 R1 의 R1-h (단계 19)');
   assert.ok(STORY.endingsKey);
 });

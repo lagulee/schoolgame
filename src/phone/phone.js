@@ -41,9 +41,15 @@ export class Phone {
     this.begun = true;
   }
 
-  // 시점 전환: 태민 핸드폰은 처음 쓸 때 55% 로 만든다
+  // 시점 전환: 태민 핸드폰은 처음 쓸 때 55% 로 만든다 (라이트는 MINGEON_LIGHT, 단계 19). 떠나는 핸드폰의 화면은 닫는다
   usePov(pov) {
-    if (!this.states[pov]) this.states[pov] = this.fresh(pov === 'mingeon' ? this.cfg.MINGEON_START : this.roll());
+    if (pov === this.pov) return;
+    this.s.screenOpen = false;
+    if (!this.states[pov]) {
+      const mg = pov === 'mingeon';
+      this.states[pov] = this.fresh(mg ? this.cfg.MINGEON_START : this.roll());
+      if (mg && this.cfg.MINGEON_LIGHT) this.states[pov].lightOn = true;
+    }
     this.pov = pov;
   }
 

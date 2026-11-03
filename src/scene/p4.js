@@ -42,9 +42,10 @@ export class P4Keys {
     this.moving = false;
   }
 
-  // 안내 문구. 당직과 함께(R2, dutyCompanion)면 textsDuty 가 덮어쓴다 (단계 17: 퍼즐은 같고 말만 다르다)
+  // 안내 문구. 당직과 함께(R2 dutyCompanion, 단계 17 / R1-e 처럼 사건에 withDuty, 단계 19)면 textsDuty 가 덮어쓴다 (퍼즐은 같고 말만 다르다)
   get texts() {
-    return this.runner.flags.get('dutyCompanion') ? { ...this.K.texts, ...this.K.textsDuty } : this.K.texts;
+    const duty = this.runner.flags.get('dutyCompanion') || !!this.runner.event?.withDuty;
+    return duty ? { ...this.K.texts, ...this.K.textsDuty } : this.K.texts;
   }
 
   get active() {
