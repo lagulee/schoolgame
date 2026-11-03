@@ -99,7 +99,9 @@ export class StoryRunner {
   objectiveKey() {
     const ev = this.phoneEvent();
     // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c). 끝난 사건에 objectiveDone 이 있으면 그것 (단계 12)
-    const done = ev && this.event?.kind !== 'event' && ev.objectiveDone;
+    let done = ev && this.event?.kind !== 'event' && ev.objectiveDone;
+    // 플래그에 따라 끝난 뒤 목표가 갈리는 사건 (단계 17: E12 에서 따라가면 followDuty). objectiveDoneByFlag = { 플래그: 목표 키 }
+    if (done) for (const [flag, key] of Object.entries(ev.objectiveDoneByFlag ?? {})) if (this.flags.get(flag)) done = key;
     return (ev ? (this.repeat && ev.objectiveRepeat) || done || ev.objective : this.story.prelude?.objective) || null;
   }
 

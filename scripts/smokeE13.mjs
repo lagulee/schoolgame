@@ -51,7 +51,7 @@ export async function e13e15Smoke({ S, check, poll }) {
   check('출구 결과 = 쓰러짐(collapse)', await S(() => window.__DEBUG.chase.current.atExit === 'collapse'));
   check('귀신 실루엣이 복도 3 m 뒤에 그려진다', await poll(() => { const g = window.__DEBUG.scenes.e2.ghost; return g?.mode === 'chase' && g.level === 1 && window.__DEBUG.scenes.view.ghost.visible; }));
   // 달려서 현관 유리문 앞에 도착했다고 본다 (귀신과 거리를 벌려 둔다)
-  await S((p) => { const D = window.__DEBUG; D.player.setView([p[0], p[1], p[2]], 90, 0, 0); D.chase.chase.gap = 20; D.chase.reach(); }, DOOR);
+  await S((p) => { const D = window.__DEBUG; D.player.setView([p[0], p[1], p[2]], 90, 0, 0); D.chase.chase.gap = 20; D.chase.reach(); D.chase.chase.unlockLeft = Math.min(D.chase.chase.unlockLeft, 0.05); /* 느린 headless 는 출구 여는 1초를 줄인다 */ }, DOOR);
   check('도착 → 출구 여는 1초 조작 불가 → exit(쓰러짐)', await poll(() => window.__DEBUG.chase.last?.id === 'C4' && window.__DEBUG.chase.last.outcome === 'exit' && window.__DEBUG.chase.last.finale === 'collapse'), await S(() => window.__DEBUG.chase.hudLine()));
   // E15
   check('E14 끝 → 현관 유리문 앞에서 E15 시작', await poll(() => window.__DEBUG.story.registry.done.has('E14') && window.__DEBUG.story.event?.id === 'E15'));

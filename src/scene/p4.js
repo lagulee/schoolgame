@@ -25,13 +25,13 @@ export class P4Keys {
     puzzle.hooks.register('onWrong', ({ puzzle: id, wrong, limit }) => {
       if (id !== 'P4') return;
       if (wrong < limit) {
-        this.toast(this.text(this.K.texts.wrong));
+        this.toast(this.text(this.texts.wrong));
         this.events.push({ kind: 'wrong' });
       }
     });
     puzzle.hooks.register('onFail', ({ puzzle: id }) => {
       if (id !== 'P4') return;
-      this.toast(this.text(this.K.texts.failed));
+      this.toast(this.text(this.texts.failed));
       this.events.push({ kind: 'caught' });
     });
   }
@@ -40,6 +40,11 @@ export class P4Keys {
     this.ghost = null;
     this.walked = 0; // 이번 걸음에서 막 걸은 거리 (발소리 간격용, 화면이 읽는다)
     this.moving = false;
+  }
+
+  // 안내 문구. 당직과 함께(R2, dutyCompanion)면 textsDuty 가 덮어쓴다 (단계 17: 퍼즐은 같고 말만 다르다)
+  get texts() {
+    return this.runner.flags.get('dutyCompanion') ? { ...this.K.texts, ...this.K.textsDuty } : this.K.texts;
   }
 
   get active() {
@@ -57,7 +62,7 @@ export class P4Keys {
   tryKey(n) {
     if (!this.active) return null;
     if (!this.light()) {
-      this.toast(this.text(this.K.texts.dark));
+      this.toast(this.text(this.texts.dark));
       return 'dark';
     }
     return this.puzzle.submit(n);

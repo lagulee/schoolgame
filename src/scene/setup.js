@@ -65,7 +65,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   const p4 = new P4Keys({ runner, puzzle: puzzle.session, pose: e2.pose, interactions: story.interactions, light: () => phone.phone.lightOn, toast, text: (t) => runner.text(t), cfg: SCENE.p4 });
   const p4View = new P4View({ scene, p4, collision, audio, camera });
   const look = new Look({ runner, story: data, pose: e2.pose });
-  const collapse = new Collapse({ runner, story: data, pose: e2.pose, cfg: SCENE.collapse });
+  const collapse = new Collapse({ runner, story: data, pose: e2.pose, cfg: SCENE.collapse, ready: () => e2.ghostArrived });
   const finaleView = new FinaleView({
     runner, look, collapse, player, camera, audio,
     bloodEl: document.getElementById('blood'), veilEl: document.getElementById('veil'), threatEl,

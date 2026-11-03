@@ -18,7 +18,10 @@ export class FinaleView {
     const ev = r.event;
     if (!ev?.freezeUntil || !r.busy || ev.kind !== 'event') return false;
     const at = ev.lines.findIndex((l) => l.do === ev.freezeUntil);
-    return at < 0 || r.lineIdx < at;
+    if (at < 0 || r.lineIdx < at) return true;
+    // freezeAfter: 그 행동 줄이 끝난 뒤(예: R2 E14 의 추격 뒤 붙잡힘 장면)도 사건이 끝날 때까지 조작 정지
+    const after = ev.freezeAfter ? ev.lines.findIndex((l) => l.do === ev.freezeAfter) : -1;
+    return after >= 0 && r.lineIdx > after;
   }
 
   update() {

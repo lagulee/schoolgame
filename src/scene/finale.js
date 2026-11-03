@@ -56,10 +56,11 @@ export class Look {
 // 엔딩 카드를 닫으면(recover) 막과 눈높이가 천천히 돌아온다.
 export class Collapse {
   // cfg = SCENE.collapse
-  constructor({ runner, story, pose, cfg }) {
-    Object.assign(this, { runner, pose, cfg });
+  // ready(): 장면 준비가 됐는가 (엔딩 B: 귀신이 등 뒤에 다 올 때까지 돌아보지 않는다, 단계 17). 기본은 항상 true
+  constructor({ runner, story, pose, cfg, ready = () => true }) {
+    Object.assign(this, { runner, pose, cfg, ready });
     this.defs = story.collapses ?? {};
-    this.phase = 'idle'; // idle | turn | sag | dark | hold | end | recover
+    this.phase = 'idle'; // idle | wait | turn | sag | dark | hold | end | recover
     this.t = 0;
     this.line = null;
     this.rec = 0; // recover 시작 때의 값 (blood, veil, rise)
@@ -116,11 +117,12 @@ export class Collapse {
 
   begin(line) {
     this.line = line;
-    this.phase = 'turn';
+    this.phase = this.ready() ? 'turn' : 'wait';
     this.t = 0;
     this.base = this.pose.get();
     const d = this.defs[line.id];
-    const to = d?.at ? yawTo(this.base.pos[0], this.base.pos[2], d.at[0], d.at[1]) : this.base.yaw;
+    // at [x, z] = 그 점을 바라봄(엔딩 C 의 현관 문), yaw(도) = 그 방향(엔딩 B: 등 뒤의 귀신 쪽), 둘 다 없으면 보던 방향 그대로
+    const to = d?.at ? yawTo(this.base.pos[0], this.base.pos[2], d.at[0], d.at[1]) : d?.yaw !== undefined ? (d.yaw * Math.PI) / 180 : this.base.yaw;
     this.from = this.base.yaw;
     this.delta = turnDelta(this.from, to);
   }
@@ -137,7 +139,11 @@ export class Collapse {
     if (a?.do === 'collapse') {
       if (this.line !== a) this.begin(a);
       else this.t += dt;
-      if (this.phase === 'turn') {
+      if (this.phase === 'wait') {
+        this.t = 0;
+        if (this.ready()) this.phase = 'turn';
+        this.base = this.pose.get(); // 기다리는 동안 움직였을 수 있다 (정지 중이라 거의 없음)
+      } else if (this.phase === 'turn') {
         const k = ease(this.t / C.turn);
         this.pose.set({ ...this.base, yaw: this.from + this.delta * k, pitch: this.base.pitch * (1 - k) });
         if (this.t >= C.turn) this.next('sag');

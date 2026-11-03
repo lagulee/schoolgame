@@ -34,6 +34,7 @@
     "exitKeyPlan": "출구 열쇠를 어떻게 가져올지 정한다",
     "findExitKey": "교무실 열쇠함에서 번호가 맞는 열쇠를 찾는다",
     "wait": "{mingeon:과} {duty:을} 기다린다",
+    "followDuty": "{duty:을} 따라 교무실로 간다",
     "waitDuty": "{duty:을} 기다린다",
     "runExit": "열쇠를 들고 현관으로 달린다",
     "exit": "현관 문을 열고 나간다"
@@ -60,7 +61,9 @@
     { "event": "E12", "after": "E11", "space": "4F-duty", "level": 3 },
     { "_comment": "단계 16 [가정]: routes = 이 루트에서만 건다(R2 의 E13~E14 는 단계 17). wait = 앞 사건이 끝난 뒤 그 시간(초)이 지나면 자리와 상관없이 시작(E13: 당직이 돌아오지 않는 시간). E13 = E12 뒤 45초, E14 = 교무실을 나와 2층 동쪽 복도 남쪽(z −31, C4 경로 시작 — 추격이 시작된 자리에서 40 m 뒤가 현관 유리문 앞), E15 = 현관 유리문 앞(추격 도착 자리)", "event": "E13", "after": "E12", "wait": 45, "routes": ["R3"] },
     { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R3"] },
-    { "event": "E15", "after": "E14", "rect": [15, -6, 18, 2], "level": 0, "routes": ["R3"] }
+    { "event": "E15", "after": "E14", "rect": [15, -6, 18, 2], "level": 0, "routes": ["R3"] },
+    { "_comment": "단계 17 [가정]: R2(당직 동행). E13 = E12 에서 '따라간다'를 고른 뒤 교무실(2F-staff)에 들어서면, E14 = R3 와 같은 복도 자리(교무실을 나와 2층 동쪽 복도 남쪽, C4 경로 시작)", "event": "E13", "after": "E12", "space": "2F-staff", "level": 1, "routes": ["R2"] },
+    { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R2"] }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
@@ -85,6 +88,7 @@
   },
   "collapses": {
     "_comment": "단계 16 [가정, 사용자 확인 대기]: 행동 줄 { do: collapse, id } — 엔딩 C. at [x, z] 의 현관 문 쪽으로 돌아선 뒤 몸이 주저앉으며 시야 가장자리부터 붉은 막이 한 방향으로만 번지고(깜빡임 0회), 어두워졌다 암전. 피·비명·시체는 그리지 않는다 (수치는 config SCENE.collapse)",
+    "caught": { "_comment": "단계 17 [가정, 사용자 확인 대기]: 엔딩 B — 입구 5 m 앞에서 붙잡힘. yaw(도) 방향(북 = 등 뒤, 귀신 쪽)으로 돌아본 뒤 엔딩 C 와 같은 주저앉음·붉은 막·암전 (수위 같음). 이 방향으로 귀신 실루엣이 뒤에서 바짝 다가와 있다", "yaw": 0 },
     "door": { "at": [15, -1] }
   },
   "faints": {
@@ -249,7 +253,7 @@
     },
     {
       "id": "E12", "title": "열쇠를 가지러", "place": "구관 4층", "routes": ["R2", "R3"], "stage": 4,
-      "pov": "player", "objective": "exitKeyPlan", "objectiveDone": "waitDuty",
+      "pov": "player", "objective": "exitKeyPlan", "objectiveDone": "waitDuty", "objectiveDoneByFlag": { "dutyCompanion": "followDuty" },
       "lines": [
         { "who": "duty", "text": "출구는 잠겨 있다. 내가 교무실에 가서 열쇠를 가져오마. 여기 있어라." }
       ],
@@ -280,11 +284,17 @@
     },
     {
       "id": "E13", "title": "셋이서 교무실로", "place": "구관 2층 교무실", "routes": ["R2"], "stage": 5,
-      "pov": "player", "objective": "findExitKey", "puzzle": "P4",
+      "pov": "player", "objective": "findExitKey", "objectiveDone": "runExit", "puzzle": "P4",
       "lines": [
-        { "who": "duty", "text": "번호표를 잘 봐라. 틀린 걸 꽂으면 소리가 난다." },
-        { "style": "subtitle", "text": "셋이서 열쇠 꾸러미를 뒤져 출구 열쇠를 찾았다." }
-      ]
+        { "style": "subtitle", "text": "[임시] {duty:과} {dohyeon:과} 함께 교무실에 들어섰다." },
+        { "who": "duty", "text": "[임시] 열쇠함은 서쪽 벽이다. 번호표를 잘 봐라. 틀린 걸 꽂으면 소리가 난다." },
+        { "do": "reach", "id": "staffRack" },
+        { "style": "subtitle", "text": "[임시] 교무실 안쪽에서 무언가가 다가온다. …발소리가 느리다." },
+        { "who": "duty", "text": "[임시] 47번이다. 라이트로 번호표를 비춰라. 내가 뒤를 보마." },
+        { "do": "puzzle" },
+        { "style": "subtitle", "text": "[임시] 47번 열쇠다. 셋이서 출구 열쇠를 챙겼다." }
+      ],
+      "set": { "hasExitKey": true }
     },
     {
       "id": "E14", "title": "{dohyeon}", "place": "교무실→복도→계단→현관 홀", "routes": ["R3"], "stage": 4,
@@ -305,15 +315,22 @@
     {
       "id": "E14", "title": "쫓아오는 것", "place": "교무실→복도→계단→현관 홀", "routes": ["R2"], "stage": 5,
       "pov": "player", "objective": "runExit", "chase": "C4", "jumpscare": 3,
+      "freezeUntil": "chase", "freezeAfter": "chase", "ending": "B",
       "deaths": ["duty", "player"],
       "finale": { "companion": "duty", "fleeing": ["player", "dohyeon"], "atExit": "playerCaught" },
       "lines": [
-        { "style": "subtitle", "text": "열쇠를 들고 나오자 그것이 쫓아온다. {duty:을} 먼저 덮친다." },
-        { "style": "subtitle", "text": "{duty:이} 붙잡혀 있는 사이, {dohyeon:과} 함께 현관으로 뛴다." },
-        { "style": "subtitle", "text": "현관이 코앞이다. 등 뒤에서 차가운 손이 어깨를 붙잡는다." },
-        { "style": "subtitle", "text": "{dohyeon:이} 문을 열고 빠져나간다." }
-      ],
-      "set": { "hasExitKey": true }
+        { "do": "sound", "id": "behind" },
+        { "do": "look", "id": "north" },
+        { "do": "scare", "id": "J3" },
+        { "do": "sound", "id": "cry" },
+        { "style": "subtitle", "text": "[임시] 그것이 {duty:을} 먼저 덮친다. \"가라! 열쇠 들고 현관으로!\"" },
+        { "style": "subtitle", "text": "[임시] {duty:이} 붙잡혀 있는 사이, {dohyeon:과} 함께 현관으로 뛴다." },
+        { "do": "look", "id": "south" },
+        { "do": "chase" },
+        { "style": "subtitle", "text": "[임시] 현관이 코앞이다. 등 뒤에서 차가운 손이 어깨를 붙잡는다." },
+        { "style": "subtitle", "text": "[임시] \"뛰어! 돌아보지 마!\" {dohyeon:이} 문을 열고 빠져나간다. 문이 닫히는 소리가 멀다." },
+        { "do": "collapse", "id": "caught" }
+      ]
     },
     {
       "id": "E15", "title": "현관", "place": "구관 1층 현관", "routes": ["R3"], "stage": 4,

@@ -141,7 +141,7 @@ test('전체 진행: E12 따라간다 → R2 · E14 에서 끝, 엔딩 B', () =>
   const { r, seen } = playAll((id) => (id === 'E12' ? 'follow' : null));
   assert.deepEqual(seen, [...COMMON, ...E(8, 9, 10, 11, 12, 13, 14)]);
   assert.equal(r.route, 'R2');
-  assert.equal(r.flags.get('hasExitKey'), true, 'R2 도 E14 에서 출구 열쇠');
+  assert.equal(r.flags.get('hasExitKey'), true, 'R2 도 E13(P4)에서 출구 열쇠');
   assert.match(r.ui.shown.speaker, /엔딩 B/);
 });
 

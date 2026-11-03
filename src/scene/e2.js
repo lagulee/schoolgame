@@ -6,6 +6,7 @@
 // - E2 동안(숨기가 끝날 때까지) P1.hide.lockedRooms 의 문은 잠긴다. 화면(실루엣·발소리·비네팅)은 e2View.js 가 이 상태를 읽어 그린다.
 import { ChasePath, PathProgress } from './path.js';
 import { Hide } from './hide.js';
+import { SCENE } from '../config.js';
 
 export class E2Scene {
   // chase / puzzle: ChaseSession / PuzzleSession, pose: { get(), set(v) }, where(): { x, z, level },
@@ -16,6 +17,8 @@ export class E2Scene {
     this.path = null; // { def, path, progress, base }
     this.hide = null;
     this.hideDef = null;
+    this.held = null; // R2 트리거 뒤 붙잡힘 장면: { path, def, at(귀신 경로 위치), player(플레이어 경로 위치) } — 귀신이 등 뒤로 다가온다 (단계 17)
+    this.cache = null; // 이번 프레임 직전 추격의 { path, ghostAt, playerAt } (추격이 끝난 프레임에 Chase 가 이미 사라져 있으므로)
     this.seenChase = null; // 마지막으로 경로를 맞춘 Chase 객체 (복원으로 새로 만들어지면 다시 맞춘다)
     this.locked = false;
     this.enabled = true;
@@ -71,6 +74,7 @@ export class E2Scene {
     const c = this.own.chase ? this.chase.chase : null;
     const def = c?.def;
     if (!c || !def.path) {
+      if (this.path) this.cache = { path: this.path, ghostAt: this.cache?.ghostAt ?? 0, playerAt: this.path.progress.best };
       this.path = null;
       this.seenChase = null;
       return;
@@ -92,14 +96,19 @@ export class E2Scene {
     this.syncPath();
     if (this.path) {
       this.path.progress.update(p.x, p.z, dt);
+      const ch = this.chase.chase;
+      if (ch) this.cache = { path: this.path, ghostAt: this.path.base + ch.ghostPos, playerAt: this.path.progress.best };
       const t = this.path.def.target;
       if (t && this.locate(p.x, p.z, p.level)?.id === t) this.chase.reach();
     }
     // 추격이 끝났거나(도착) 퍼즐을 풀었으면 다음 줄로
-    if (this.own.chase && act === 'chase' && !this.chase.active && this.chase.last?.outcome === 'exit') {
+    if (this.own.chase && act === 'chase' && !this.chase.active && ['exit', 'trigger'].includes(this.chase.last?.outcome)) {
       this.own.chase = false;
+      // R2: 입구 5 m 앞 트리거 — 귀신이 등 뒤로 다가오는 붙잡힘 장면으로 (단계 17)
+      if (this.chase.last.outcome === 'trigger' && this.cache) this.held = { path: this.cache.path.path, def: this.cache.path.def, at: this.cache.ghostAt, player: this.cache.playerAt };
       this.runner.resume('chase');
     }
+    this.updateHeld(dt);
     if (this.own.puzzle && act === 'puzzle' && !this.puzzle.active && this.puzzle.last?.outcome === 'solved') {
       this.own.puzzle = false;
       this.runner.resume('puzzle');
@@ -127,6 +136,24 @@ export class E2Scene {
     this.lockRooms();
   }
 
+  // 붙잡힘 장면에서 귀신이 등 뒤에 다 왔는가 (장면이 아니면 항상 true) — Collapse 가 돌아보기 전에 기다린다
+  get ghostArrived() {
+    const h = this.held;
+    return !h || h.at >= h.player - SCENE.caught.stopAt - 1e-6;
+  }
+
+  // 붙잡힘 장면: 귀신이 플레이어 뒤 stopAt 까지 closeSpeed 로 다가와 선다. 사건이 끝나면 사라진다
+  updateHeld(dt) {
+    const h = this.held;
+    if (!h) return;
+    if (!this.runner.busy || this.runner.event?.finale?.atExit !== 'playerCaught') {
+      this.held = null;
+      return;
+    }
+    const C = SCENE.caught;
+    h.at = Math.min(h.at + C.closeSpeed * dt, h.player - C.stopAt);
+  }
+
   // E2 의 숨기 줄까지는 열린 방 하나만 남기고 잠근다
   lockRooms() {
     const ev = this.runner.event;
@@ -151,6 +178,10 @@ export class E2Scene {
       const [x, z, lv] = this.path.path.at(at);
       // hideBefore: 귀신 자리가 경로 시작 앞(아직 건물 밖)이면 실루엣은 그리지 않고 발소리만 (C2, 단계 15). stalled: 지형 지연으로 멈춰 서 있음
       return { mode: 'chase', x, z, level: lv ?? this.path.def.path.level ?? 0, gap: c.gap, locked: c.locked, unlockK: c.unlockTime > 0 ? 1 - c.unlockLeft / c.unlockTime : 0, stalled: c.stall > 0 && !!this.path.def.path.stallBang, hidden: !!this.path.def.path.hideBefore && at < 0 };
+    }
+    if (this.held) {
+      const [x, z, lv] = this.held.path.at(this.held.at);
+      return { mode: 'chase', x, z, level: lv ?? this.held.def.path.level ?? 0, gap: this.held.player - this.held.at, locked: false, unlockK: 0, stalled: false, hidden: false };
     }
     if (this.hide?.active && this.hideDef) {
       const d = this.hideDef;
