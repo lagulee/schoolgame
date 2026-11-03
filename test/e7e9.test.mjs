@@ -195,14 +195,12 @@ test('정답 교실은 단서를 다 모으지 않아도 들어가면 성공', (
   assert.equal(w.puzzle.last?.outcome, 'solved');
 });
 
-test('R1(earlyBook): E7 은 같고, E8 은 걸리지 않으며 E9 는 생략된다', () => {
+test('R1(earlyBook): E7 은 같고, E8 대신 R1-a 가 걸리며 E9 는 생략된다 (단계 18)', () => {
   const w = world({ earlyBook: true });
   assert.equal(w.runner.route, 'R1');
   runE7(w);
-  assert.ok(!w.runner.busy, 'R1 에는 E8 이 없어 자리 진입이 걸리지 않는다');
-  w.at(10, -91.9, 2);
-  assert.ok(!w.runner.busy, 'E9 도 걸리지 않는다');
-  assert.equal(w.runner.registry.nextId(w.runner.flags.values, w.runner.route), 'R1-a');
+  assert.ok(w.runner.registry.history.includes('R1-a'), 'R1 에는 E8 이 없고, 같은 자리에서 R1-a(책 건네기)가 시작된다');
+  assert.ok(!w.runner.registry.history.includes('E8'));
   assert.ok(!w.runner.registry.isAvailable('E9', w.runner.flags.values, w.runner.route), 'E9 생략');
 });
 

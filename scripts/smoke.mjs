@@ -7,6 +7,7 @@ import { e7e9Smoke } from './smokeE7.mjs';
 import { e10e12Smoke } from './smokeE10.mjs';
 import { e13e15Smoke } from './smokeE13.mjs';
 import { e17Smoke } from './smokeE17.mjs';
+import { r1Smoke } from './smokeR1.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -102,6 +103,7 @@ await e7e9Smoke({ S, check, poll, press });
 await e10e12Smoke({ S, check, poll, press });
 await e13e15Smoke({ S, check, poll });
 await e17Smoke({ S, check, poll });
+await r1Smoke({ S, check, poll });
 // 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀·복도에서 E1·E2 가 끼어들지 않게)
 await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
@@ -330,7 +332,7 @@ check('R → 라이트 다시 켬', (await ph()).light);
 await press('KeyE', 120);
 check('E 한 번 더 → 화면 닫힘', !(await ph()).open && (await poll(() => document.getElementById('phone').style.display === 'none')));
 const finishEvent = async () => {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) { // R1-d 는 대화가 길다 (단계 18)
     const mode = await S(() => window.__DEBUG.story.mode);
     if (mode === 'action') await S(() => window.__DEBUG.story.resume()); // 추격·숨기(행동 줄)는 위 E2 점검에서 봤으므로 건너뜀
     else if (mode === 'line') await press('KeyE', 120);

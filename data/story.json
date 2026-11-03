@@ -29,6 +29,7 @@
     "findFriends": "흩어진 {gyuha:과} {mingeon:을} 찾는다",
     "dohyeonBook": "{dohyeon}의 책을 챙기러 신관 4층으로 간다",
     "giveBook": "{dohyeon}에게 책을 돌려준다",
+    "goDuty": "구관 4층 당직실로 간다",
     "goOld": "구관으로 돌아간다",
     "findClue": "출구 열쇠 번호를 알아낸다",
     "exitKeyPlan": "출구 열쇠를 어떻게 가져올지 정한다",
@@ -63,7 +64,11 @@
     { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R3"] },
     { "event": "E15", "after": "E14", "rect": [15, -6, 18, 2], "level": 0, "routes": ["R3"] },
     { "_comment": "단계 17 [가정]: R2(당직 동행). E13 = E12 에서 '따라간다'를 고른 뒤 교무실(2F-staff)에 들어서면, E14 = R3 와 같은 복도 자리(교무실을 나와 2층 동쪽 복도 남쪽, C4 경로 시작)", "event": "E13", "after": "E12", "space": "2F-staff", "level": 1, "routes": ["R2"] },
-    { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R2"] }
+    { "event": "E14", "after": "E13", "rect": [15, -31.6, 18, -30.6], "level": 1, "routes": ["R2"] },
+    { "_comment": "단계 18 [가정]: R1(책 선점). R1-a = E7 이 끝난 자리(신관 2층 복도, 배전반 앞)에서 바로, R1-b = R1-a 가 끝난 자리에서 바로(E8 과 같은 P3), R1-c = 구관 4층 당직실(4F-duty)에 들어설 때(R1-b 뒤 — 신관 3층 3-10 에서 3층 연결통로 → 구관 계단으로 올라간다), R1-d = R1-c 가 끝난 당직실에서 바로. R1 은 E9 이 생략돼 done 에 들어가지 않으므로 after 를 E9 로 두지 않는다", "event": "R1-a", "after": "E7", "space": "AC", "level": 1, "routes": ["R1"] },
+    { "event": "R1-b", "after": "R1-a", "space": "AC", "level": 1, "routes": ["R1"] },
+    { "event": "R1-c", "after": "R1-b", "space": "4F-duty", "level": 3, "routes": ["R1"] },
+    { "event": "R1-d", "after": "R1-c", "space": "4F-duty", "level": 3, "routes": ["R1"] }
   ],
   "pickups": [
     { "_comment": "단계 13: 행동 줄 { do: take, id } 이 기다리는 줍기. pos 가 있으면 그 자리에 살펴보기(E)를 만들고, spot 이면 신관 살펴보기 자리(annexInterior.json spots)를 쓴다. set = 주울 때 켜는 플래그. 물체 모양 = scene/stepsView.js (mount = 벽에 붙인 물체 자리 [x, z, 벽과 나란한 축 아님 = 두께 방향 축])", "id": "connectorKey", "level": 1, "pos": [18.35, -43], "label": "열쇠함 살펴보기", "mesh": "keybox", "mount": [18.2, -43, "x"], "set": { "hasConnectorKey": true } },
@@ -84,7 +89,12 @@
   "looks": {
     "_comment": "단계 16: 행동 줄 { do: look, id } — 조작이 멈춘 채 시선을 time 초에 걸쳐 돌린다. yaw(도, 0 = 북(−z), 180 = 남, −90 = 동) 또는 at [x, z] (그 점을 바라봄). 끝나면 다음 줄로",
     "north": { "yaw": 0, "time": 0.5 },
-    "south": { "yaw": 180, "time": 0.45 }
+    "south": { "yaw": 180, "time": 0.45 },
+    "gyuhaSpot": { "_comment": "단계 18: R1-d — {gyuha}(가짜)가 서 있던 당직실 앞 벽(칠판) 서쪽 자리로 돌아본다", "at": [19.6, -30.4], "time": 0.9 }
+  },
+  "vanishes": {
+    "_comment": "단계 18 [가정]: 행동 줄 { do: vanish, id } — 그 자리(pos [x, z], level)에서 검은 연기가 피어올라 흩어진다(실루엣 없음, 점프스케어로 세지 않음). 연기 짙기는 한 번 짙어졌다 옅어지기만 한다(깜빡임 0회). 시간·크기는 config SCENE.vanish. 끝나면 다음 줄",
+    "gyuhaR1d": { "level": 3, "pos": [19.6, -30.4] }
   },
   "collapses": {
     "_comment": "단계 16 [가정, 사용자 확인 대기]: 행동 줄 { do: collapse, id } — 엔딩 C. at [x, z] 의 현관 문 쪽으로 돌아선 뒤 몸이 주저앉으며 시야 가장자리부터 붉은 막이 한 방향으로만 번지고(깜빡임 0회), 어두워졌다 암전. 피·비명·시체는 그리지 않는다 (수치는 config SCENE.collapse)",
@@ -192,18 +202,24 @@
     },
     {
       "id": "R1-a", "title": "책을 건네다", "place": "신관 2층", "routes": ["R1"], "stage": 6,
-      "pov": "player", "objective": "giveBook",
+      "pov": "player", "objective": "giveBook", "objectiveDone": "findFriends",
+      "_comment": "단계 18 [가정, 대사 임시]: E7 이 끝난 자리에서 바로. 미리 챙긴 책을 건네 E9(4층 우회)가 사라진다",
       "lines": [
-        { "style": "subtitle", "text": "4층에서 챙겨 온 책을 {dohyeon}에게 건넸다." },
-        { "who": "dohyeon", "text": "어? 내 책이네. 고마워, 4층 안 가도 되겠다." }
+        { "style": "subtitle", "text": "가방에서 4층에서 챙겨 온 책을 꺼내 {dohyeon}에게 건넸다." },
+        { "who": "dohyeon", "text": "어? 내 책이네. 언제 챙겼어? 고마워, 4층 안 가도 되겠다." },
+        { "who": "dohyeon", "text": "이제 {gyuha:과} {mingeon}만 찾으면 돼. 근처 교실부터 보자. 아무 데나 막 들어가진 말고." }
       ]
     },
     {
       "id": "R1-b", "title": "교실 수색", "place": "신관 2층 인근 교실들", "routes": ["R1"], "stage": 6,
-      "pov": "player", "objective": "findFriends", "puzzle": "P3",
+      "pov": "player", "objective": "findFriends", "objectiveDone": "goDuty", "puzzle": "P3",
+      "_comment": "단계 18 [가정, 대사 임시]: E8 과 같은 P3 교실 수색(STAGES 단계 0 가정 ③: R1 은 E8 대신 R1-b). 끝에 {mingeon} 이 구관 4층 당직실에서 보자고 해 R1-c 자리를 알려 준다",
       "lines": [
-        { "who": "mingeon", "text": "우리 먼저 구관으로 가 있을게." },
-        { "who": "gyuha", "text": "…응. 먼저 가 있을게." }
+        { "do": "puzzle" },
+        { "style": "subtitle", "text": "교실 구석에 {gyuha:과} {mingeon:이} 웅크리고 있다." },
+        { "who": "mingeon", "text": "왔구나… 아까 구관 4층 당직실에 불 켜진 거 봤어. 우리 먼저 거기 가 있을게." },
+        { "who": "gyuha", "text": "…응. 먼저 가 있을게." },
+        { "style": "subtitle", "text": "둘이 계단 쪽으로 사라진다. 발소리는 하나뿐이었다." }
       ]
     },
     {
@@ -345,21 +361,36 @@
     },
     {
       "id": "R1-c", "title": "구관 4층의 일행", "place": "구관 4층", "routes": ["R1"], "stage": 6,
-      "pov": "player", "objective": "findClue", "puzzle": "P2",
+      "pov": "player", "objective": "findClue", "objectiveDone": "wait", "puzzle": "P2",
+      "_comment": "단계 18 [가정, 대사 임시]: 구관 4층 당직실(4F-duty)에 들어서면. 결정 D7 — 먼저 와 있던 {duty} 가 짧게 자기소개(첫 만남). P2 는 E11 과 같은 당직실 단서 3개(번호 47). 끝에 {duty} 가 열쇠를 가지러 가고 {mingeon} 이 따라간다",
       "lines": [
-        { "style": "subtitle", "text": "구관 4층에 {mingeon:과} {gyuha:이} 낯선 어른과 함께 있다." },
-        { "who": "duty", "text": "놀라지 마라. 오늘 여기 당직 서는 사람이다. 너희 친구들은 내가 먼저 찾았다." },
-        { "who": "duty", "text": "출구 열쇠는 교무실 열쇠함에 있다. 내가 가져오마." },
-        { "who": "mingeon", "text": "저도 같이 갈게요." }
+        { "style": "subtitle", "text": "당직실 안에 {mingeon:과} {gyuha}, 그리고 처음 보는 어른이 있다." },
+        { "who": "duty", "text": "놀라지 마라. 오늘 이 학교 당직 서는 사람이다. 순찰 돌다가 이 둘을 먼저 만났다." },
+        { "who": "duty", "text": "현관은 잠겨 있다. 출구 열쇠는 교무실 열쇠함에 있는데, 번호부터 알아야 한다. 이 방 어딘가에 적어 둔 게 있을 거다." },
+        { "do": "puzzle" },
+        { "who": "duty", "text": "47번. 교무실 열쇠함에 달린 번호표다. 틀림없어." },
+        { "who": "duty", "text": "내가 가서 가져오마. 너희는 여기 있어라." },
+        { "who": "mingeon", "text": "저도 같이 갈게요. 혼자 다니시면 위험하잖아요." },
+        { "style": "subtitle", "text": "{duty:과} {mingeon:이} 계단 쪽으로 내려간다." }
       ]
     },
     {
       "id": "R1-d", "title": "기다리는 동안", "place": "구관 4층", "routes": ["R1"], "stage": 6,
-      "pov": "player", "objective": "wait",
+      "pov": "player", "objective": "wait", "objectiveDone": "wait",
+      "_comment": "단계 18 [가정, 대사 임시]: R1-c 가 끝난 당직실에서 바로. 주인공 시점의 짧은 잡담(대화 넘김 포함 1분 내외) 뒤 {gyuha}(가짜)가 검은 연기로 사라진다 — 돌아본 자리(looks.gyuhaSpot)에서 연기만 피어올라 흩어진다(vanishes.gyuhaR1d). 이후 R1-f 에서 {mingeon} 쪽에 나타난다(단계 19)",
       "lines": [
         { "who": "dohyeon", "text": "금방 오겠지?" },
         { "who": "gyuha", "text": "…응. 금방 올 거야." },
-        { "style": "subtitle", "text": "돌아보니 {gyuha:이} 있던 자리에 검은 연기만 흩어진다." }
+        { "who": "dohyeon", "text": "아까 정전 났을 때 너네 어디까지 뛰어간 거야? 한참 찾았잖아." },
+        { "who": "gyuha", "text": "…어디까지 갔더라. 잘 기억이 안 나." },
+        { "who": "dohyeon", "text": "하긴, 나도 정신없었어. 나가면 떡볶이나 먹으러 가자. 너 좋아하잖아." },
+        { "who": "gyuha", "text": "…응. 좋아해." },
+        { "who": "dohyeon", "text": "…너 아까부터 왜 그렇게 대답해?" },
+        { "style": "subtitle", "text": "대답이 없다. 옆이 너무 조용하다." },
+        { "do": "look", "id": "gyuhaSpot" },
+        { "do": "vanish", "id": "gyuhaR1d" },
+        { "style": "subtitle", "text": "돌아보니 {gyuha:이} 있던 자리에 검은 연기만 흩어진다." },
+        { "who": "dohyeon", "text": "…방금, 봤어? {gyuha:이}…" }
       ]
     },
     {

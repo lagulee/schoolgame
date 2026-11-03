@@ -1,7 +1,8 @@
 // 사건 연출 조립 (단계 12·13): 자리 진입 사건(triggers) + E2(추격 C1·숨기 P1) + 흔적(traces) + 화면(e2View) + E1 조작 안내
 // + 사건 안 작은 행동(steps: 줍기·소리·원경 귀신, 단계 13 E3~E6 / 자리 도착·정전·점프스케어, 단계 14 E7)
 // + P3 교실 수색(p3·p3View, 단계 14 E8) + 기절·각성(faint·faintView)과 P2 당직실 단서(p2·p2View, 단계 15 E10~E12)
-// + P4 교무실 열쇠(p4·p4View)와 마지막 장면(finale·finaleView: 시선 돌리기·쓰러짐·엔딩 C, 단계 16 E13~E15).
+// + P4 교무실 열쇠(p4·p4View)와 마지막 장면(finale·finaleView: 시선 돌리기·쓰러짐·엔딩 C, 단계 16 E13~E15)
+// + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
 import { PLAYER, SCENE } from '../config.js';
 import { EventTriggers } from '../story/triggers.js';
@@ -20,6 +21,8 @@ import { P4Keys } from './p4.js';
 import { P4View } from './p4View.js';
 import { Look, Collapse } from './finale.js';
 import { FinaleView } from './finaleView.js';
+import { Vanish } from './vanish.js';
+import { VanishView } from './vanishView.js';
 import { showNotice } from '../ui/notice.js';
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
@@ -70,6 +73,8 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     runner, look, collapse, player, camera, audio,
     bloodEl: document.getElementById('blood'), veilEl: document.getElementById('veil'), threatEl,
   });
+  const vanish = new Vanish({ runner, story: data, cfg: SCENE.vanish });
+  const vanishView = new VanishView({ scene, vanish, collision, audio, player });
   // E1 이 끝나면 조작 안내 (사건 데이터 tutorial)
   const prevEvent = runner.onEvent;
   runner.onEvent = (id, phase) => {
@@ -96,6 +101,8 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     look,
     collapse,
     finaleView,
+    vanish,
+    vanishView,
     get breath() {
       return Math.max(view.breath, faint.breath, collapse.breath);
     },
@@ -119,6 +126,8 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       look.update(dt);
       collapse.update(dt);
       finaleView.update();
+      vanish.update(dt);
+      vanishView.update();
       world.interior.atmo.powerOut = steps.powerOut;
     },
   };
