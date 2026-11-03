@@ -1,0 +1,18 @@
+<!doctype html><html><body style="margin:0;background:#000"><script type="module">
+import * as THREE from 'three';
+import { buildGhostModel } from '/src/scene/ghost/model.js';
+const q = new URLSearchParams(location.search);
+const r = new THREE.WebGLRenderer({ antialias: true });
+r.setSize(innerWidth, innerHeight); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = +(q.get('exp') || 1);
+r.outputColorSpace = THREE.SRGBColorSpace; r.shadowMap.enabled = true;
+document.body.appendChild(r.domElement);
+const s = new THREE.Scene(); s.background = new THREE.Color(0x202226);
+s.add(new THREE.HemisphereLight(0xffffff, 0x404040, 1.2));
+const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(1, 3, 3); s.add(d);
+const g = buildGhostModel({ pose: q.get('pose') || 'idle' }); s.add(g);
+const c = new THREE.PerspectiveCamera(+(q.get('fov') || 35), innerWidth / innerHeight, 0.01, 50);
+const [x, y, z, tx, ty, tz] = (q.get('cam') || '0,1.0,4.2,0,0.9,0').split(',').map(Number);
+c.position.set(x, y, z); c.lookAt(tx, ty, tz);
+if (q.get('tex')) { const { ghostTextures } = await import('/src/scene/ghost/textures.js'); const im = ghostTextures()[q.get('tex')].map.image; im.style.cssText='position:fixed;left:0;top:0;width:900px;height:900px'; document.body.appendChild(im); }
+r.render(s, c); window.__READY = true;
+</script></body></html>
