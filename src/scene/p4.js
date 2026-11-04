@@ -27,12 +27,14 @@ export class P4Keys {
       if (wrong < limit) {
         this.toast(this.text(this.texts.wrong));
         this.events.push({ kind: 'wrong' });
+        return true;
       }
     });
     puzzle.hooks.register('onFail', ({ puzzle: id }) => {
       if (id !== 'P4') return;
       this.toast(this.text(this.texts.failed));
       this.events.push({ kind: 'caught' });
+      return true;
     });
   }
 

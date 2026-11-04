@@ -7,6 +7,7 @@ import { STORY, PLAYER } from '../config.js';
 import { StoryRunner } from './runner.js';
 import { StoryUI, storyKey } from './ui.js';
 import { Interactions } from './interact.js';
+import { interactionsOpen } from './interactGate.js';
 import { FLAG_NAMES } from './flags.js';
 import { EndingsSeen } from './endingsSeen.js';
 import { applyLocal } from './names.js';
@@ -82,7 +83,8 @@ export function setupStory({ player, touch, toast }) {
     update(dt) {
       runner.update(dt);
       player.frozen = runner.choosing; // 선택지가 떠 있는 동안 이동 정지 (W/S 가 선택 이동 키)
-      interactions.enabled = !runner.active || runner.mode === 'action'; // 추격·숨기 중(행동 줄)에는 문·물건을 쓸 수 있다
+      // 추격·숨기 중(행동 줄)에는 문·물건을 쓸 수 있다. 연출 행동 줄(look·escape·collapse·scare …)에는 안내를 숨긴다
+      interactions.enabled = interactionsOpen(runner);
       interactions.update(player.pos.x, player.pos.z, player.level);
     },
     hudLines() {

@@ -25,10 +25,14 @@ export class P3Search {
       },
     });
     puzzle.hooks.register('onWrong', ({ puzzle: id, wrong, limit }) => {
-      if (id === 'P3' && wrong < limit) this.toast(this.text(this.S.texts.pulled));
+      if (id !== 'P3' || wrong >= limit) return false;
+      this.toast(this.text(this.S.texts.pulled));
+      return true;
     });
     puzzle.hooks.register('onFail', ({ puzzle: id }) => {
-      if (id === 'P3') this.toast(this.text(this.S.texts.failed));
+      if (id !== 'P3') return false;
+      this.toast(this.text(this.S.texts.failed));
+      return true;
     });
   }
 

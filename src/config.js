@@ -301,6 +301,7 @@ export const STORY = {
   subtitlePerChar: 0.07,
   timerWarn: 3, // 선택지 남은 시간이 이 이하(초)면 타이머 막대를 붉게
   interactRadius: 1.6, // E 상호작용 기본 반경 (m)
+  noInteractActions: ['blackout', 'collapse', 'escape', 'faint', 'look', 'scare', 'switch', 'vanish'], // 이 행동 줄(연출) 동안은 살펴보기 안내를 숨긴다
   hudLog: 4, // HUD 에 보이는 최근 스토리 기록 수
   endingsKey: 'schoolgame.endingsSeen', // 본 엔딩 기록 localStorage 키 (2회차 안내 조건)
   debugBook: 'dohyeonBook', // J 키(디버그)로 실행하는 상호작용 사건 — 맵 배치 전 earlyBook 확인용
