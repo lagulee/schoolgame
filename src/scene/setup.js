@@ -3,9 +3,11 @@
 // + P3 교실 수색(p3·p3View, 단계 14 E8) + 기절·각성(faint·faintView)과 P2 당직실 단서(p2·p2View, 단계 15 E10~E12)
 // + P4 교무실 열쇠(p4·p4View)와 마지막 장면(finale·finaleView: 시선 돌리기·쓰러짐·엔딩 C, 단계 16 E13~E15)
 // + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d) + 시점 전환(pov)·탈출(escape, 단계 19 R1-e~R1-h, 화면은 finaleView)
-// + 혼자일 때 환경 연출(alone: 속삭임·조명 떨림, 단계 20 STORY 13-3).
+// + 혼자일 때 환경 연출(alone: 속삭임·조명 떨림, 단계 20 STORY 13-3) + 옥상 수영장·엔딩 D(roof·roofView, 단계 21 STORY 16장 —
+// 옥상에 있는 동안(roof.paused) 자리 진입 사건·혼자일 때 연출을 멈춘다. main.js 는 이상 현상도 멈춘다).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
-import { PLAYER, SCENE, FINISH } from '../config.js';
+import { PLAYER, SCENE, FINISH, ROOF } from '../config.js';
+import roofData from '../../data/roof.json';
 import { EventTriggers } from '../story/triggers.js';
 import { E2Scene } from './e2.js';
 import { E2View } from './e2View.js';
@@ -29,6 +31,11 @@ import { Escape } from './escape.js';
 import { AloneAmbience } from './alone.js';
 import { whisper } from '../audio/whisper.js';
 import { showNotice } from '../ui/notice.js';
+import { RoofScene } from './roof.js';
+import { RoofView } from './roofView.js';
+import { buildRoof, addRoofCollision } from '../world/roof/build.js';
+import { yAt } from '../world/interior/plan.js';
+import { doorLocked } from '../audio/door.js';
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
   const runner = story.runner;
@@ -84,6 +91,18 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   const vanishView = new VanishView({ scene, vanish, collision, audio, player });
   const atmo = world.interior.atmo;
   const alone = new AloneAmbience({ runner, def: data.alone, cfg: FINISH.alone, inside: () => atmo.inside && !chase.session.active && !puzzle.session.active });
+  // 옥상 수영장 (단계 21): 데크·수영장·간판(크레딧) + 5층 옥상 문. 옥상 문 잠김 소리는 map.json lockSounds (기본 rattle)
+  addRoofCollision(collision, roofData);
+  const roofBuild = buildRoof(scene, world.M, { def: roofData, credits: story.credits, text: (t) => runner.text(t), floor5: atmo.groups.L4 });
+  const [rdx, rdz] = roofData.door.pos;
+  const roof = new RoofScene({
+    runner, def: roofData, cfg: ROOF, pose: e2.pose, where, interactions: story.interactions, toast, endings: story.endings,
+    blocked: () => chase.session.active || puzzle.session.active,
+    lockSound: () => doorLocked(audio, { x: rdx, y: yAt(roofData.door.level) + 1.2, z: rdz }, mapData.lockSound(`roof:${roofData.door.id}`)),
+  });
+  roof.attach();
+  const [px0, pz0, px1, pz1] = roofData.pool;
+  const roofView = new RoofView({ roof, build: roofBuild, player, audio, veilEl: document.getElementById('veil'), fog: scene.fog, poolPos: { x: (px0 + px1) / 2, y: roofBuild.poolLight.position.y, z: (pz0 + pz1) / 2 } });
   // 속삭임은 머리 뒤 왼쪽/오른쪽 가까이 (HRTF)
   const whisperBehind = (side) => {
     const W = FINISH.alone.whisper;
@@ -126,6 +145,9 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     vanish,
     vanishView,
     alone,
+    roof,
+    roofView,
+    roofBuild,
     get breath() {
       return Math.max(view.breath, faint.breath, collapse.breath);
     },
@@ -135,7 +157,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       alone.enabled = on;
     },
     update(dt) {
-      triggers.update(player.pos.x, player.pos.z, player.level, dt);
+      if (!roof.paused) triggers.update(player.pos.x, player.pos.z, player.level, dt);
       e2.update(dt);
       traces.update();
       view.update(dt);
@@ -154,7 +176,9 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       finaleView.update();
       vanish.update(dt);
       vanishView.update();
-      if (alone.update(dt)?.kind === 'whisper') whisperBehind(alone.fired.side);
+      roof.update(dt);
+      roofView.update(dt);
+      if (!roof.paused && alone.update(dt)?.kind === 'whisper') whisperBehind(alone.fired.side);
       atmo.tremble = alone.dim;
       atmo.powerOut = steps.powerOut;
     },

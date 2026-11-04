@@ -44,7 +44,17 @@ export async function e1e2Smoke({ page, S, press, check, poll }) {
 
 export async function e3e6Smoke({ S, press, check, poll }) {
   // E3~E6 (단계 13): 3층 연결문 앞 E3(가짜 {gyuha} 등장) → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 열쇠 들고 다시 온 3층 연결문 앞 E5 → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
-  const busyDone = async (id) => { for (let i = 0; i < 40 && (await S((e) => window.__DEBUG.story.registry.active === e && window.__DEBUG.story.mode !== 'action', id)); i++) await press('KeyE', 150); return poll((e) => window.__DEBUG.story.registry.done.has(e), id); };
+  // 사건이 끝날 때까지 대사·자막은 E 로 넘기고, 행동 줄(소리 등)은 프레임이 넘길 때까지 기다린다.
+  // (예전에는 행동 줄을 만나면 멈춰서, E6 처럼 행동 줄 뒤에 자막이 하나 더 있으면 그 자막이 넘어가지 않아 가끔 실패했다)
+  const busyDone = async (id) => {
+    for (let i = 0; i < 80; i++) {
+      const m = await S((e) => (window.__DEBUG.story.registry.active === e ? window.__DEBUG.story.mode : null), id);
+      if (m === null) break;
+      if (m === 'action') await new Promise((res) => setTimeout(res, 150));
+      else await press('KeyE', 150);
+    }
+    return poll((e) => window.__DEBUG.story.registry.done.has(e), id);
+  };
   await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
   check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인, 가짜 {gyuha} 등장은 e3e6 단위 테스트)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
   await S(() => window.__DEBUG.player.setView([16.5, 1.6, -30], 0, 0, 1));
@@ -57,7 +67,7 @@ export async function e3e6Smoke({ S, press, check, poll }) {
   await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
   check('열쇠 들고 3층 연결문 앞 → E5 (문 열고 넘어감)', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await busyDone('E5')));
   await S(() => window.__DEBUG.player.setView([3, 1.6, -91.9], 0, 0, 4));
-  check('신관 5층 복도 → E6', await poll(() => window.__DEBUG.story.registry.history.includes('E6')) && (await busyDone('E6')));
+  check('신관 5층 복도 → E6', await poll(() => window.__DEBUG.story.registry.history.includes('E6')) && (await busyDone('E6')), await S(() => { const D = window.__DEBUG; const r = D.story; return JSON.stringify({ active: r.registry.active, mode: r.mode, hist: r.registry.history.join(), lv: D.player.level, pos: D.pos(), where: D.where(), phone: D.phone.screenOpen, frozen: D.player.frozen }); }));
   const e6 = await S(() => ({ obj: window.__DEBUG.story.objective(), book: window.__DEBUG.story.used.has('take:myBook'), key: window.__DEBUG.story.flags.values.hasClassKey }));
   check('E6 끝(1회차): 책은 못 챙김, 목표 = 신관 2층으로', !e6.book && !e6.key && e6.obj.includes('2층'), JSON.stringify(e6));
 }

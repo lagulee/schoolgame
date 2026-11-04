@@ -35,6 +35,7 @@
     "waitDuty": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "keyToLobby": [{ "to": "lobby", "text": "구관 현관 홀" }],
     "runExit": [{ "to": "lobby", "text": "구관 현관 홀" }],
-    "exit": [{ "to": "lobby", "text": "구관 현관 홀" }]
+    "exit": [{ "to": "lobby", "text": "구관 현관 홀" }],
+    "roofPool": []
   }
 }

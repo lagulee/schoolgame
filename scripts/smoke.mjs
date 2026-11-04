@@ -11,6 +11,7 @@ import { r1Smoke } from './smokeR1.mjs';
 import { r1ehSmoke, toMingeonLine } from './smokeR1eh.mjs';
 import { e1e2Smoke, e3e6Smoke } from './smokeE1E6.mjs';
 import { brightStartSmoke, brightKeySmoke, aloneSmoke, endingRestartSmoke, enginesSmoke } from './smokeFinish.mjs';
+import { roofSmoke } from './smokeRoof.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -368,6 +369,7 @@ check('무응답 10초 → 기본값 남는다', await S(() => window.__DEBUG.st
 await S(() => window.__DEBUG.story.reset());
 await enginesSmoke({ S, press, check, poll }); // 퍼즐 실행기·추격 엔진 (단계 0b-3·0b-4)
 await mapSmoke({ S, check, poll, press }); // 단계 10: 위치 이름·보조배터리
+await roofSmoke({ S, press, check, poll }); // 단계 21: 옥상 수영장·엔딩 D·크레딧
 const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent, pos: window.__DEBUG?.pos?.() }));
 console.log(info);
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');

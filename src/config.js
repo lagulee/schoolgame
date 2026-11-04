@@ -316,6 +316,7 @@ export const START = {
 // 사건 연출 수치(SCENE, 단계 13)·마감 수치(FINISH: 밝기 보정·조명 구역·혼자일 때 연출, 단계 20)는 줄 수 규칙(400줄) 때문에 config/ 아래에 둔다
 export { SCENE } from './config/scene.js';
 export { FINISH } from './config/finish.js';
+export { ROOF } from './config/roof.js'; // 옥상 수영장·엔딩 D (단계 21)
 
 // 스태미나 (STORY 14-2, 단계 0b-2). 값은 STORY 의 [제안] 그대로
 export const STAMINA = {

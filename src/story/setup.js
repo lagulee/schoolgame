@@ -51,7 +51,8 @@ export function setupStory({ player, touch, toast }) {
     runner,
     ui,
     interactions,
-    credits, // 옥상 수영장 간판 크레딧 (표시는 단계 8)
+    credits, // 옥상 수영장 간판 크레딧 (단계 21: src/world/roof/signs.js 가 그린다)
+    endings, // 본 엔딩 기록 (옥상에 닿으면 D, scene/roof.js)
     // 주인공 이름 주입 지점 (입력 화면은 단계 0c). 빈 값이면 "나"
     setPlayerName(name) {
       runner.setPlayerName(name);

@@ -84,6 +84,10 @@ test('모든 목표가 현관 홀·교무실·연결문·신관에서 열쇠를 
     for (const f of from) {
       const g = mk(flags);
       const v = g.update(0, f[0], f[1], f[2], k);
+      if (!navData.goals[k].length) { // 빈 목록 = 안내 없음 (단계 21 옥상 수영장 roofPool)
+        assert.equal(v, null, k);
+        continue;
+      }
       assert.ok(v, k);
       if (v.state === 'arrived') continue;
       assert.equal(v.state, 'path', `${k} ← ${f}`);

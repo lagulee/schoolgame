@@ -37,7 +37,8 @@ export async function e7e9Smoke({ S, check, poll, press }) {
   check('가방 E → 단서(소지품), 젖은 발자국 보임', await poll(() => window.__DEBUG.puzzle.puzzle?.got.includes('belongings') && window.__DEBUG.scenes.p3View.prints.visible));
   await S(() => window.__DEBUG.player.setView([1.5, 1.6, -87], 0, 0, 1));
   check('틀린 교실(3-6) → 검은 연기', await poll(() => window.__DEBUG.scenes.p3.pull && window.__DEBUG.scenes.p3View.smoke.visible));
-  check('끌려 나옴 → 복도, 틀림 1', await poll(() => window.__DEBUG.puzzle.puzzle?.wrong === 1 && window.__DEBUG.where().includes('복도')), await S(() => window.__DEBUG.where()));
+  // 끌려 나오기(1.6초)는 headless 프레임이 느리면 30초 안에 안 끝날 수 있다: 남은 시간만 없앤다 (끌어내기·틀림 처리는 그대로)
+  check('끌려 나옴 → 복도, 틀림 1', await poll(() => { const D = window.__DEBUG; const pl = D.scenes.p3.pull; if (pl) pl.t = 99; return D.puzzle.puzzle?.wrong === 1 && D.where().includes('복도'); }), await S(() => window.__DEBUG.where()));
   await S(() => window.__DEBUG.player.setView([10.5, 1.6, -87], 0, 0, 2));
   check('3층 3-10 → P3 성공', await poll(() => window.__DEBUG.puzzle.last?.outcome === 'solved'));
   check('E8 끝 ({gyuha}·{mingeon} 만남), 목표 = 4층 책', (await busyDone('E8')) && (await S(() => window.__DEBUG.story.objective().includes('4층'))));

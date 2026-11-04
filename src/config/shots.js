@@ -47,4 +47,11 @@ export const SHOTS = [
   { name: '39_upper_zone_2f', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, lv: 1 },
   { name: '40_annex_blackout', pos: [16.4, 1.6, -92.6], yaw: 90, pitch: 0, lv: 2, q: { power: 0 } },
   { name: '41_ending_restart', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, story: 'ending', q: { ending: 'C' } },
+  // 단계 21: 5층 옥상 문(S2 계단 맨 위), 옥상에 나타난 자리, 수영장·네온 간판, 바닥 타일 문구, 입간판, 엔딩 D 카드
+  { name: '42_roof_door_5f', pos: [-19.2, 1.6, -47.4], yaw: -18, pitch: 6, lv: 4, light: 1 },
+  { name: '43_roof_arrive', pos: [-16.9, 1.6, -48.25], yaw: -72, pitch: -4, lv: 5 },
+  { name: '44_roof_pool_neon', pos: [-2, 1.6, -46.6], yaw: 0, pitch: -8, lv: 5 },
+  { name: '45_roof_tile_text', pos: [-2, 1.6, -50.4], yaw: 0, pitch: -50, lv: 5 },
+  { name: '46_roof_stand', pos: [-16.4, 1.6, -47.5], yaw: -90, pitch: -14, lv: 5 },
+  { name: '47_roof_ending_d', pos: [-2, 1.6, -46.6], yaw: 0, pitch: -8, lv: 5, story: 'ending', q: { ending: 'D' } },
 ];

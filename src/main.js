@@ -95,7 +95,7 @@ const guide = (dt) => {
   const angle = Math.round((Math.atan2(v.ax * -fz + v.az * fx, v.ax * fx + v.az * fz) * 180) / Math.PI);
   return { state: v.state, text: v.text, step: v.step, rough: v.rough, angle };
 };
-const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where, guide }); // 손전등 대신 핸드폰 라이트 (결정 D6) // 손전등 대신 핸드폰 라이트 (결정 D6)
+const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where, guide, note: () => scenes.roof.keyNote() }); // 손전등 대신 핸드폰 라이트 (결정 D6). note = 옥상 열쇠 안내 (단계 21)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
 // 스태미나는 체크포인트 시점의 값으로 되돌린다 (단계 0b-3: 추격에서 잡히면 추격 시작 때의 값. 마지막 추격은 시작 때 가득)
@@ -169,7 +169,7 @@ const act = {
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
-  storyReset: () => { chase.reset(); puzzle.reset(); story.reset(); phone.reset(); player.stamina.reset(); },
+  storyReset: () => { chase.reset(); puzzle.reset(); story.reset(); scenes.roof.stop(); phone.reset(); player.stamina.reset(); },
   chase: () => chase.debugToggle(),
   puzzle: () => puzzle.debugToggle(),
   puzzleClue: () => puzzle.debugClue(),
@@ -195,7 +195,7 @@ const KEYS = {
 // 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질·실내 밝기. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
 const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote', 'Minus', 'Equal', 'NumpadSubtract', 'NumpadAdd']);
 const unlocked = () => gate.unlocked;
-const verTap = tapCounter(DEBUG.tapCount, DEBUG.tapWindowMs, () => act.unlock());
+const verTap = tapCounter(DEBUG.tapCount, () => DEBUG.tapWindowMs, () => act.unlock());
 const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` 키로 해제)'));
 // E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
@@ -288,7 +288,7 @@ function step(t, dt) {
   renderer.info.reset();
   U.time.value = t;
   if (dt > 0) player.update(dt);
-  if (!shot) director.update(t, dt);
+  if (!shot && !scenes.roof.paused) director.update(t, dt); // 옥상(엔딩 D)에서는 이상 현상도 멈춘다
   prelude.update(player.pos.x, player.pos.z, player.level);
   story.update(dt);
   scenes.update(dt); // 추격 진행(경로 투영)을 추격 update 보다 먼저

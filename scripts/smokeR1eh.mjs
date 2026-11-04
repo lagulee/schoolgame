@@ -19,7 +19,7 @@ export async function r1ehSmoke({ S, check, poll }) {
   const wait = (ms) => new Promise((res) => setTimeout(res, ms));
   // 대사·자막을 넘기고 행동 줄의 시간을 건너뛰며 kind 에 닿을 때까지
   const advanceTo = async (kind) => {
-    for (let i = 0; i < 80 && (await S(() => window.__DEBUG.story.action?.do)) !== kind; i++) {
+    for (let i = 0; i < 200 && (await S(() => window.__DEBUG.story.action?.do)) !== kind; i++) { // 느린 프레임 대비 넉넉히 (닿으면 바로 끝)
       await S(() => {
         const W = window.__DEBUG;
         const sc = W.scenes;
@@ -37,7 +37,8 @@ export async function r1ehSmoke({ S, check, poll }) {
   await S(() => window.__DEBUG.scenes.triggers.waited.set('R1-e', 4.9)); // R1-d 뒤 5초 대기를 줄인다
   check('R1-d 뒤 5초 → R1-e, 시점 = {mingeon}, 핸드폰 55%·라이트 켜짐, 보조배터리 빠짐', await poll(() => { const W = window.__DEBUG; return W.story.event?.id === 'R1-e' && W.story.pov === 'mingeon' && W.phone.pov === 'mingeon' && W.phone.level <= 55 && W.phone.level >= 54 && W.phone.lightOn && W.banks.placed.size === 0; }), JSON.stringify(before));
   check('시점 전환: 화면이 어두워지고 조작 정지', await poll(() => window.__DEBUG.scenes.pov.active && window.__DEBUG.player.frozen && +document.getElementById('veil').style.opacity > 0));
-  check('암전 속에서 교무실로 옮겨진다', await poll(() => { const W = window.__DEBUG; return W.scenes.pov.phase !== 'out' && W.player.level === 1 && W.where().includes('교무실'); }), await S(() => window.__DEBUG.where()));
+  // 어두워지기(1.2초)도 느린 headless 프레임에서는 30초를 넘길 수 있다 → 남은 시간만 없앤다 (자리 옮기기는 그대로 암전 단계에서)
+  check('암전 속에서 교무실로 옮겨진다', await poll(() => { const W = window.__DEBUG; if (W.scenes.pov.phase === 'out') W.scenes.pov.t = 99; return W.scenes.pov.phase !== 'out' && W.player.level === 1 && W.where().includes('교무실'); }), await S(() => window.__DEBUG.where()));
   check('{mingeon} 은 스태미나 가득', await S(() => window.__DEBUG.player.stamina.value >= window.__DEBUG.player.stamina.cfg.MAX - 1));
   // headless 는 한 프레임 dt 가 0.05초로 잘려 1초 남짓한 암전도 수십 초 걸린다 → 남은 단계를 매번 건너뛴다
   const skipPov = () => { const p = window.__DEBUG.scenes.pov; if (p.active) p.t = 99; };

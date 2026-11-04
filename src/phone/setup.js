@@ -12,7 +12,8 @@ import { PhoneUI, fmt } from './ui.js';
 import { PowerBanks, seenBy } from './bank.js';
 import { BankView } from './bankView.js';
 
-export function setupPhone({ scene, camera, story, touch, toast, collision, where = () => '', guide = () => null }) {
+// note() = 목표 아래 작은 한 줄 (단계 21: 옥상 열쇠를 가진 판의 안내, scene/roof.js keyNote)
+export function setupPhone({ scene, camera, story, touch, toast, collision, where = () => '', guide = () => null, note = () => '' }) {
   const { runner, interactions } = story;
   const msgs = texts.messages;
   const phone = new Phone(PHONE);
@@ -83,7 +84,7 @@ export function setupPhone({ scene, camera, story, touch, toast, collision, wher
       const open = phone.screenOpen && !phone.dead;
       ui.update(dt, {
         open, level: phone.level, lightOn: phone.lightOn, low: phone.low,
-        objective: open ? runner.objective() : '', place: open ? where() || runner.place() : '',
+        objective: open ? runner.objective() : '', note: open ? note() : '', place: open ? where() || runner.place() : '',
         guide: open ? guide(dt) : null, // 길 안내 (열었을 때만 계산)
       });
     },
