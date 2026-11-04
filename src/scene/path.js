@@ -72,3 +72,74 @@ export class PathProgress {
     return this.speed;
   }
 }
+
+// 귀신이 따라오는 발자취 (v1.26.1): 경로 시작 → 플레이어 출발 지점까지는 추격 경로, 그 뒤는 플레이어가 실제로 걸은 자리.
+// 귀신은 이 발자취 위에서 움직이므로 늘 플레이어가 지나온 곳(벽 안쪽)에 있고, 플레이어가 되돌아가면 마주친다.
+// 점은 [x, z, 층, 누적 거리]. 한 프레임에 늘어나는 길이는 maxSpeed 로 막는다 (순간이동해도 gap 이 튀지 않게).
+export class Trail {
+  constructor(maxSpeed, minStep = 0.05) {
+    this.maxSpeed = maxSpeed;
+    this.minStep = minStep;
+    this.pts = [];
+    this.since = 0;
+    this.speed = 0;
+  }
+
+  // path: ChasePath, base: 플레이어 출발 지점의 경로 위치, (x, z, level): 플레이어 자리, lv0: 경로 점에 층이 없을 때의 층
+  begin(path, base, x, z, level, lv0 = 0) {
+    this.pts = [];
+    const lvOf = (v) => (v === undefined ? lv0 : v);
+    for (let i = 0; i < path.points.length && (i === 0 || path.seg[i - 1].from + path.seg[i - 1].len < base); i++) {
+      const [px, pz, pl] = path.points[i];
+      this.pts.push([px, pz, lvOf(pl), i === 0 ? 0 : path.seg[i - 1].from + path.seg[i - 1].len]);
+    }
+    const [bx, bz, bl] = path.at(base);
+    if (base > this.pts.at(-1)[3]) this.pts.push([bx, bz, lvOf(bl), base]);
+    this.prefix = this.pts.length;
+    const last = this.pts.at(-1);
+    this.pts.push([x, z, level, last[3] + Math.hypot(x - last[0], z - last[1])]);
+    this.start = this.pts.at(-1)[3]; // 귀신 자리 = start + Chase.ghostPos
+    this.since = 0;
+    this.speed = 0;
+  }
+
+  // 발자취 끝(플레이어 자리)의 누적 거리
+  get length() {
+    return this.pts.at(-1)[3];
+  }
+
+  // 플레이어가 움직였으면 점을 더한다. 반환: 이번 프레임에 늘어난 길이의 속도 (m/s)
+  update(x, z, level, dt) {
+    this.since += dt;
+    const last = this.pts.at(-1);
+    const d = Math.hypot(x - last[0], z - last[1]);
+    let gain = 0;
+    if (d >= this.minStep || level !== last[2]) {
+      gain = Math.min(d, this.maxSpeed * this.since);
+      this.pts.push([x, z, level, last[3] + gain]);
+      this.since = 0;
+    }
+    this.speed = dt > 0 ? gain / dt : 0;
+    return this.speed;
+  }
+
+  // 누적 거리 → [x, z, 층] (0 미만·끝 너머는 끝점)
+  at(dist) {
+    const P = this.pts;
+    if (dist <= 0) return [P[0][0], P[0][1], P[0][2]];
+    if (dist >= P.at(-1)[3]) return [P.at(-1)[0], P.at(-1)[1], P.at(-1)[2]];
+    let lo = 0;
+    let hi = P.length - 1;
+    while (hi - lo > 1) {
+      const m = (lo + hi) >> 1;
+      if (P[m][3] <= dist) lo = m;
+      else hi = m;
+    }
+    const a = P[lo];
+    const b = P[hi];
+    const t = b[3] > a[3] ? (dist - a[3]) / (b[3] - a[3]) : 0;
+    // 경로 구간은 경로처럼 층을 이어 붙이고, 발자취 구간은 가까운 점의 층 (계단에서 플레이어 층이 0.5 단위로 바뀐다)
+    const lv = hi < this.prefix ? a[2] + (b[2] - a[2]) * t : t < 0.5 ? a[2] : b[2];
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, lv];
+  }
+}

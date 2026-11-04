@@ -3,7 +3,9 @@
 // - 매 프레임 gap += (플레이어 속도 − 귀신 속도) × dt
 // - 지연(일행 처리 companionKillDelay, 지형 delays)은 "그 시간 동안 귀신이 멈춤"으로 처리한다.
 //   지연이 끝난 뒤의 gap 은 STORY 의 gap += ghostSpeed × 시간 과 같고, 귀신 위치가 뒤로 튀지 않는다.
-// - gap ≤ catchDistance 면 잡힘.
+// - gap ≤ catchDistance 면 잡힘. 화면 쪽(E2Scene)이 귀신과 실제로 닿았다고 알리면(touch) 그 자리에서 잡힘.
+// - update(dt, 플레이어 속도, 진행 속도): gap 은 플레이어 속도(실제 발자취 길이)로, 목적지까지의 진행(dist·지연 위치·도착)은
+//   진행 속도(경로에 투영한 거리)로 센다. 진행 속도를 주지 않으면 둘이 같다 (시뮬레이터·단위 테스트).
 // - 마지막 추격(final): 출구 도착 시 gap ≥ ghostSpeed × unlockTime + catchDistance 면 통과,
 //   unlockTime 동안 조작 불가(출구 열기). 통과하지 못하면 문을 여는 동안 잡힌다.
 // - triggerAt(선택): 그 경로 위치에 잡히지 않고 닿으면 'trigger' 로 끝난다 (R2 의 입구 직전 붙잡힘 연출 전환).
@@ -36,6 +38,7 @@ export class Chase {
     this.delays = [...(def.delays ?? [])].sort((a, b) => a.at - b.at);
     this.t = 0;
     this.dist = 0; // 플레이어가 경로를 따라 간 거리
+    this.ghostRun = 0; // 귀신이 움직인 거리 (멈춘 시간 제외)
     this.gap = this.startGap;
     this.minGap = this.gap;
     this.stall = this.final ? def.companionKillDelay ?? 0 : 0; // 귀신이 멈춰 있는 남은 시간
@@ -68,28 +71,38 @@ export class Chase {
 
   // 귀신의 경로 위 위치 (연출·발소리용, 시작 지점 기준. 음수면 시작 지점 뒤)
   get ghostPos() {
-    return this.dist - this.gap;
+    return this.ghostRun - this.startGap;
   }
 
-  // playerSpeed: 이번 프레임 플레이어 실제 속도 (m/s). 끝났으면 아무것도 하지 않는다. 반환: phase
-  update(dt, playerSpeed) {
+  // playerSpeed: 이번 프레임 플레이어 실제 속도 (m/s), progressSpeed: 목적지 쪽 진행 속도 (없으면 playerSpeed).
+  // 끝났으면 아무것도 하지 않는다. 반환: phase
+  update(dt, playerSpeed, progressSpeed = playerSpeed) {
     if (this.done || dt <= 0) return this.phase;
     // 지연 시작·끝, 도착, 잡힘이 프레임 가운데에서 일어나도 프레임 크기와 무관하게 같은 결과가 되도록 구간을 나눠 진행한다
     let left = dt;
-    for (let i = 0; i < 64 && left > 1e-9 && !this.done; i++) left -= this.step(left, this.locked ? 0 : Math.max(0, playerSpeed));
+    const v = this.locked ? 0 : Math.max(0, playerSpeed);
+    const p = this.locked ? 0 : Math.max(0, progressSpeed ?? playerSpeed);
+    for (let i = 0; i < 64 && left > 1e-9 && !this.done; i++) left -= this.step(left, this.locked ? 0 : v, this.locked ? 0 : p);
     return this.phase;
   }
 
-  // 귀신 속도·플레이어 속도가 일정한 한 구간을 진행하고 쓴 시간을 돌려준다
-  step(maxDt, v) {
+  // 귀신과 실제로 닿았다 (화면 쪽 판정). 출구 통과 조건을 만족하고 문을 여는 중이면 무시
+  touch() {
+    if (this.done || (this.locked && this.passed)) return this.phase;
+    this.phase = 'caught';
+    return this.phase;
+  }
+
+  // 귀신 속도·플레이어 속도가 일정한 한 구간을 진행하고 쓴 시간을 돌려준다 (v: gap 용 속도, p: 진행 속도)
+  step(maxDt, v, p = v) {
     const goal = this.triggerAt ?? this.pathLength;
     let h = maxDt;
     if (this.stall > 0) h = Math.min(h, this.stall);
     if (this.locked) h = Math.min(h, this.unlockLeft);
-    else if (v > 0) {
-      h = Math.min(h, (goal - this.dist) / v);
+    else if (p > 0) {
+      h = Math.min(h, (goal - this.dist) / p);
       const d = this.delays[this.nextDelay];
-      if (d) h = Math.min(h, (d.at - this.dist) / v);
+      if (d) h = Math.min(h, (d.at - this.dist) / p);
     }
     const close = this.ghostNow - v; // gap 이 줄어드는 속도
     const catchable = !this.locked || !this.passed; // 통과 조건을 만족했으면 문을 여는 동안은 잡히지 않는다
@@ -97,7 +110,8 @@ export class Chase {
     h = Math.max(0, h);
 
     this.t += h;
-    this.dist += v * h;
+    this.dist += p * h;
+    this.ghostRun += this.ghostNow * h;
     this.gap += (v - this.ghostNow) * h;
     this.minGap = Math.min(this.minGap, this.gap);
     if (this.stall > 0) {

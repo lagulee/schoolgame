@@ -59,6 +59,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     locate,
     light: () => phone.phone.lightOn,
     maxSpeed: PLAYER.run * 1.4,
+    clear: (x0, z0, x1, z1, level) => { const d = Math.hypot(x1 - x0, z1 - z0); return collision.rayDistance(x0, z0, (x1 - x0) / d, (z1 - z0) / d, d, level) >= d - 1e-6; }, // 귀신과 닿음: 벽 너머 제외
     toast,
   });
   const traces = new Traces({ runner, defs: data.traces, interactions: story.interactions, toast });

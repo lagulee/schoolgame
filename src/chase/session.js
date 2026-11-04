@@ -14,6 +14,7 @@ export class ChaseSession {
     this.defs = new Map(chases.map((c) => [c.id, c]));
     this.cfg = cfg;
     this.getSpeed = getSpeed;
+    this.getProgress = null; // () => 목적지 쪽 진행 속도 (m/s) 또는 null. 경로 추격(E2Scene)이 정한다
     this.stamina = stamina;
     this.pose = pose;
     this.chase = null;
@@ -74,6 +75,11 @@ export class ChaseSession {
     this.snap = null;
   }
 
+  // 귀신과 실제로 닿았을 때 (Chase.touch). 결과 처리는 다음 update 에서
+  touch() {
+    this.chase?.touch();
+  }
+
   // 목적지에 먼저 들어섰을 때 (Chase.reach). 결과 처리는 다음 update 에서
   reach() {
     this.chase?.reach();
@@ -82,7 +88,7 @@ export class ChaseSession {
   update(dt) {
     const c = this.chase;
     if (!c) return null;
-    if (!c.done) c.update(dt, this.getSpeed());
+    if (!c.done) c.update(dt, this.getSpeed(), this.getProgress?.() ?? undefined);
     if (!c.done) return null;
     const res = c.result(this.current.atExit);
     this.last = res;

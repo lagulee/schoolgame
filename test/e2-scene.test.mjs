@@ -209,3 +209,39 @@ test('디버그로 시작한 추격(C 키)은 경로·E2 가 건드리지 않는
   assert.equal(w.e2.path, null);
   assert.ok(w.chase.active);
 });
+
+// v1.26.1 사용자 제보: "귀신과 닿아도 안 죽음, 시간제임" · 귀신이 엉뚱한 곳에 보임
+test('귀신은 플레이어 발자취를 따라온다: 되돌아가 귀신에 닿으면 gap 과 무관하게 바로 잡힌다', () => {
+  const w = world();
+  toE2(w);
+  w.walk(16.5, -40, PLAYER.run); // 앞으로 달려 gap 을 벌린다
+  const g = w.e2.ghost;
+  assert.ok(g.z > w.me.z, '귀신은 등 뒤(남쪽)');
+  assert.ok(Math.abs(g.x - 16.5) < 1, '귀신은 복도 위');
+  assert.ok(w.chase.chase.gap > 5 * CHASE.catchDistance, `아직 멀다 (gap ${w.chase.chase.gap.toFixed(1)})`);
+  // 귀신 쪽으로 되돌아 달린다 → 귀신과 마주쳐 잡힘 (예전엔 진행이 줄지 않아 귀신을 뚫고 지나갔다)
+  const before = w.chase.attemptOf('C1');
+  const timeOnly = (w.chase.chase.gap - CHASE.catchDistance) / C1.ghostSpeed; // 시간만으로 잡히는 데 걸리는 시간
+  let t = 0;
+  for (let i = 0; i < 200 && w.chase.attemptOf('C1') === before; i++, t += DT) {
+    w.me.z += PLAYER.run * DT;
+    w.tick();
+  }
+  assert.equal(w.chase.attemptOf('C1'), before + 1, '닿으면 잡힘');
+  assert.ok(t < timeOnly * 0.7, `마주쳐서 잡힘 (${t.toFixed(2)} s, 시간만이면 ${timeOnly.toFixed(2)} s)`);
+  assert.equal(w.chase.last.outcome, 'caught');
+  assert.ok(w.me.z < -20, '추격 시작 자리로 되돌아감');
+});
+
+test('귀신 자리: 경로에서 벗어나도 플레이어가 지나온 자리에 있고, 실제 거리 = 추격 gap 이하', () => {
+  const w = world();
+  toE2(w);
+  w.walk(16.5, -51.5, PLAYER.run);
+  w.walk(10, -51.5, PLAYER.run);
+  w.walk(10, -50, PLAYER.walk); // 북쪽 복도 안쪽 벽 쪽으로 비켜 섬
+  const g = w.e2.ghost;
+  const d = Math.hypot(g.x - w.me.x, g.z - w.me.z);
+  assert.ok(d <= w.chase.chase.gap + 1e-6, `직선 거리 ${d.toFixed(2)} ≤ gap ${w.chase.chase.gap.toFixed(2)}`);
+  // 발자취 위: 동쪽 복도(x ≈ 16.5) 또는 북쪽 복도(z ≈ −51.5) 위
+  assert.ok(Math.abs(g.x - 16.5) < 0.6 || Math.abs(g.z + 51.5) < 2.2, `귀신 (${g.x.toFixed(1)}, ${g.z.toFixed(1)})`);
+});
