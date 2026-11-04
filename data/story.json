@@ -131,6 +131,11 @@
     "behind": { "_comment": "단계 16: E14 — 복도 북쪽(등 뒤)에서 쿵", "kind": "bang", "dz": -7 },
     "cry": { "_comment": "단계 16: E14 — 등 뒤 가까이서 날카로운 소리({dohyeon} 이 붙잡힌 소리의 대용, 목소리 합성은 없음)", "kind": "sting", "dz": -3.5, "gain": 0.5 }
   },
+  "alone": {
+    "_comment": "단계 20 [가정, 복선 STORY 13-3]: 플레이어가 사실상 혼자인 구간 — after 사건이 끝난 뒤 until 사건이 시작되기 전. E2 뒤 ~ E7 = 진짜 {gyuha}가 떠나고 가짜만 곁에 있는 동안(STORY 2-2 '사실상 혼자'), E9 뒤 ~ E10 = {dohyeon}보다 먼저 구관으로 돌아가는 동안(R2·R3, R1 은 E9 가 없어 걸리지 않음). 사건·추격·퍼즐이 없고 건물 안일 때만, 쿨다운(FINISH.alone)을 두고 속삭임·조명 떨림을 번갈아 낸다. 구간마다 max 번까지",
+    "windows": [{ "after": "E2", "until": "E7" }, { "after": "E9", "until": "E10" }],
+    "max": 3
+  },
   "traces": [
     { "_comment": "단계 12: 사건(after)이 끝난 뒤 생기는 흔적 (살펴보기 E). 물체 모양은 src/scene/traceView.js", "id": "gyuhaPhone", "after": "E2", "level": 0, "pos": [16.2, -1.0], "label": "떨어진 핸드폰 살펴보기", "text": "{gyuha}의 핸드폰이다. 화면이 거미줄처럼 깨져 있다." }
   ],

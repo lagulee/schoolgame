@@ -1,5 +1,6 @@
 // 자막·대화창·선택지 화면 (DOM). 진행 규칙은 runner.js 가 갖고, 여기서는 그리기와 입력 전달만 한다.
 // 키보드: E/Enter/Space 넘기기·결정, ↑↓·W/S 이동, 숫자키 바로 선택. 터치·클릭: 대화창 탭으로 넘기기, 선택지 버튼 탭.
+// 엔딩 카드(단계 20): E·탭 = 닫고 그 자리에서 둘러보기, Enter·"처음부터 다시" 버튼 = onRestart (story/setup.js 가 새로고침).
 import { onTap } from '../ui/tap.js';
 
 function el(tag, cls, parent) {
@@ -16,6 +17,7 @@ export class StoryUI {
     this.instant = false; // 촬영 모드: 타자 효과 없이 바로 전체 표시
     this.onAdvance = null; // () => void
     this.onPick = null; // (index) => void
+    this.onRestart = null; // () => void  엔딩 카드의 "처음부터 다시" (단계 20)
     this.full = '';
     this.shown = 0;
     this.typing = false;
@@ -27,7 +29,12 @@ export class StoryUI {
     this.name = el('div', 'story-name', this.dlg);
     this.body = el('div', 'story-text', this.dlg);
     this.hint = el('div', 'story-hint', this.dlg);
-    this.hint.textContent = opts.touch ? '탭하여 계속 ▶' : 'E 계속 ▶';
+    this.hintText = opts.touch ? '탭하여 계속 ▶' : 'E 계속 ▶';
+    this.hint.textContent = this.hintText;
+    this.restart = el('button', 'story-restart', this.dlg);
+    this.restart.type = 'button';
+    this.restart.textContent = opts.touch ? '처음부터 다시' : '처음부터 다시 (Enter)';
+    onTap(this.restart, () => this.onRestart?.());
     this.choice = el('div', 'story-choice', this.root);
     this.prompt = el('div', 'story-prompt', this.choice);
     this.list = el('div', 'story-options', this.choice);
@@ -47,7 +54,10 @@ export class StoryUI {
     this.shown = this.instant ? text.length : 0;
     this.typing = !this.instant;
     if (style === 'dialog' || style === 'ending') {
-      this.dlg.classList.toggle('ending', style === 'ending');
+      const ending = style === 'ending';
+      this.dlg.classList.toggle('ending', ending);
+      this.restart.style.display = ending ? '' : 'none';
+      this.hint.textContent = ending ? (this.opts.touch ? '탭하여 닫고 둘러보기 ▶' : 'E 닫고 둘러보기 ▶') : this.hintText;
       this.name.textContent = speaker;
       this.name.style.display = speaker ? '' : 'none';
       this.target = this.body;
@@ -134,6 +144,11 @@ export function storyKey(runner, code) {
     else if (code === 'KeyE' || code === 'Enter' || code === 'Space') runner.choose();
     else if (/^Digit[1-9]$/.test(code)) runner.choose(Number(code.slice(5)) - 1);
     else return false;
+    return true;
+  }
+  // 엔딩 카드: Enter = 처음부터 다시 (E·Space 는 아래에서 닫기)
+  if (runner.mode === 'ending' && code === 'Enter') {
+    runner.ui.onRestart?.();
     return true;
   }
   // 행동 줄(추격·숨기) 동안 E 는 문·물건 상호작용으로 넘긴다 (단계 12)

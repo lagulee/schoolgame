@@ -23,6 +23,7 @@ const touch = (type, id, x, y) => {
   return cdp.send('Input.dispatchTouchEvent', { type, touchPoints: [...down.values()] });
 };
 const dbg = (fn) => page.evaluate(fn);
+const poll = (fn) => page.waitForFunction(fn, null, { timeout: 20000 }).then(() => true, () => false); // 고정 대기 대신 조건 폴링 (PROGRESS 3장)
 
 // 자동 감지 (쿼리 없이 isMobile 에뮬레이션만으로 터치 모드가 켜지는지)
 await page.goto(`http://localhost:${PORT}/`);
@@ -62,7 +63,12 @@ const mbtn = (text) => ({ tap: async () => { const c = await page.evaluate((t) =
 const visibleLabels = () => page.$$eval('.mbtn', (b) => b.filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.textContent));
 const lockedLabels = await visibleLabels();
 check('터치: 잠금 중 디버그 항목이 보이지 않음', !lockedLabels.some((t) => t.includes('디버그') || t.includes('유령') || t.includes('HUD') || t.includes('블룸') || t.includes('이상 현상')), lockedLabels.join('|'));
-check('터치: 음소거·품질·전체화면은 그대로 보임', ['음소거', '품질', '전체화면'].every((w) => lockedLabels.some((t) => t.includes(w))));
+check('터치: 음소거·품질·전체화면·실내 밝기는 그대로 보임', ['음소거', '품질', '전체화면', '실내 밝기'].every((w) => lockedLabels.some((t) => t.includes(w))));
+// 실내 밝기 보정 (단계 20): 메뉴 한 칸을 누를 때마다 0 → +1 → +2 → −2 → −1 → 0, 브라우저에 저장
+await mbtn('실내 밝기').tap();
+check('터치: 실내 밝기 0 → +1 (저장)', (await poll(() => window.__DEBUG.brightness.level === 1 && localStorage.getItem('schoolgame.brightness') === '1')) && (await visibleLabels()).some((t) => t.includes('실내 밝기 +1')));
+for (let i = 0; i < 4; i++) await mbtn('실내 밝기').tap();
+check('터치: 한 바퀴 돌면 다시 0', await poll(() => window.__DEBUG.brightness.level === 0 && window.__DEBUG.interior.atmo.bright.light === 1));
 await dbg(() => { window.__DEBUG.debugCfg.tapWindowMs = 30000; }); // SwiftShader 는 프레임당 ~1초라 실기기의 3초 창으로는 느려서 늘려 둔다
 const vpos = await page.evaluate(() => { const b = [...document.querySelectorAll('.mbtn.quiet')][0]; b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
 for (let i = 0; i < 4; i++) await page.touchscreen.tap(vpos[0], vpos[1]);

@@ -29,8 +29,10 @@ export async function e13e15Smoke({ S, check, poll }) {
   check('라이트를 켜면 47번 열쇠를 꽂아 볼 수 있다', await poll(() => document.getElementById('interact').textContent.includes('47번')), await S(() => document.getElementById('interact').textContent));
   await S(() => window.__DEBUG.puzzle.submit('74')); // 틀린 열쇠 한 번 → 귀신이 다가옴
   check('틀린 열쇠 → 틀림 1, 귀신이 다음 자리로', await poll(() => window.__DEBUG.puzzle.puzzle?.wrong === 1 && window.__DEBUG.scenes.p4.target()[0] < 25));
+  await poll(() => document.getElementById('interact').textContent.includes('47번')); // 틀린 소리·귀신 걸음 뒤 안내가 47번 그대로인지 (단계 20: 클릭 전에 기다림)
   await S(() => document.getElementById('interact').click());
-  check('E → 47번 열쇠로 P4 풀림', await poll(() => window.__DEBUG.puzzle.last?.id === 'P4' && window.__DEBUG.puzzle.last.outcome === 'solved'));
+  const p4diag = () => S(() => { const D = window.__DEBUG; return JSON.stringify({ hint: document.getElementById('interact').textContent, mode: D.story.mode, act: D.story.action?.do, wrong: D.puzzle.puzzle?.wrong, light: D.phone.lightOn, bat: D.phone.battery, toast: document.getElementById('toast').textContent, pos: D.pos?.() }); });
+  check('E → 47번 열쇠로 P4 풀림', await poll(() => window.__DEBUG.puzzle.last?.id === 'P4' && window.__DEBUG.puzzle.last.outcome === 'solved'), await p4diag());
   for (let i = 0; i < 40 && !(await S(() => window.__DEBUG.story.registry.done.has('E13'))); i++) {
     await S(() => window.__DEBUG.story.mode === 'line' && window.__DEBUG.story.advance());
     await wait(250);

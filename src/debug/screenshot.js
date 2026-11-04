@@ -1,4 +1,4 @@
-// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&lv=층][&light=0|1][&phone=1][&battery=%][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A][&open=connector] 쿼리 모드와 P 키 스크린샷
+// ?shot=1&pos=x,y,z&yaw=°&pitch=°[&lv=층][&light=0|1][&phone=1][&battery=%][&q=low|mid|high][&t=초][&story=E5&line=1][&flags=dutyCompanion][&story=ending&ending=A][&open=connector][&bright=−2~2][&power=0|1] 쿼리 모드와 P 키 스크린샷
 export function parseShotParams() {
   const q = new URLSearchParams(location.search);
   if (!q.has('shot')) return null;
@@ -24,6 +24,8 @@ export function parseShotParams() {
     storyFlags: Object.fromEntries((q.get('flags') ?? '').split(',').filter(Boolean).map((f) => [f, true])), // 예: flags=dutyCompanion → R2 변형 사건
     storyEnding: q.get('ending'), // story=ending 일 때 엔딩 키 (A/B/C)
     open: (q.get('open') ?? '').split(',').filter(Boolean), // 단계 9: open=connector → 연결문을 연 채 촬영
+    bright: q.has('bright') ? parseInt(q.get('bright'), 10) : null, // 단계 20: 실내 밝기 보정 단계 (저장값 대신)
+    power: q.get('power') === '0' ? false : null, // 단계 20: power=0 → 정전 뒤 모습
   };
 }
 

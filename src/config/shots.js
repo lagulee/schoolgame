@@ -1,0 +1,50 @@
+// 시각 검증용 시점 (7장, scripts/shots.mjs·perf.mjs). src/config.js 가 다시 내보낸다 (단계 20 에서 옮김).
+// pos = 카메라 [x, 눈높이, z], yaw·pitch = 도, lv = 층(0 = 1층), light = 핸드폰 라이트, phone = 화면 열기, story = 사건 대화창,
+// open = 연 채로 둘 문, bright = 실내 밝기 보정 단계(단계 20), power: 0 = 정전 뒤(단계 20)
+export const SHOTS = [
+  { name: '01_front_overview', pos: [0, 1.6, 12], yaw: 0, pitch: 4 },
+  { name: '02_entrance_canopy', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6 },
+  { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
+  { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
+  { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
+  { name: '08_field_track', pos: [70, 1.6, 9], yaw: 20, pitch: 6 }, // 단계 7: 공원(필로티 너머)이 없어져 운동장 시점으로 바꿈
+  { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
+  { name: '06_phone_light_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, light: 1 },
+  { name: '10_side_path', pos: [6, 1.6, 10.6], yaw: -82, pitch: 4 },
+  { name: '11_field_buildings', pos: [62, 1.6, -18], yaw: 58, pitch: 9 },
+  { name: '12_annex_yaja', pos: [46, 1.6, -52], yaw: 50, pitch: 8 },
+  { name: '13_bridge', pos: [44, 1.6, -71], yaw: 92, pitch: 12 },
+  { name: '09_phone_screen', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, light: 1, phone: 1, story: 'E3' },
+  // 단계 8: 본관 실내 (lv = 층, 0 = 1층). 실내는 어두워 핸드폰 라이트를 켠다
+  { name: '14_entrance_open', pos: [12.6, 1.6, -1], yaw: -90, pitch: 2 },
+  { name: '15_lobby_to_door', pos: [24, 1.6, -1], yaw: 90, pitch: 0, light: 1 },
+  { name: '16_lobby_lockers', pos: [22, 1.6, 4], yaw: 18, pitch: 2, light: 1 },
+  { name: '17_corridor_east', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, light: 1 },
+  { name: '18_atrium_2f', pos: [3.6, 1.6, -52.2], yaw: 160, pitch: -14, lv: 1, light: 1 },
+  { name: '19_classroom', pos: [-8.9, 1.6, -54.3], yaw: -68, pitch: -10, light: 1 },
+  { name: '20_stairs', pos: [18.7, 1.6, -19], yaw: -90, pitch: 18, light: 1 },
+  { name: '21_staff_room', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1 },
+  { name: '22_duty_room', pos: [19.4, 1.6, -34.4], yaw: -125, pitch: -6, lv: 3, light: 1 },
+  // 단계 9: 3층 연결통로·신관 실내 (open: connector = 연결문을 연 채)
+  { name: '23_bridge_door', pos: [18.9, 1.6, -55.5], yaw: 0, pitch: 4, lv: 2, light: 1 },
+  { name: '24_bridge_inside', pos: [18.5, 1.6, -60.5], yaw: 0, pitch: 0, lv: 2, light: 1, open: 'connector' },
+  { name: '25_annex_hall_3f', pos: [21.5, 1.6, -88.6], yaw: 150, pitch: 0, lv: 2, light: 1, open: 'connector' },
+  { name: '26_annex_corridor', pos: [16.4, 1.6, -92.6], yaw: 90, pitch: 0, lv: 2, light: 1 },
+  { name: '27_annex_yaja', pos: [11, 1.6, -92.9], yaw: -125, pitch: 0, lv: 1 },
+  { name: '28_annex_yaja_room', pos: [14.2, 1.6, -89.4], yaw: 110, pitch: -12, lv: 1 },
+  { name: '29_annex_stairs', pos: [16.1, 1.6, -91.9], yaw: -90, pitch: -6, lv: 1, light: 1 },
+  { name: '30_annex_desk_4f', pos: [3.6, 1.6, -89.5], yaw: 112, pitch: -22, lv: 3, light: 1 },
+  // 단계 10: 보조배터리 자리 (PB4 연결문 앞 사물함 위, PB1 현관 게시판 아래, PB2 소화전 옆) + 핸드폰 화면 위치 이름
+  { name: '31_pb4_locker', pos: [17.6, 1.6, -57.4], yaw: 41, pitch: -14, lv: 2, light: 1 },
+  { name: '32_pb1_lobby_board', pos: [25.2, 1.6, -11.6], yaw: -27, pitch: -30, light: 1 },
+  { name: '33_pb2_hydrant', pos: [16.4, 1.6, -20.6], yaw: -40, pitch: -32, light: 1 },
+  { name: '34_phone_place', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1, phone: 1 },
+  // 단계 20 (마감): 유도등 가까이, 같은 1층 복도의 밝기 보정 −2·0·+2(라이트 없이), 조명 구역(같은 자리 2층), 정전 뒤 신관 복도, 엔딩 카드(처음부터 다시). q = 쿼리 덧붙임
+  { name: '35_exit_sign_close', pos: [18.6, 1.6, -1], yaw: 90, pitch: 16 },
+  { name: '36_corridor_bright_m2', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, q: { bright: -2 } },
+  { name: '37_corridor_bright_0', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, q: { bright: 0 } },
+  { name: '38_corridor_bright_p2', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, q: { bright: 2 } },
+  { name: '39_upper_zone_2f', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, lv: 1 },
+  { name: '40_annex_blackout', pos: [16.4, 1.6, -92.6], yaw: 90, pitch: 0, lv: 2, q: { power: 0 } },
+  { name: '41_ending_restart', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, story: 'ending', q: { ending: 'C' } },
+];

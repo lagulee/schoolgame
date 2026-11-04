@@ -2,9 +2,10 @@
 // + 사건 안 작은 행동(steps: 줍기·소리·원경 귀신, 단계 13 E3~E6 / 자리 도착·정전·점프스케어, 단계 14 E7)
 // + P3 교실 수색(p3·p3View, 단계 14 E8) + 기절·각성(faint·faintView)과 P2 당직실 단서(p2·p2View, 단계 15 E10~E12)
 // + P4 교무실 열쇠(p4·p4View)와 마지막 장면(finale·finaleView: 시선 돌리기·쓰러짐·엔딩 C, 단계 16 E13~E15)
-// + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d) + 시점 전환(pov)·탈출(escape, 단계 19 R1-e~R1-h, 화면은 finaleView).
+// + 검은 연기로 사라짐(vanish·vanishView, 단계 18 R1-d) + 시점 전환(pov)·탈출(escape, 단계 19 R1-e~R1-h, 화면은 finaleView)
+// + 혼자일 때 환경 연출(alone: 속삭임·조명 떨림, 단계 20 STORY 13-3).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
-import { PLAYER, SCENE } from '../config.js';
+import { PLAYER, SCENE, FINISH } from '../config.js';
 import { EventTriggers } from '../story/triggers.js';
 import { E2Scene } from './e2.js';
 import { E2View } from './e2View.js';
@@ -25,6 +26,8 @@ import { Vanish } from './vanish.js';
 import { VanishView } from './vanishView.js';
 import { PovSwitch } from './pov.js';
 import { Escape } from './escape.js';
+import { AloneAmbience } from './alone.js';
+import { whisper } from '../audio/whisper.js';
 import { showNotice } from '../ui/notice.js';
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
@@ -79,6 +82,19 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   });
   const vanish = new Vanish({ runner, story: data, cfg: SCENE.vanish });
   const vanishView = new VanishView({ scene, vanish, collision, audio, player });
+  const atmo = world.interior.atmo;
+  const alone = new AloneAmbience({ runner, def: data.alone, cfg: FINISH.alone, inside: () => atmo.inside && !chase.session.active && !puzzle.session.active });
+  // 속삭임은 머리 뒤 왼쪽/오른쪽 가까이 (HRTF)
+  const whisperBehind = (side) => {
+    const W = FINISH.alone.whisper;
+    const yaw = player.camera.rotation.y;
+    const fx = -Math.sin(yaw);
+    const fz = -Math.cos(yaw);
+    const p = camera.position.clone();
+    p.x += -fx * W.dist * 0.8 + -fz * side * W.dist * 0.6;
+    p.z += -fz * W.dist * 0.8 + fx * side * W.dist * 0.6;
+    whisper(audio, p, { gain: W.gain, len: W.len[0] + (W.len[1] - W.len[0]) * Math.random() });
+  };
   // E1 이 끝나면 조작 안내 (사건 데이터 tutorial)
   const prevEvent = runner.onEvent;
   runner.onEvent = (id, phase) => {
@@ -109,12 +125,14 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     finaleView,
     vanish,
     vanishView,
+    alone,
     get breath() {
       return Math.max(view.breath, faint.breath, collapse.breath);
     },
     // 촬영 모드·자동 점검에서 자리 진입 사건을 끈다
     set auto(on) {
       triggers.enabled = on;
+      alone.enabled = on;
     },
     update(dt) {
       triggers.update(player.pos.x, player.pos.z, player.level, dt);
@@ -136,7 +154,9 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
       finaleView.update();
       vanish.update(dt);
       vanishView.update();
-      world.interior.atmo.powerOut = steps.powerOut;
+      if (alone.update(dt)?.kind === 'whisper') whisperBehind(alone.fired.side);
+      atmo.tremble = alone.dim;
+      atmo.powerOut = steps.powerOut;
     },
   };
 }

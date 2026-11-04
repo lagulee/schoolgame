@@ -159,6 +159,7 @@ function buildProps(P, batch, MI, extra) {
   const lampM = [];
   const extM = [];
   const exitM = [];
+  const frameM = [];
   const S = INTERIOR.props;
   for (const p of P.props) {
     const [x0, z0, x1, z1] = p.rect;
@@ -176,10 +177,14 @@ function buildProps(P, batch, MI, extra) {
       const [nx, nz] = s.normal;
       const off = s.hang ? 0 : S.sign.d / 2 + 0.01;
       exitM.push(mat4(x + nx * off, y, z + nz * off, ry(s.normal), S.sign.w, S.sign.h, S.sign.d));
+      const F = S.sign.frame; // 테: 앞면보다 조금 크고 얇게, 벽 쪽으로 (매단 것은 가운데)
+      const fo = s.hang ? 0 : off - (S.sign.d - S.sign.d * F.depth) / 2 - 0.004;
+      frameM.push(mat4(x + nx * fo, y, z + nz * fo, ry(s.normal), S.sign.w + F.rim * 2, S.sign.h + F.rim * 2, S.sign.d * F.depth));
     }
   }
   const E = S.extinguisher;
   extra.add(instanced(new THREE.CylinderGeometry(E.r, E.r, E.h, 12), MI.extinguisher, extM));
   extra.add(instanced(new THREE.SphereGeometry(0.05, 10, 8), MI.lamp, lampM, { cast: false }));
   extra.add(instanced(new THREE.BoxGeometry(1, 1, 1), MI.exit, exitM, { cast: false }));
+  extra.add(instanced(new THREE.BoxGeometry(1, 1, 1), MI.exitFrame, frameM, { cast: false }));
 }

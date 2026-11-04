@@ -32,6 +32,7 @@ export function setupStory({ player, touch, toast }) {
 
   ui.onAdvance = () => runner.advance();
   ui.onPick = (i) => runner.choose(i);
+  ui.onRestart = () => location.reload(); // 엔딩 카드 "처음부터 다시" (단계 20): 이름 입력 화면부터, 본 엔딩 기록은 남아 다음 판이 2회차
   runner.flags.onChange = (name, value) => {
     note(`${name}=${value}`);
     toast(`플래그 ${name} = ${value}`);

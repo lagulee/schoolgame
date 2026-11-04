@@ -63,7 +63,8 @@ export function interiorMaterials(M) {
     hydrant: std(0xa3221a, 0.45, 0.3),
     extinguisher: std(0xb3241b, 0.35, 0.2),
     lamp: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a1a).multiplyScalar(1.6) }),
-    exit: new THREE.MeshBasicMaterial({ map: exitSignTexture(), color: new THREE.Color(1.4, 1.4, 1.4) }), // 블룸으로 살짝 번지게
+    exit: new THREE.MeshBasicMaterial({ map: exitSignTexture(), color: new THREE.Color(1.12, 1.12, 1.12) }), // 블룸으로 살짝 번지되 그림이 읽히게 (단계 20: 1.4 → 1.12)
+    exitFrame: std(0xc9ced2, 0.55, 0.1), // 유도등 하얀 플라스틱 테 (단계 20)
     wood: std(0x9a7550, 0.7),
     metal: std(0x5a5f64, 0.5, 0.6),
     cabinet: std(0x8c9298, 0.6, 0.4),
