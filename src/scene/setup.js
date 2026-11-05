@@ -6,7 +6,7 @@
 // + 혼자일 때 환경 연출(alone: 속삭임·조명 떨림, 단계 20 STORY 13-3) + 옥상 수영장·엔딩 D(roof·roofView, 단계 21 STORY 16장 —
 // 옥상에 있는 동안(roof.paused) 자리 진입 사건·혼자일 때 연출을 멈춘다. main.js 는 이상 현상도 멈춘다).
 // main.js 는 update(dt) 를 추격 update 보다 먼저 부르고, breath 를 숨소리에 더한다.
-import { PLAYER, SCENE, FINISH, ROOF } from '../config.js';
+import { PLAYER, NAV, SCENE, FINISH, ROOF } from '../config.js';
 import roofData from '../../data/roof.json';
 import { EventTriggers } from '../story/triggers.js';
 import { GhostFigure } from './ghost/figure.js';
@@ -37,6 +37,16 @@ import { RoofView } from './roofView.js';
 import { buildRoof, addRoofCollision } from '../world/roof/build.js';
 import { yAt } from '../world/interior/plan.js';
 import { doorLocked } from '../audio/door.js';
+import { Navigator } from '../world/nav.js';
+
+// 귀신이 길을 찾는 Navigator: 귀신에게는 모든 문이 열려 있다 (잠긴 문도 지나간다)
+export function ghostNavigator(collision, info) {
+  const nav = new Navigator(collision, { ...NAV, maxExpand: 60000 }); // 길이 없을 때 오래 헤매지 않게 한도를 낮춘다
+  const open = new Set(info.handles.values());
+  if (info.connector) open.add(info.connector.closed);
+  nav.setPassable(open, 'ghost');
+  return nav;
+}
 
 export function setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch }) {
   const runner = story.runner;
@@ -44,6 +54,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
   const locate = (x, z, l) => mapData.locate(x, z, l);
   const doors = world.interior.doors;
   const triggers = new EventTriggers({ runner, defs: data.triggers, locate });
+  const ghostNav = ghostNavigator(collision, world.interior.nav);
   const e2 = new E2Scene({
     runner,
     chase: chase.session,
@@ -62,6 +73,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     maxSpeed: PLAYER.run * 1.4,
     clear: (x0, z0, x1, z1, level) => { const d = Math.hypot(x1 - x0, z1 - z0); return collision.rayDistance(x0, z0, (x1 - x0) / d, (z1 - z0) / d, d, level) >= d - 1e-6; }, // 귀신과 닿음: 벽 너머 제외
     toast,
+    nav: ghostNav,
   });
   const traces = new Traces({ runner, defs: data.traces, interactions: story.interactions, toast });
   GhostFigure.viewer = camera; // 귀신 모델은 그릴 때마다 이 카메라 쪽으로 몸을 돌린다
