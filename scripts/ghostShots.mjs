@@ -1,4 +1,4 @@
-// 시제품 렌더: vite dev 서버의 실제 게임에 귀신 모델을 넣고 장면별로 찍는다
+// 귀신 모델 확인용 촬영 (실제 게임 안): npx vite --port 5199 를 띄운 뒤 node scripts/ghostShots.mjs <출력 폴더> '[{"name","cam":[x,y,z],"yaw","at":[x,0,z],"pose","dim"}]'
 import { chromium } from 'playwright';
 const OUT = process.argv[2];
 const PORT = 5199;
@@ -13,12 +13,11 @@ for (const s of shots) {
   await page.goto(`http://localhost:${PORT}/?${q}`);
   await page.waitForFunction(() => window.__READY === true, null, { timeout: 240000 });
   await page.evaluate(async (s) => {
-    const { buildGhostModel } = await import('/src/scene/ghost/model.js');
+    const { GhostFigure } = await import('/src/scene/ghost/figure.js');
+    const { SCENE } = await import('/src/config.js');
     const D = window.__DEBUG;
-    const g = buildGhostModel({ pose: s.pose || 'idle' });
-    const c = D.camera;
-    g.position.set(s.at[0], D.player.collision.floorHeight(s.at[0], s.at[2], s.lv ?? 0), s.at[2]);
-    g.lookAt(c.position.x, g.position.y, c.position.z);
+    const g = new GhostFigure({ pose: s.pose || 'idle', front: s.pose === 'stare' });
+    g.position.set(s.at[0], D.player.collision.floorHeight(s.at[0], s.at[2], s.lv ?? 0) + SCENE.ghost.h / 2, s.at[2]);
     D.scene.add(g);
     if (s.dim) D.scene.traverse((o) => { if (o.isSpotLight) { const i0 = o.intensity; o.__i = i0; Object.defineProperty(o, 'intensity', { get: () => i0 * s.dim, set: () => {} }); } });
     for (let i = 0; i < 3; i++) D.step(12, 0);

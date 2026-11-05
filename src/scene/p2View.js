@@ -2,7 +2,7 @@
 // 점프스케어가 아니다: 먼 곳에 서 있다가 시선을 돌리거나 시간이 지나면 천천히 흐려진다(번쩍임 없음).
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
-import { silhouetteTexture } from './e2View.js';
+import { GhostFigure } from './ghost/figure.js';
 import { ghostKnock, ghostStep } from '../audio/ghost.js';
 
 const _dir = new THREE.Vector3();
@@ -11,11 +11,9 @@ const _to = new THREE.Vector3();
 export class P2View {
   constructor({ scene, p2, collision, audio, camera, player }) {
     Object.assign(this, { p2, collision, audio, camera, player });
-    const G = SCENE.ghost;
-    this.mesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: 0, depthWrite: false }));
-    this.mesh.scale.set(G.w, G.h, 1);
+    this.mesh = new GhostFigure({ name: 'dutyGhost' });
+    this.mesh.material.opacity = 0;
     this.mesh.visible = false;
-    this.mesh.name = 'dutyGhost';
     scene.add(this.mesh);
   }
 

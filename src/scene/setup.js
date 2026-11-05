@@ -9,6 +9,7 @@
 import { PLAYER, SCENE, FINISH, ROOF } from '../config.js';
 import roofData from '../../data/roof.json';
 import { EventTriggers } from '../story/triggers.js';
+import { GhostFigure } from './ghost/figure.js';
 import { E2Scene } from './e2.js';
 import { E2View } from './e2View.js';
 import { Traces } from './traces.js';
@@ -63,6 +64,7 @@ export function setupScenes({ scene, camera, story, chase, puzzle, player, phone
     toast,
   });
   const traces = new Traces({ runner, defs: data.traces, interactions: story.interactions, toast });
+  GhostFigure.viewer = camera; // 귀신 모델은 그릴 때마다 이 카메라 쪽으로 몸을 돌린다
   const view = new E2View({
     scene, e2, collision, audio, doors, traces, traceDefs: data.traces ?? [],
     threatEl: document.getElementById('threat'), hintEl: document.getElementById('hide-hint'),

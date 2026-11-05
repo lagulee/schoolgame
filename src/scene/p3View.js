@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { canvasTexture } from '../materials/texgen.js';
-import { silhouetteTexture } from './e2View.js';
+import { GhostFigure } from './ghost/figure.js';
 import { ghostKnock, ghostStep } from '../audio/ghost.js';
 
 const _dir = new THREE.Vector3();
@@ -65,12 +65,9 @@ export class P3View {
     this.prints.visible = false;
     this.prints.name = 'p3Footprints';
     scene.add(this.prints);
-    const G = SCENE.ghost;
-    this.ghost = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: 0, depthWrite: false }));
-    this.ghost.scale.set(G.w, G.h, 1);
+    this.ghost = new GhostFigure({ name: 'p3Ghost', front: true });
+    this.ghost.material.opacity = 0;
     this.ghost.visible = false;
-    this.ghost.renderOrder = 10;
-    this.ghost.name = 'p3Ghost';
     this.smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTexture(), color: 0x000000, transparent: true, opacity: 0, depthWrite: false }));
     this.smoke.visible = false;
     scene.add(this.ghost, this.smoke);

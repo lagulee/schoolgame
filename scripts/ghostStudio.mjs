@@ -1,3 +1,4 @@
+// 귀신 모델 확인용 촬영 (밝은 조명 단독): npx vite --port 5199 를 띄운 뒤 node scripts/ghostStudio.mjs <출력 폴더> '이름|cam=x,y,z,tx,ty,tz&pose=stare' ...
 import { chromium } from 'playwright';
 const [OUT, ...views] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

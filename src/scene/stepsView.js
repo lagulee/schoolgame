@@ -3,7 +3,7 @@
 // 단계 14: 점프스케어(steps.scare) — 시선 정면에 어두운 실루엣이 나타나고 날카로운 소리. 화면을 밝히는 연출은 없다.
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
-import { silhouetteTexture } from './e2View.js';
+import { GhostFigure } from './ghost/figure.js';
 import { ghostBang, ghostSting } from '../audio/ghost.js';
 
 const _dir = new THREE.Vector3();
@@ -15,10 +15,9 @@ export class StepsView {
     Object.assign(this, { steps, collision, audio, camera, player, threatEl, light });
     const G = SCENE.ghost;
     this.ghosts = steps.sightings.map((s) => {
-      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: 0, depthWrite: false }));
-      m.scale.set(G.w, G.h, 1);
+      const m = new GhostFigure({ name: `sighting:${s.def.id}` });
+      m.material.opacity = 0;
       m.visible = false;
-      m.name = `sighting:${s.def.id}`;
       const [x, z] = s.def.pos;
       m.position.set(x, collision.floorHeight(x, z, s.def.level ?? 0) + G.h / 2, z);
       scene.add(m);
@@ -36,11 +35,10 @@ export class StepsView {
       scene.add(box);
     }
     steps.sound = (def) => this.sound(def);
-    this.scareMesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: SCENE.scare.color, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
-    this.scareMesh.scale.set(G.w, G.h, 1);
-    this.scareMesh.renderOrder = 10; // 라이트 번짐(반투명) 위에, 벽 소품(배전반 등)에 묻히지 않게 깊이 검사 없이 그린다 (2초 동안 바로 앞에만 있음)
+    // 점프스케어: 고개를 들고 똑바로 보는 자세. 라이트 번짐(반투명) 위에 그린다 (벽에서 SCENE.scare.inset 떨어져 서므로 깊이 검사는 그대로)
+    this.scareMesh = new GhostFigure({ pose: 'stare', name: 'scareSilhouette', front: true });
+    this.scareMesh.material.opacity = 0;
     this.scareMesh.visible = false;
-    this.scareMesh.name = 'scareSilhouette';
     scene.add(this.scareMesh);
     this.scareSeen = null; // 자리를 정한 점프스케어 (steps.scare 객체)
   }

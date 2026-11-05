@@ -1,34 +1,12 @@
-// E2 화면·소리 (단계 12): E2Scene 상태를 읽어 귀신 실루엣·발소리·화면 가장자리 어둡게·문틈 연기·숨기 안내·떨어진 핸드폰을 그린다.
-// 귀신은 3D 모델 없이 검은 실루엣 판 하나(카메라를 향함)와 발소리 (K6 가정). 밝기가 번쩍이는 연출은 없다 (깜빡임 규칙).
+// E2 화면·소리 (단계 12): E2Scene 상태를 읽어 귀신·발소리·화면 가장자리 어둡게·문틈 연기·숨기 안내·떨어진 핸드폰을 그린다.
+// 귀신은 교복 입은 학생 3D 모델(scene/ghost, 늘 플레이어 쪽을 봄)과 발소리. 밝기가 번쩍이는 연출은 없다 (깜빡임 규칙).
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { canvasTexture } from '../materials/texgen.js';
 import { ghostBang, ghostStep } from '../audio/ghost.js';
+import { GhostFigure } from './ghost/figure.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-
-// 사람 모양의 흐릿한 검은 실루엣 (머리·어깨·몸통, 가장자리는 부드럽게)
-export function silhouetteTexture() {
-  const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 320;
-  const g = c.getContext('2d');
-  g.filter = 'blur(6px)';
-  g.fillStyle = '#fff'; // 흰 모양 × 재질 색(SCENE.ghost.color)
-  g.beginPath();
-  g.ellipse(64, 46, 21, 26, 0, 0, Math.PI * 2); // 머리
-  g.fill();
-  g.beginPath();
-  g.moveTo(26, 98);
-  g.quadraticCurveTo(64, 70, 102, 98); // 어깨
-  g.lineTo(96, 210);
-  g.lineTo(88, 312);
-  g.lineTo(40, 312);
-  g.lineTo(32, 210);
-  g.closePath();
-  g.fill();
-  return canvasTexture(c, true, 1);
-}
 
 // 바닥에 번지는 연기 얼룩 (가운데 진하고 바깥으로 사라짐)
 function smokeTexture() {
@@ -70,11 +48,9 @@ export class E2View {
   // scene2: E2Scene, doors: 본관 Doors (문 자리), traces: Traces, threatEl·hintEl: DOM
   constructor({ scene, e2, collision, audio, doors, traces, traceDefs, threatEl, hintEl }) {
     Object.assign(this, { e2, collision, audio, doors, traces, threatEl, hintEl });
-    const G = SCENE.ghost;
-    this.ghost = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: G.opacity, depthWrite: false }));
-    this.ghost.scale.set(G.w, G.h, 1);
+    this.ghost = new GhostFigure({ name: 'ghostSilhouette' });
+    this.ghost.material.opacity = SCENE.ghost.opacity;
     this.ghost.visible = false;
-    this.ghost.name = 'ghostSilhouette';
     scene.add(this.ghost);
     const smokeMat = new THREE.MeshBasicMaterial({ map: smokeTexture(), color: 0x000000, transparent: true, opacity: 0, depthWrite: false });
     this.smoke = [];

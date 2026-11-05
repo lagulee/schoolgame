@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { SCENE } from '../config.js';
 import { canvasTexture } from '../materials/texgen.js';
-import { silhouetteTexture } from './e2View.js';
+import { GhostFigure } from './ghost/figure.js';
 import { ghostBang, ghostKnock, ghostStep } from '../audio/ghost.js';
 
 // 종이 번호표: 누런 종이에 어두운 숫자
@@ -30,11 +30,9 @@ export class P4View {
     Object.assign(this, { p4, collision, audio, camera });
     const K = p4.K;
     this.lvl = K?.level ?? 1;
-    const G = SCENE.ghost;
-    this.mesh = new THREE.Sprite(new THREE.SpriteMaterial({ map: silhouetteTexture(), color: G.color, transparent: true, opacity: 0, depthWrite: false }));
-    this.mesh.scale.set(G.w, G.h, 1);
+    this.mesh = new GhostFigure({ name: 'keyGhost' });
+    this.mesh.material.opacity = 0;
     this.mesh.visible = false;
-    this.mesh.name = 'keyGhost';
     scene.add(this.mesh);
     if (!K) return;
     // 열쇠 걸이: 벽에 박은 못 + 열쇠(작은 금속 판) + 번호표
