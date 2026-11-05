@@ -15,7 +15,7 @@ import { GateUi, tapCounter } from './debug/gateUi.js';
 import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './player/touch.js';
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
-import { MapData } from './world/mapData.js';
+import { MapData, placeLabeler } from './world/mapData.js';
 import { NavGuide } from './world/navGuide.js';
 import navData from '../data/nav.json';
 import mapJson from '../data/map.json';
@@ -77,7 +77,8 @@ const onOff = (v) => (v ? '켜짐' : '꺼짐');
 const touchMode = isTouchDevice();
 const story = setupStory({ player, touch: touchMode, toast });
 const mapData = new MapData(mapJson); // 위치 이름·잠긴 문 소리 (단계 10)
-const where = () => mapData.label(player.pos.x, player.pos.z, player.level);
+const placeAt = placeLabeler(mapData); // 이음매에서 이름이 잠깐 비지 않게 (v1.28.1)
+const where = () => placeAt(player.pos.x, player.pos.z, player.level);
 // 시작 전 자유 탐색 (단계 0c): 현관 홀에 들어서면 E1 (배터리 확정·hasRoofKey 판정은 E1 시작 경로 그대로)
 const prelude = new Prelude({ runner: story.runner, def: story.runner.story.prelude, locate: (x, z, l) => mapData.locate(x, z, l) });
 // 길 안내 (핸드폰 화살표): 목표(objective 키)에 맞는 곳까지 길을 찾아 내가 보는 방향 기준 각도를 낸다
@@ -85,7 +86,8 @@ const flagOn = (name) => story.runner.flags.values[name] === true;
 const navGuide = new NavGuide({ col: collision, info: world.interior.nav, mapData, data: navData, hasKey: flagOn });
 const _look = new THREE.Vector3();
 const guide = (dt) => {
-  const v = navGuide.update(dt, player.pos.x, player.pos.z, player.level, story.runner.objectiveKey());
+  const ch = chase.session.active ? chase.session.chase?.def ?? null : null; // 추격 중에는 그 추격의 도착점 (v1.28.1)
+  const v = navGuide.update(dt, player.pos.x, player.pos.z, player.level, story.runner.objectiveKey(), ch);
   if (!v) return null;
   camera.getWorldDirection(_look);
   const h = Math.hypot(_look.x, _look.z) || 1;

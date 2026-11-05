@@ -8,6 +8,23 @@ import { NAV, PLAYER } from '../config.js';
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 const lk = (level) => Math.round(level * 2); // 0.5 단위 층 번호
 const BLOCK = 2; // 충돌 모양을 추리는 블록 크기 (m)
+const MAX_K = 12; // 0.5 단위 층 번호 개수 (0 ~ 5.5층: 5층 건물 + 옥상)
+
+// 찾기용 작업 공간: 모든 Navigator 가 함께 쓴다 (find 는 한 번에 하나만 돈다). 크기가 모자라면 다시 잡는다
+let SCR = null;
+function scratch(size) {
+  if (SCR && SCR.size >= size) return SCR;
+  const S = { size, gen: 0, mark: new Uint32Array(size), gv: new Float64Array(size), parent: new Int32Array(size), heap: null };
+  S.grow = () => {
+    const old = S.heap;
+    const cap = old ? old.f.length * 2 : 1 << 16;
+    S.heap = { f: new Float64Array(cap), n: new Int32Array(cap) };
+    if (old) { S.heap.f.set(old.f); S.heap.n.set(old.n); }
+  };
+  S.grow();
+  SCR = S;
+  return S;
+}
 
 export class Navigator {
   constructor(col, cfg = NAV) {
@@ -121,57 +138,79 @@ export class Navigator {
       if (best === Infinity) return null;
       [si, sj] = [bi, bj];
     }
+    // 칸 상태는 Map 대신 미리 잡아 둔 typed array 에 둔다 (v1.28.1: 귀신이 0.3초마다 길을 다시 찾아, Map 으로는 한 번에 평균 25 ms·최대 230 ms 걸려 끊겼다).
+    // mark[n] = 이번 찾기 번호 × 2 (+1 = 닫힘). 번호가 다르면 아직 안 본 칸이다. 순서·동점 처리는 예전 Map 판과 같다.
     const id = (i, j, k) => (k * H + j) * W + i;
-    const g = new Map();
-    const parent = new Map();
-    const heap = []; // [f, g, i, j, 층]
-    const push = (e) => {
-      heap.push(e);
-      let n = heap.length - 1;
-      while (n > 0) {
-        const p = (n - 1) >> 1;
-        if (heap[p][0] <= heap[n][0]) break;
-        [heap[p], heap[n]] = [heap[n], heap[p]];
-        n = p;
+    const S = scratch(W * H * MAX_K);
+    const gen = (S.gen = S.gen >= 0x7ffffff0 ? 1 : S.gen + 1);
+    if (gen === 1) S.mark.fill(0);
+    const open = gen * 2;
+    const shut = open + 1;
+    const { mark, gv, parent } = S;
+    let hn = 0; // 힙: S.heap.f(점수)·S.heap.n(칸 번호)를 나란히. 비교는 예전 배열 힙과 같다
+    const push = (f, n) => {
+      if (hn >= S.heap.f.length) S.grow();
+      let k = hn++;
+      const hf = S.heap.f;
+      const hi = S.heap.n;
+      hf[k] = f;
+      hi[k] = n;
+      while (k > 0) {
+        const p = (k - 1) >> 1;
+        if (hf[p] <= hf[k]) break;
+        [hf[p], hf[k]] = [hf[k], hf[p]];
+        [hi[p], hi[k]] = [hi[k], hi[p]];
+        k = p;
       }
     };
     const pop = () => {
-      const top = heap[0];
-      const last = heap.pop();
-      if (heap.length) {
-        heap[0] = last;
-        let n = 0;
+      const hf = S.heap.f;
+      const hi = S.heap.n;
+      const top = hi[0];
+      hn--;
+      if (hn) {
+        hf[0] = hf[hn];
+        hi[0] = hi[hn];
+        let k = 0;
         for (;;) {
-          const l = 2 * n + 1;
+          const l = 2 * k + 1;
           const r = l + 1;
-          let m = n;
-          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
-          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
-          if (m === n) break;
-          [heap[m], heap[n]] = [heap[n], heap[m]];
-          n = m;
+          let m = k;
+          if (l < hn && hf[l] < hf[m]) m = l;
+          if (r < hn && hf[r] < hf[m]) m = r;
+          if (m === k) break;
+          [hf[m], hf[k]] = [hf[k], hf[m]];
+          [hi[m], hi[k]] = [hi[k], hi[m]];
+          k = m;
         }
       }
       return top;
     };
+    const lvOf = (n) => Math.floor(n / (W * H)) / 2;
     const start = id(si, sj, lk(sl));
-    g.set(start, 0);
-    push([toGoal(this.x0 + si * step, this.z0 + sj * step), 0, si, sj, sl]);
-    const done = new Set();
+    mark[start] = open;
+    gv[start] = 0;
+    parent[start] = -1;
+    push(toGoal(this.x0 + si * step, this.z0 + sj * step), start);
     let expanded = 0;
-    while (heap.length) {
-      const [, d, i, j, lv] = pop();
-      const cur = id(i, j, lk(lv));
-      if (done.has(cur)) continue;
-      done.add(cur);
+    while (hn) {
+      const cur = pop();
+      if (mark[cur] === shut) continue;
+      mark[cur] = shut;
+      const d = gv[cur];
+      const k = Math.floor(cur / (W * H));
+      const rem = cur - k * W * H;
+      const i = rem % W;
+      const j = (rem - i) / W;
+      const lv = lvOf(cur);
       const x = this.x0 + i * step;
       const z = this.z0 + j * step;
-      if (lk(lv) === gl && x >= r0 && x <= r1 && z >= q0 && z <= q1) {
+      if (k === gl && x >= r0 && x <= r1 && z >= q0 && z <= q1) {
         const path = [];
-        for (let n = cur; n !== undefined; n = parent.get(n)) {
-          const k = Math.floor(n / (W * H));
-          const rem = n - k * W * H;
-          path.push([this.x0 + (rem % W) * step, this.z0 + Math.floor(rem / W) * step, k / 2]);
+        for (let n = cur; n >= 0; n = parent[n]) {
+          const kk = Math.floor(n / (W * H));
+          const rr = n - kk * W * H;
+          path.push([this.x0 + (rr % W) * step, this.z0 + Math.floor(rr / W) * step, kk / 2]);
         }
         return { path: path.reverse(), dist: d };
       }
@@ -186,10 +225,12 @@ export class Navigator {
         const l2 = this.col.levelAt(x2, z2, lv);
         const n2 = id(i2, j2, lk(l2));
         const d2 = d + step * (dx && dz ? Math.SQRT2 : 1);
-        if (done.has(n2) || (g.get(n2) ?? Infinity) <= d2) continue;
-        g.set(n2, d2);
-        parent.set(n2, cur);
-        push([d2 + toGoal(x2, z2), d2, i2, j2, l2]);
+        const m2 = mark[n2];
+        if (m2 === shut || (m2 === open && gv[n2] <= d2)) continue;
+        mark[n2] = open;
+        gv[n2] = d2;
+        parent[n2] = cur;
+        push(d2 + toGoal(x2, z2), n2);
       }
     }
     return null;

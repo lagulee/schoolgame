@@ -4,6 +4,7 @@
 // - 귀신이 얼마나 가는가(step)는 Chase(gap 모델)의 귀신 속도·멈춤(지형 지연)이 정한다. gap 은 이 길의 실제 남은 거리로 되돌려 준다.
 // - 시작 때 귀신은 추격 경로(chases.json path) 위 startGap 만큼 뒤에서 출발한다. 경로 시작보다 더 뒤라면(건물 밖) offstage 만큼 보이지 않게 달려온다.
 // - Navigator 가 없거나 길이 없으면(막힌 자리) 곧장 플레이어 쪽으로 간다.
+// - v1.28.1: 같은 층에서 플레이어까지 곧장 걸을 수 있으면(nav.clear) 길 찾기를 하지 않고 곧장 간다 (복도에서 대부분, 끊김을 줄인다).
 const REPLAN = 0.3; // 길을 다시 구하는 간격 (초)
 const DRIFT = 1.0; // 플레이어가 길 끝에서 이만큼 벗어나면 바로 다시 구한다 (m)
 const RETRY = 1.5; // 길을 못 찾았을 때 다시 시도하기까지 (초)
@@ -75,7 +76,9 @@ export class Pursuer {
     this.age = 0;
     const from = [this.x, this.z, half(this.level)];
     let pts = null;
-    if (this.nav && this.failed <= 0) {
+    const sameLevel = Math.abs(this.level - p.level) < 0.01 && Math.abs(p.level - Math.round(p.level)) < 0.01;
+    if (this.nav && sameLevel && this.nav.clear(this.x, this.z, p.x, p.z, p.level)) pts = [[this.x, this.z, this.level]];
+    else if (this.nav && this.failed <= 0) {
       const r = this.nav.find(from, { rect: [p.x - 0.5, p.z - 0.5, p.x + 0.5, p.z + 0.5], level: half(p.level) });
       if (r) pts = [[this.x, this.z, this.level], ...r.path.slice(1)];
       else this.failed = RETRY;

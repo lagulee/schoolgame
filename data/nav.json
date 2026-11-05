@@ -1,5 +1,5 @@
 {
-  "_comment": "길 안내 (핸드폰 화살표, src/world/navGuide.js). goals: story.json objectives 키 → 가는 곳(다리) 목록. 다리의 if 조건(플래그 이름, ! 는 아님)이 모두 맞는 첫 다리를 쓴다. to = map.json 의 방·공간 참조('2F-staff', 'AC@1'), point = [x, z, 층] 한 점(반경 1 m). text = 핸드폰에 보일 이름. 빈 목록 = 안내 없음. 이름·문구와 사건 단계 이후 목표의 장소는 [가정] — 사건 구현 단계에서 확인한다.",
+  "_comment": "길 안내 (핸드폰 화살표, src/world/navGuide.js). goals: story.json objectives 키 → 가는 곳(다리) 목록. 다리의 if 조건(플래그 이름, ! 는 아님)이 모두 맞는 첫 다리를 쓴다. to = map.json 의 방·공간 참조('2F-staff', 'AC@1'), point = [x, z, 층] 한 점(반경 1 m). text = 핸드폰에 보일 이름. 빈 목록 = 안내 없음. chases: 추격(chases.json id) 중에는 목표 대신 그 추격의 도착점(target 방, 없으면 경로 위 startAt + pathLength)을 가리키고 이 이름을 보인다 (v1.28.1). 이름·문구와 사건 단계 이후 목표의 장소는 [가정] — 사건 구현 단계에서 확인한다.",
   "texts": {
     "label": "가는 길",
     "route": "{name} · 약 {n} m",
@@ -7,6 +7,7 @@
     "arrived": "도착: {name}",
     "lost": "{name}: 길을 찾지 못했다"
   },
+  "chases": { "C1": "숨을 곳: 구관 1층 1-2 교실", "C2": "도망칠 곳: 1층 북쪽 복도 끝", "C3": "도망칠 곳: 구관 현관 유리문", "C4": "도망칠 곳: 구관 현관 유리문" },
   "goals": {
     "goEntrance": [{ "to": "lobby", "text": "본관 현관 홀" }],
     "goFifth": [

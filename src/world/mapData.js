@@ -70,3 +70,17 @@ export class MapData {
     return this.map.eventPlaces[text] ?? null;
   }
 }
+
+// 핸드폰 위치 이름 (v1.28.1): 공간 사이 이음매(예: 1층 계단 ↔ 동쪽 복도, 폭 수 cm)에서 이름이 비면 사건 장소 문구로 깜빡였다.
+// 같은 층에서 마지막 이름을 본 자리 hold(m) 안이면 그 이름을 그대로 쓴다. 반환 (x, z, 층) → 이름 또는 ''
+export function placeLabeler(mapData, hold = 1.5) {
+  let last = null;
+  return (x, z, level = 0) => {
+    const t = mapData.label(x, z, level);
+    if (t) {
+      last = { t, x, z, level };
+      return t;
+    }
+    return last && Math.abs(last.level - level) < 0.6 && Math.hypot(last.x - x, last.z - z) <= hold ? last.t : '';
+  };
+}

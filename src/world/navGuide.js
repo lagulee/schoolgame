@@ -3,8 +3,23 @@
 // - 다리(leg): 목표 하나에 여러 곳이 있을 수 있다 (예: 연결문 열쇠가 없으면 먼저 교무실). 조건 if 가 맞는 첫 다리를 쓴다.
 // - 길은 한 번 찾아 두고 따라간다. 목표·다리·열쇠 상태가 바뀌거나 길에서 NAV.offPath 이상 벗어나면 다시 찾는다.
 // - 열쇠 때문에 길이 없으면(엄격 → 느슨) 열쇠 문도 통과로 보고 대략의 방향을 알려 준다.
+// - 추격 중(v1.28.1)에는 목표 대신 그 추격의 도착점(chases.json target 방, 없으면 경로 위 startAt + pathLength 자리)을 가리킨다.
+//   목표 장소가 추격 출발점이거나(C2: 현관 홀 → 북쪽 복도) 도착점보다 앞이면(C3·C4: 현관 홀 안에서 "도착") 화살표가 귀신 쪽을 가리키거나 사라졌다.
 import { NAV } from '../config.js';
 import { Navigator } from './nav.js';
+import { ChasePath } from '../scene/path.js';
+
+// 추격 정의(chases.json) → 도착 구역 { rect, level } 또는 null (경로·목표 방이 없는 추격)
+export function chaseGoal(def, mapData) {
+  if (def.target) {
+    const r = mapData.resolve(def.target);
+    if (r) return { rect: r.item.rect, level: r.level };
+  }
+  if (!def.path) return null;
+  const end = new ChasePath(def.path).at((def.path.startAt ?? 0) + def.pathLength);
+  const [x, z] = end;
+  return { rect: [x - 1, z - 1, x + 1, z + 1], level: Math.round((end[2] ?? def.path.level ?? 0) * 2) / 2 };
+}
 
 // 통과로 볼 문 박스. info = { handles: 문 id → 박스, doors: 평면 문 목록, connector: {closed}, connectorKey }
 export function passableBoxes(info, hasKey, lenient) {
@@ -36,8 +51,13 @@ export class NavGuide {
     this.retryLeft = 0;
   }
 
-  // 목표 키 → { leg, goal: { rect, level }, id } 또는 null (안내 없음)
-  legFor(objectiveKey) {
+  // 목표 키 → { leg, goal: { rect, level }, id } 또는 null (안내 없음). chase = 진행 중인 추격 정의(있으면 그 도착점이 먼저)
+  legFor(objectiveKey, chase = null) {
+    const ct = chase && this.data.chases?.[chase.id];
+    if (ct) {
+      const goal = chaseGoal(chase, this.mapData);
+      if (goal) return { leg: { text: ct }, goal, id: `chase:${chase.id}` };
+    }
     const legs = this.data.goals[objectiveKey];
     if (!legs?.length) return null;
     const i = legs.findIndex((l) => [l.if ?? []].flat().every((c) => cond(c, this.hasKey)));
@@ -87,10 +107,10 @@ export class NavGuide {
     return same.off <= this.cfg.offPath ? same : near(this.cfg.levelTol);
   }
 
-  // 화면에 보일 안내. 반환 null(안내 없음) 또는
+  // 화면에 보일 안내 (chase: 진행 중인 추격 정의 또는 null). 반환 null(안내 없음) 또는
   // { state: 'arrived'|'path'|'lost', text, step, ax, az (가리킬 방향 단위 벡터), dist }
-  update(dt, x, z, level, objectiveKey) {
-    const L = this.legFor(objectiveKey);
+  update(dt, x, z, level, objectiveKey, chase = null) {
+    const L = this.legFor(objectiveKey, chase);
     if (!L) { this.cache = null; return null; }
     const T = this.data.texts;
     const { rect } = L.goal;
