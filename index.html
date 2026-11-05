@@ -15,12 +15,19 @@
     #overlay.hidden { display: none; }
     .card { max-width: 560px; padding: 28px 32px; text-align: center; margin: auto; } /* margin auto: 화면보다 길면 위에서부터 스크롤 */
     .card h1 { font-weight: 600; letter-spacing: 0.08em; margin: 0 0 10px; font-size: 26px; color: #e6ebf2; }
-    .warn { color: #e0b98a; font-size: 15px; margin: 6px 0 18px; }
+    .warn { color: #e0b98a; font-size: 15px; margin: 6px 0 18px; line-height: 1.55; }
+    .warn small { display: block; color: #a8957a; font-size: 12.5px; }
+    #bright-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 0; font-size: 14px; color: #9aa6b6; cursor: default; }
+    .bright-btn { min-width: 34px; min-height: 30px; border-radius: 6px; border: 1px solid rgba(200,215,235,0.35); background: rgba(10,14,22,0.9);
+      color: #eef2f7; font-size: 17px; line-height: 1; cursor: pointer; font-family: inherit; }
+    .bright-value { min-width: 2.2em; color: #eef2f7; font-family: ui-monospace, monospace; font-size: 16px; }
+    .bright-note { font-size: 12px; color: #6f7b8b; }
     .start { font-size: 18px; color: #fff; margin: 16px 0; animation: pulse 2.4s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: 0.45; } }
     table.keys { margin: 0 auto; border-collapse: collapse; font-size: 13px; color: #9aa6b6; }
     table.keys td { padding: 2px 10px; text-align: left; }
     table.keys td:nth-child(odd) { color: #dfe5ee; font-family: ui-monospace, monospace; text-align: right; }
+    table.keys tr.dbg td { color: #5f6a79; font-size: 12px; }
     #version { margin-top: 18px; font-family: ui-monospace, monospace; letter-spacing: 0.02em; }
     #version .ver-main { font-size: 15px; color: #8d99a9; }
     #version .ver-sub { font-size: 10px; color: #4a5565; margin-top: 1px; }
@@ -97,7 +104,9 @@
     .story-dlg { position: absolute; left: 50%; bottom: calc(5% + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(820px, 90vw); box-sizing: border-box;
       min-height: 104px; padding: 14px 20px 26px; border-radius: 8px; background: rgba(6,9,14,0.84); border: 1px solid rgba(200,212,230,0.22);
       pointer-events: auto; cursor: pointer; }
-    .story-dlg.ending { border-color: rgba(220,90,80,0.5); }
+    .story-dlg.ending { border-color: rgba(220,90,80,0.5); padding-bottom: 54px; }
+    .story-restart { position: absolute; left: 20px; bottom: 12px; min-height: 34px; padding: 4px 14px; border-radius: 6px; border: 1px solid rgba(241,217,168,0.55);
+      background: rgba(40,30,22,0.85); color: #f1d9a8; font-size: 14px; font-family: inherit; cursor: pointer; }
     .story-name { display: inline-block; margin-bottom: 6px; padding: 1px 10px; border-radius: 3px; background: rgba(150,170,200,0.18); color: #f1d9a8; font-size: 15px; font-weight: 600; }
     .story-text { color: #eef2f7; font-size: 19px; line-height: 1.55; white-space: pre-wrap; }
     .story-hint { position: absolute; right: 14px; bottom: 6px; font-size: 12px; color: #8996a8; animation: pulse 2.4s ease-in-out infinite; }
@@ -126,6 +135,7 @@
     .ph-row { margin-bottom: 8px; }
     .ph-label { font-size: 12px; color: #8fa0b8; }
     .ph-value { font-size: 16px; line-height: 1.4; }
+    .ph-note { display: block; margin-top: 4px; font-size: 12px; color: #9fd8c8; }
     .ph-route-body { display: flex; align-items: center; gap: 10px; }
     .ph-arrow { flex: none; width: 34px; height: 34px; border-radius: 50%; background: rgba(120,170,230,0.16); border: 1px solid rgba(160,190,230,0.45);
       color: #cfe3ff; font-size: 22px; line-height: 34px; text-align: center; }
@@ -161,22 +171,22 @@
   <div id="overlay">
     <div class="card">
       <h1>밤 학교 · 3D 룩 데모</h1>
-      <div class="warn">헤드폰 권장 · 어두운 장면 · 약한 깜빡임 포함</div>
+      <div class="warn">공포 게임입니다 · 갑자기 놀라게 하는 장면(점프스케어) · 어두운 장면 · 약한 깜빡임(초당 3회 미만) 포함<small>빛에 민감하거나 놀라는 장면이 힘들면 플레이하지 마세요 · 헤드폰 권장</small></div>
       <div id="name-box">
         <label for="name-input">주인공 이름</label>
         <input id="name-input" type="text" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="1~8자" />
         <div class="name-msg" aria-live="polite"></div>
       </div>
       <div class="start">클릭하여 시작</div>
-      <div class="touchhelp">왼쪽 아래 조이스틱: 이동 (끝까지 밀면 달리기, 아래쪽 막대 = 스태미나)<br />화면 드래그: 시점 · 오른쪽 아래 📱: 핸드폰 화면 · 💡: 라이트 · 오른쪽 위 ☰: 메뉴<br />가로 모드를 권장합니다</div>
+      <div class="touchhelp">왼쪽 아래 조이스틱: 이동 (끝까지 밀면 달리기, 아래쪽 막대 = 스태미나)<br />화면 드래그: 시점 · 오른쪽 아래 📱: 핸드폰 화면 · 💡: 라이트 · 오른쪽 위 ☰: 메뉴(실내 밝기)<br />가로 모드를 권장합니다</div>
       <table class="keys">
         <tr><td>WASD / Shift</td><td>이동 / 달리기 (스태미나 소모)</td><td>E / R</td><td>핸드폰 화면 / 라이트</td></tr>
-        <tr><td>마우스</td><td>시점 (ESC 해제)</td><td>H</td><td>헤드밥 감소·끔</td></tr>
-        <tr><td>B / G / V</td><td>블룸 / 그레인 / 비네팅</td><td>M</td><td>음소거</td></tr>
-        <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>E</td><td>(대화 중) 넘기기 · (근처) 상호작용</td></tr>
-        <tr><td>[ ]</td><td>안개 밀도 − / +</td><td>L</td><td>점검 모드</td></tr>
-        <tr><td>P</td><td>스크린샷 저장</td><td>~</td><td>디버그 HUD</td></tr>
-        <tr><td>Y</td><td>이상 현상 발동 (디버그)</td><td>N / J / U / K</td><td>다음 사건 / 책 줍기 / 보조배터리 놓기 / 스토리 초기화 (디버그)</td></tr>
+        <tr><td>마우스</td><td>시점 (ESC 해제)</td><td>E</td><td>(대화 중) 넘기기 · (근처) 상호작용</td></tr>
+        <tr><td>- / =</td><td>실내 밝기 − / +</td><td>Enter</td><td>(엔딩 화면) 처음부터 다시</td></tr>
+        <tr><td>1 2 3</td><td>품질 Low / Mid / High</td><td>M</td><td>음소거</td></tr>
+        <tr class="dbg"><td>~</td><td>디버그 잠금 해제 (아래는 잠김)</td><td>P</td><td>스크린샷 저장</td></tr>
+        <tr class="dbg"><td>B / G / V</td><td>블룸 / 그레인 / 비네팅</td><td>H / L</td><td>헤드밥 감소·끔 / 점검 모드</td></tr>
+        <tr class="dbg"><td>[ ] / Y</td><td>안개 밀도 − + / 이상 현상</td><td>N / J / U / K</td><td>다음 사건 / 책 줍기 / 보조배터리 놓기 / 스토리 초기화</td></tr>
       </table>
       <div id="loading">텍스처 생성 중…</div>
       <div id="version"><div class="ver-main"></div><div class="ver-sub"></div></div>

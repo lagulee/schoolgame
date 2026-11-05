@@ -1,11 +1,12 @@
 // 비밀번호 입력 창 (DOM). 열려 있는 동안 게임 키 입력은 main.js 가 무시한다 (open)
 // n 번 연속 탭(각 탭 사이가 ms 이내)하면 fn 을 부르는 함수를 만든다
+// ms = 탭 사이 최대 간격(ms) 또는 그 값을 돌려주는 함수 (자동 점검이 실행 중에 늘릴 수 있게 매번 읽는다)
 export function tapCounter(n, ms, fn) {
   let count = 0;
   let last = -Infinity;
   return () => {
     const now = performance.now();
-    count = now - last > ms ? 1 : count + 1;
+    count = now - last > (typeof ms === 'function' ? ms() : ms) ? 1 : count + 1;
     last = now;
     if (count >= n) {
       count = 0;

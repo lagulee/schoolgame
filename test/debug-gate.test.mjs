@@ -31,3 +31,21 @@ test('guard: 잠겨 있으면 실행하지 않고, 풀리면 실행한다', () =
 test('유령 모드 속도 배율은 1 보다 크다', () => {
   assert.ok(DEBUG.ghostSpeedScale > 1);
 });
+
+test('tapCounter: n 번 연속 탭이면 부르고, 간격(함수면 매번 읽음)을 넘으면 처음부터 센다', async () => {
+  const { tapCounter } = await import('../src/debug/gateUi.js');
+  let fired = 0;
+  let win = 1e9;
+  const tap = tapCounter(5, () => win, () => fired++);
+  for (let i = 0; i < 4; i++) tap();
+  assert.equal(fired, 0, '4번은 아직');
+  tap();
+  assert.equal(fired, 1, '5번째에 부름');
+  win = -1; // 간격 0 미만 = 매 탭이 새로 시작
+  for (let i = 0; i < 10; i++) tap();
+  assert.equal(fired, 1);
+  const fixed = tapCounter(2, 1e9, () => fired++); // 숫자도 그대로 된다
+  fixed();
+  fixed();
+  assert.equal(fired, 2);
+});

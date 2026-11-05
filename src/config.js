@@ -198,14 +198,14 @@ export const INTERIOR = {
   entrance: { reach: 2.6, time: 0.9, leafT: 0.04 }, // 현관 자동문: 감지 거리(m, 문 가운데 기준)·열림 시간(초)·문짝 두께
   inside: { exposure: 0.55, fade: 3, hemi: 0.3, hemiSky: 0x3a4660, hemiGround: 0x171512, moon: 0.04, lamps: 0.12, red: 0.5 }, // 실내 노출·전환 시간(STORY 15-2)·하늘빛(밝은 색으로 바꿔 윤곽만 보이게)·바깥 광원 배율
   nearSight: { color: 0x8a96ad, intensity: 3.5, distance: 7 }, // 어둠에 익은 눈: 카메라 둘레의 약한 빛 (그림자 없음, 실내에서만). 라이트 없이도 바로 앞 윤곽이 보이게 (STORY 15-2)
-  signLight: { pool: 4, exit: { color: 0x3cff8c, intensity: 1.4, distance: 5 }, hydrant: { color: 0xff2a1a, intensity: 0.7, distance: 3 } }, // 유도등·소화전 표시등: 가까운 것부터 pool 개만 점광원
+  signLight: { pool: 4, out: 0.5, drop: 0.2, exit: { color: 0x3cff8c, intensity: 0.85, distance: 5 }, hydrant: { color: 0xff2a1a, intensity: 0.7, distance: 3 } }, // 유도등·소화전 표시등: 가까운 것부터 pool 개만 점광원, 벽에서 out m·아래로 drop m (단계 20: 벽면 과노출 줄임)
   windowGlow: { depth: 1.6, opacity: 0.07 }, // 창가 바닥의 희미한 달빛 (가산 혼합)
   props: { // 복도 벽 소품 (data/mainInterior.json props): 폭·높이·깊이·바닥에서 높이 (m)
     hydrant: { w: 0.75, h: 1.0, d: 0.2, y: 0.5 }, // 소화전함 + 위쪽 붉은 표시등
     locker: { h: 1.75, d: 0.42, cell: 0.4 },
     board: { h: 1.0, d: 0.03, y: 1.0 },
     extinguisher: { r: 0.085, h: 0.5, out: 0.15 },
-    sign: { w: 0.44, h: 0.17, d: 0.06, y: 2.4 }, // 비상구 유도등 (문·계단 입구 위)
+    sign: { w: 0.44, h: 0.17, d: 0.06, y: 2.4, frame: { rim: 0.022, depth: 0.8 } }, // 비상구 유도등 (문·계단 입구 위), 하얀 테(단계 20): 둘레 폭·두께 비율
   },
   furniture: { // 가구 (interior/furniture.js): 다리 굵기, 의자, 교실 배치(행·간격·앞 여유·옆 여백), 교무실 책상 섬, 현관 신발장, 천장 형광등 기구
     leg: 0.035,
@@ -233,46 +233,8 @@ export const ANNEX = {
 // 신관 2층 야자 교실 창 불빛 (STORY 15장 "유일하게 밝은 곳"). 깜빡이지 않는다
 export const YAJA_LIGHT = { color: 0xe6f2ff, emissive: 1.25, leak: 0.3, intensity: 14, distance: 13, out: 1.6 };
 
-// 시각 검증용 시점 (7장)
-export const SHOTS = [
-  { name: '01_front_overview', pos: [0, 1.6, 12], yaw: 0, pitch: 4 },
-  { name: '02_entrance_canopy', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6 },
-  { name: '03_wave_corridor', pos: [4.5, 1.6, -1], yaw: -50, pitch: 5 },
-  { name: '04_piloti_green', pos: [0.5, 1.6, -6], yaw: 0, pitch: 3 },
-  { name: '05_look_up', pos: [-3, 1.6, -7], yaw: 12, pitch: 42 },
-  { name: '08_field_track', pos: [70, 1.6, 9], yaw: 20, pitch: 6 }, // 단계 7: 공원(필로티 너머)이 없어져 운동장 시점으로 바꿈
-  { name: '07_fence_gate', pos: [2, 1.6, 9], yaw: 160, pitch: 2 },
-  { name: '06_phone_light_wall', pos: [-12.5, 1.6, -3], yaw: 90, pitch: 8, light: 1 },
-  { name: '10_side_path', pos: [6, 1.6, 10.6], yaw: -82, pitch: 4 },
-  { name: '11_field_buildings', pos: [62, 1.6, -18], yaw: 58, pitch: 9 },
-  { name: '12_annex_yaja', pos: [46, 1.6, -52], yaw: 50, pitch: 8 },
-  { name: '13_bridge', pos: [44, 1.6, -71], yaw: 92, pitch: 12 },
-  { name: '09_phone_screen', pos: [3.5, 1.6, 2.5], yaw: -62, pitch: 6, light: 1, phone: 1, story: 'E3' },
-  // 단계 8: 본관 실내 (lv = 층, 0 = 1층). 실내는 어두워 핸드폰 라이트를 켠다
-  { name: '14_entrance_open', pos: [12.6, 1.6, -1], yaw: -90, pitch: 2 },
-  { name: '15_lobby_to_door', pos: [24, 1.6, -1], yaw: 90, pitch: 0, light: 1 },
-  { name: '16_lobby_lockers', pos: [22, 1.6, 4], yaw: 18, pitch: 2, light: 1 },
-  { name: '17_corridor_east', pos: [16.5, 1.6, -20], yaw: 0, pitch: 0, light: 1 },
-  { name: '18_atrium_2f', pos: [3.6, 1.6, -52.2], yaw: 160, pitch: -14, lv: 1, light: 1 },
-  { name: '19_classroom', pos: [-8.9, 1.6, -54.3], yaw: -68, pitch: -10, light: 1 },
-  { name: '20_stairs', pos: [18.7, 1.6, -19], yaw: -90, pitch: 18, light: 1 },
-  { name: '21_staff_room', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1 },
-  { name: '22_duty_room', pos: [19.4, 1.6, -34.4], yaw: -125, pitch: -6, lv: 3, light: 1 },
-  // 단계 9: 3층 연결통로·신관 실내 (open: connector = 연결문을 연 채)
-  { name: '23_bridge_door', pos: [18.9, 1.6, -55.5], yaw: 0, pitch: 4, lv: 2, light: 1 },
-  { name: '24_bridge_inside', pos: [18.5, 1.6, -60.5], yaw: 0, pitch: 0, lv: 2, light: 1, open: 'connector' },
-  { name: '25_annex_hall_3f', pos: [21.5, 1.6, -88.6], yaw: 150, pitch: 0, lv: 2, light: 1, open: 'connector' },
-  { name: '26_annex_corridor', pos: [16.4, 1.6, -92.6], yaw: 90, pitch: 0, lv: 2, light: 1 },
-  { name: '27_annex_yaja', pos: [11, 1.6, -92.9], yaw: -125, pitch: 0, lv: 1 },
-  { name: '28_annex_yaja_room', pos: [14.2, 1.6, -89.4], yaw: 110, pitch: -12, lv: 1 },
-  { name: '29_annex_stairs', pos: [16.1, 1.6, -91.9], yaw: -90, pitch: -6, lv: 1, light: 1 },
-  { name: '30_annex_desk_4f', pos: [3.6, 1.6, -89.5], yaw: 112, pitch: -22, lv: 3, light: 1 },
-  // 단계 10: 보조배터리 자리 (PB4 연결문 앞 사물함 위, PB1 현관 게시판 아래, PB2 소화전 옆) + 핸드폰 화면 위치 이름
-  { name: '31_pb4_locker', pos: [17.6, 1.6, -57.4], yaw: 41, pitch: -14, lv: 2, light: 1 },
-  { name: '32_pb1_lobby_board', pos: [25.2, 1.6, -11.6], yaw: -27, pitch: -30, light: 1 },
-  { name: '33_pb2_hydrant', pos: [16.4, 1.6, -20.6], yaw: -40, pitch: -32, light: 1 },
-  { name: '34_phone_place', pos: [19.2, 1.6, -37], yaw: -10, pitch: -4, lv: 1, light: 1, phone: 1 },
-];
+// 시각 검증용 시점 (7장)은 줄 수 규칙 때문에 config/shots.js 에 둔다 (단계 20)
+export { SHOTS } from './config/shots.js';
 
 // 핸드폰 (STORY 8장). 배터리 단위는 %. 단계 0b-1(단계 3)에서 손전등을 대체했다
 export const PHONE = {
@@ -283,7 +245,7 @@ export const PHONE = {
   LIGHT_COST_PER_SEC: 1 / 20, // 라이트 20초당 −1%
   BANK_GAIN: 15, // 보조배터리 1개
   BATTERY_MAX: 100,
-  MINGEON_START: 55, // 태민 시점(pov mingeon)의 핸드폰
+  MINGEON_START: 55, MINGEON_LIGHT: true, // 태민 시점(pov mingeon)의 핸드폰: 시작 배터리·처음 쓸 때 라이트 켜짐 [가정, 단계 19: 어두운 계단을 내려온 직후]
   WARN_LEVELS: [20, 10], // 이 값에 처음 닿을 때 한 번씩 알림
   LOW_LEVEL: 10, // 이하이면 라이트가 더 어둡고 가끔 흐려짐
   WARN_SHOW: 3, // 경고 알림 표시 시간 (초)
@@ -339,6 +301,7 @@ export const STORY = {
   subtitlePerChar: 0.07,
   timerWarn: 3, // 선택지 남은 시간이 이 이하(초)면 타이머 막대를 붉게
   interactRadius: 1.6, // E 상호작용 기본 반경 (m)
+  noInteractActions: ['blackout', 'collapse', 'escape', 'faint', 'look', 'scare', 'switch', 'vanish'], // 이 행동 줄(연출) 동안은 살펴보기 안내를 숨긴다
   hudLog: 4, // HUD 에 보이는 최근 스토리 기록 수
   endingsKey: 'schoolgame.endingsSeen', // 본 엔딩 기록 localStorage 키 (2회차 안내 조건)
   debugBook: 'dohyeonBook', // J 키(디버그)로 실행하는 상호작용 사건 — 맵 배치 전 earlyBook 확인용
@@ -351,8 +314,10 @@ export const START = {
   hintShow: 6, // 시작 안내 문구 표시 시간 (초)
 };
 
-// 사건 연출 수치(SCENE)는 줄 수 규칙(400줄) 때문에 config/scene.js 에 둔다 (단계 13)
+// 사건 연출 수치(SCENE, 단계 13)·마감 수치(FINISH: 밝기 보정·조명 구역·혼자일 때 연출, 단계 20)는 줄 수 규칙(400줄) 때문에 config/ 아래에 둔다
 export { SCENE } from './config/scene.js';
+export { FINISH } from './config/finish.js';
+export { ROOF } from './config/roof.js'; // 옥상 수영장·엔딩 D (단계 21)
 
 // 스태미나 (STORY 14-2, 단계 0b-2). 값은 STORY 의 [제안] 그대로
 export const STAMINA = {
@@ -389,7 +354,7 @@ export const PERF = {
 export const NAV = {
   step: 0.25, // 길 찾기 격자 간격 (m). 플레이어 반지름 0.3 보다 작아야 문틈을 지난다
   area: [-30, -96, 31, 16], // 격자 범위 [x0, z0, x1, z1]
-  weight: 2, // 휴리스틱 가중치 (1 = 최단. 2 = 최단보다 3% 안팎 길지만 살펴보는 칸이 절반 이하라 폰에서 덜 멈춘다)
+  weight: 1.3, // 휴리스틱 가중치 (1 = 최단). v1.26.1: 2 는 최단보다 최대 27% 긴 길(엉뚱한 계단)을 골라 화살표가 반대로 가리켰다. 1.3 은 최대 1.6% 길고 찾는 시간은 약 1.5배
   maxExpand: 400000, // 한 번 찾을 때 살펴보는 칸 수 한도 (넘으면 길 없음 처리)
   startSnap: 1.5, // 출발 위치가 가구 사이로 막혀 있으면 이 거리 안의 가장 가까운 빈 칸에서 시작 (m)
   lookahead: 8, // 화살표가 가리키는 지점: 길을 따라 이만큼 앞(m) 안에서 곧장 보이는 가장 먼 곳

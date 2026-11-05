@@ -1,5 +1,5 @@
 {
-  "_comment": "맵 데이터 (단계 10 = 옛 1d). 손으로 쓰는 부분: buildings·floor·labels·roomNames·outdoor·lockSounds·eventPlaces. 만들어지는 부분: spaces·rooms·locks — 실내 배치(mainInterior.json·annexInterior.json)를 바꾸면 `npm run map` 으로 다시 만든다(직접 고치지 않음, map.test 가 평면과 비교). 좌표 m, 사각형 [x0, z0, x1, z1], 층 level 0 = 1층. 핸드폰 위치 표시는 src/world/mapData.js. 이름·문구는 [가정].",
+  "_comment": "맵 데이터 (단계 10 = 옛 1d). 손으로 쓰는 부분: buildings·floor·labels·roomNames·outdoor·roof(옥상 수영장, 단계 21)·lockSounds·eventPlaces. 만들어지는 부분: spaces·rooms·locks — 실내 배치(mainInterior.json·annexInterior.json)를 바꾸면 `npm run map` 으로 다시 만든다(직접 고치지 않음, map.test 가 평면과 비교). 좌표 m, 사각형 [x0, z0, x1, z1], 층 level 0 = 1층. 핸드폰 위치 표시는 src/world/mapData.js. 이름·문구는 [가정].",
   "buildings": {
     "main": { "name": "구관", "outside": "본관" },
     "annex": { "name": "신관" },
@@ -13,6 +13,11 @@
     "outdoor": "{name}"
   },
   "roomNames": { "classroom": "{name} 교실", "yaja": "{name} 교실" },
+  "roof": {
+    "level": 5,
+    "rect": [-24.6,-60.6,12,-42],
+    "name": "구관 옥상 수영장"
+  },
   "outdoor": [
     { "id": "street", "name": "정문 밖 보도", "rect": [-30,15,30,19] },
     { "id": "piloti", "name": "필로티", "rect": [-5,-20,5,-14] },

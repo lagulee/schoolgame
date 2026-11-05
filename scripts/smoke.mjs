@@ -7,6 +7,11 @@ import { e7e9Smoke } from './smokeE7.mjs';
 import { e10e12Smoke } from './smokeE10.mjs';
 import { e13e15Smoke } from './smokeE13.mjs';
 import { e17Smoke } from './smokeE17.mjs';
+import { r1Smoke } from './smokeR1.mjs';
+import { r1ehSmoke, toMingeonLine } from './smokeR1eh.mjs';
+import { e1e2Smoke, e3e6Smoke } from './smokeE1E6.mjs';
+import { brightStartSmoke, brightKeySmoke, aloneSmoke, endingRestartSmoke, enginesSmoke } from './smokeFinish.mjs';
+import { roofSmoke } from './smokeRoof.mjs';
 
 const PORT = 4180;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -25,6 +30,7 @@ const S = (fn, arg) => page.evaluate(fn, arg);
 const poll = (fn, arg) => page.waitForFunction(fn, arg, { timeout: 30000 }).then(() => true, () => false); // 프레임 반영을 기다린다 (SwiftShader 는 느림)
 // 시작 흐름 (단계 0c): 경고 → 이름 입력(필수) → 시작 → 학교 앞 자유 탐색 → 현관 홀에서 E1 한 번
 check('시작 화면: 경고 문구 + 이름 칸', (await page.isVisible('#overlay .warn')) && (await page.isVisible('#name-input')));
+await brightStartSmoke({ page, check, poll }); // 실내 밝기 보정 (단계 20)
 await page.click('#overlay', { position: { x: 8, y: 8 } });
 check('이름 없이 누르면 시작하지 않음 (안내)', !(await S(() => window.__DEBUG.startFlow.started)) && (await page.textContent('#name-box .name-msg')).length > 0);
 await page.fill('#name-input', '가나다라마바사아자');
@@ -38,70 +44,20 @@ await page.click('#overlay', { position: { x: 8, y: 8 } });
 check('이름 입력 → 시작 (오버레이 숨김)', await poll(() => window.__DEBUG.startFlow.started && document.getElementById('overlay').classList.contains('hidden')));
 check('HTML 문자 이름은 글자 그대로 (태그로 해석 안 됨, localStorage 에 저장)', await S(() => window.__DEBUG.story.text('{player}') === '<i>a</i>' && !document.querySelector('#story i, #overlay i') && localStorage.getItem('schoolgame.playerName') === '<i>a</i>'));
 check('이름 칸은 첫 시작 뒤 숨김', !(await page.isVisible('#name-input')));
+await brightKeySmoke({ press, check, poll });
 check('자유 탐색 안내 문구 (6초 뒤 사라짐, headless 는 느려 문구만 확인)', await S(() => document.getElementById('notice').textContent.includes('운동장')));
 await press('Digit1', 200);
-const pre0 = await S(() => ({ bat: window.__DEBUG.phone.battery, begun: window.__DEBUG.phone.begun, obj: window.__DEBUG.story.objective(), where: window.__DEBUG.where(), hist: window.__DEBUG.story.registry.history.length }));
-await page.waitForTimeout(1500);
-const pre1 = await S(() => window.__DEBUG.phone.battery);
-check('탐색 구간: 사건 없음, 라이트를 켜도 배터리 그대로, 목표 = 현관으로, 위치 = 앞마당', pre0.hist === 0 && !pre0.begun && pre1 === pre0.bat && pre0.obj.includes('현관') && pre0.where === '앞마당', JSON.stringify({ ...pre0, pre1 }));
-// headless 는 프레임이 느려 실제로 걸어 들어가면 오래 걸린다 → 현관 앞에 세워 두고(사건 없음) 문턱 안쪽(현관 홀)으로 옮긴다
-await S(() => window.__DEBUG.player.setView([13, 1.6, -1], -90, 0));
-await page.waitForTimeout(1500);
-const porch = await S(() => ({ where: window.__DEBUG.where(), hist: window.__DEBUG.story.registry.history.length }));
-check('현관 앞(바깥)에서는 E1 없음', porch.where === '현관 앞' && porch.hist === 0, JSON.stringify(porch));
-await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
-const e1 = await poll(() => window.__DEBUG.story.event?.id === 'E1');
-const e1s = await S(() => ({ where: window.__DEBUG.where(), begun: window.__DEBUG.phone.begun, lv: window.__DEBUG.phone.level }));
-check('현관 홀에 들어서면 E1 시작 + 배터리 확정 (86~92)', e1 && e1s.begun && e1s.lv >= 86 && e1s.lv <= 92, JSON.stringify(e1s));
-for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
-await S(() => window.__DEBUG.player.setView([13, 1.6, -1], -90, 0));
-await page.waitForTimeout(800);
-await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
-await page.waitForTimeout(1500);
-check('다시 들어와도 E1 은 한 번만', await S(() => window.__DEBUG.story.registry.history.join() === 'E1' && window.__DEBUG.story.mode === 'idle'));
-// E2 (단계 12): 동쪽 복도에 들어서면 E2 → 추격 C1(실루엣·잠긴 방 3개) → 1-2 교실에 들어서면 숨기 P1 → 그림자 통과 → 퇴장·흔적.
-// headless 는 프레임이 느려 걷지 않고 자리를 옮기며, 그림자가 지나가는 8초는 시간을 건너뛴다
-await S(() => window.__DEBUG.player.setView([16.5, 1.6, -25], 180, 0));
-check('E1 뒤 동쪽 복도 → E2 시작', await poll(() => window.__DEBUG.story.event?.id === 'E2'));
-for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
-check('E2 대사 뒤 추격 C1 (경로 진행·귀신 실루엣·다른 방 잠김)', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'chase' && D.chase.active && D.scenes.e2.path && D.scenes.view.ghost.visible && D.interior.doors.list.filter((s) => s.forced).length === 6; }));
-await S(() => window.__DEBUG.player.setView([14.8, 1.6, -52], 180, 0));
-await poll(() => document.getElementById('interact').textContent.includes('행정실')); // 새 자리 첫 프레임(셰이더 준비)을 기다린다
-await press('KeyE', 120);
-check('행정실 문은 잠겨 있다 (추격 중 E = 문)', await poll(() => document.getElementById('toast').textContent.includes('행정실') && window.__DEBUG.story.action?.do === 'chase'));
-await S(() => window.__DEBUG.player.setView([6.3, 1.6, -54], 180, 0));
-check('1-2 교실에 들어서면 추격 도착 → 숨기 시작, 안내 = 라이트 끄기', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'puzzle' && D.scenes.e2.hide.phase === 'prep' && document.getElementById('hide-hint').textContent.includes('라이트'); }));
+await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 동쪽 복도 E2 (단계 0c·12)
+await aloneSmoke({ S, check, poll }); // 혼자일 때 연출 (단계 20, STORY 13-3)
 await press('KeyR', 120);
-await S(() => window.__DEBUG.player.setView([2.5, 1.6, -58], 0, 0));
-check('라이트 끄고 책상 사이 → 그림자가 지나간다', await poll(() => window.__DEBUG.scenes.e2.hide.phase === 'pass'));
-await S(() => { window.__DEBUG.scenes.e2.hide.t = 7.9; });
-check('다 지나가면 숨기 성공 → 잠금 해제', await poll(() => window.__DEBUG.puzzle.last?.outcome === 'solved' && window.__DEBUG.interior.doors.list.every((s) => !s.forced)));
-for (let i = 0; i < 30 && (await S(() => window.__DEBUG.story.registry.active)) === 'E2'; i++) await press('KeyE', 200);
-await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
-const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
-check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
-await press('KeyR', 120);
-// E3~E6 (단계 13): 3층 연결문 앞 E3(가짜 {gyuha} 등장) → 2층 복도 E4(원경 귀신·열쇠함 E → 연결문 열쇠) → 열쇠 들고 다시 온 3층 연결문 앞 E5 → 신관 5층 E6(1회차: 2-13 잠김, 아래층 소리)
-const busyDone = async (id) => { for (let i = 0; i < 40 && (await S((e) => window.__DEBUG.story.registry.active === e && window.__DEBUG.story.mode !== 'action', id)); i++) await press('KeyE', 150); return poll((e) => window.__DEBUG.story.registry.done.has(e), id); };
-await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
-check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인, 가짜 {gyuha} 등장은 e3e6 단위 테스트)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
-await S(() => window.__DEBUG.player.setView([16.5, 1.6, -30], 0, 0, 1));
-check('2층 동쪽 복도 → E4, 복도 모퉁이에 원경 귀신', await poll(() => window.__DEBUG.story.event?.id === 'E4' && window.__DEBUG.scenes.stepsView.ghosts[0].m.visible));
-for (let i = 0; i < 40 && (await S(() => window.__DEBUG.story.action?.do)) !== 'take'; i++) await press('KeyE', 150); // 자막 넘기기
-await S(() => window.__DEBUG.player.setView([18.9, 1.6, -43], 90, 0, 1));
-check('교무실 열쇠함 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('열쇠함')));
-await press('KeyE', 120);
-check('열쇠함 E → 연결문 열쇠(hasConnectorKey), E4 끝', await poll(() => window.__DEBUG.story.flags.values.hasConnectorKey) && (await busyDone('E4')));
-await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
-check('열쇠 들고 3층 연결문 앞 → E5 (문 열고 넘어감)', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await busyDone('E5')));
-await S(() => window.__DEBUG.player.setView([3, 1.6, -91.9], 0, 0, 4));
-check('신관 5층 복도 → E6', await poll(() => window.__DEBUG.story.registry.history.includes('E6')) && (await busyDone('E6')));
-const e6 = await S(() => ({ obj: window.__DEBUG.story.objective(), book: window.__DEBUG.story.used.has('take:myBook'), key: window.__DEBUG.story.flags.values.hasClassKey }));
-check('E6 끝(1회차): 책은 못 챙김, 목표 = 신관 2층으로', !e6.book && !e6.key && e6.obj.includes('2층'), JSON.stringify(e6));
+await e3e6Smoke({ S, press, check, poll }); // E3~E6 (단계 13)
 await e7e9Smoke({ S, check, poll, press });
 await e10e12Smoke({ S, check, poll, press });
 await e13e15Smoke({ S, check, poll });
 await e17Smoke({ S, check, poll });
+await r1Smoke({ S, check, poll });
+await r1ehSmoke({ S, check, poll });
+await endingRestartSmoke({ S, press, check, poll }); // 엔딩 카드 처음부터 다시 (단계 20)
 // 이후 점검은 디버그 키로 사건을 직접 부르므로 자동 진입을 끄고 스토리를 비운다 (실내 점검 중 현관 홀·복도에서 E1·E2 가 끼어들지 않게)
 await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; window.__DEBUG.story.reset(); window.__DEBUG.player.setView([0, 1.6, 12], 0, 0); });
 // 디버그 잠금: 잠긴 동안 디버그 키는 동작하지 않고, ` 키는 비밀번호 창을 연다
@@ -330,7 +286,7 @@ check('R → 라이트 다시 켬', (await ph()).light);
 await press('KeyE', 120);
 check('E 한 번 더 → 화면 닫힘', !(await ph()).open && (await poll(() => document.getElementById('phone').style.display === 'none')));
 const finishEvent = async () => {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) { // R1-d 는 대화가 길다 (단계 18)
     const mode = await S(() => window.__DEBUG.story.mode);
     if (mode === 'action') await S(() => window.__DEBUG.story.resume()); // 추격·숨기(행동 줄)는 위 E2 점검에서 봤으므로 건너뜀
     else if (mode === 'line') await press('KeyE', 120);
@@ -371,8 +327,7 @@ for (let i = 0; i < 15; i++) {
     check('R1-e 태민 시점 전환', st.pov === 'mingeon', JSON.stringify(st));
     const mp = await S(() => ({ pov: window.__DEBUG.phone.pov, bat: window.__DEBUG.phone.battery }));
     check('R1-e 태민 핸드폰 55% 에서 시작', mp.pov === 'mingeon' && mp.bat > 53 && mp.bat <= 55, JSON.stringify(mp));
-    await press('KeyE', 120); // 타자 효과 끝내기
-    await press('KeyE', 120); // 둘째 줄 = 태민 대사
+    await toMingeonLine({ S, press }); // 첫 줄 = 시점 전환(행동 줄, 단계 19) → 태민 대사 줄까지 넘긴다
     const nm = await S(() => ({ line: window.__DEBUG.story.lineIdx, who: window.__DEBUG.story.event.lines[window.__DEBUG.story.lineIdx].who, shown: getComputedStyle(document.querySelector('.story-name')).display !== 'none' }));
     check('태민 시점: 태민 대사는 이름 없이', nm.who === 'mingeon' && !nm.shown, JSON.stringify(nm));
   }
@@ -412,42 +367,9 @@ check('S 로 항목 이동(기본값 남는다 → 따라간다, 순환) → E �
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); r.update(10.5); });
 check('무응답 10초 → 기본값 남는다', await S(() => window.__DEBUG.story.mode === 'idle' && !window.__DEBUG.story.flags.values.dutyCompanion));
 await S(() => window.__DEBUG.story.reset());
-// 퍼즐 실행기 (단계 0b-4): I 시작/중지, O 단서(중복 무시), Z 정답, X 오답 3번 → 시작 지점·플래그 복원 후 다시
-await press('KeyI', 120);
-check('I → 시험 퍼즐 시작 + HUD 퍼즐 줄', await poll(() => window.__DEBUG.puzzle.puzzle?.id === 'T0' && document.getElementById('hud').textContent.includes('퍼즐 T0')));
-await press('KeyO', 120);
-await press('KeyO', 120);
-check('O → 단서 얻기 (2/3)', await poll(() => window.__DEBUG.puzzle.puzzle?.got.length === 2));
-await S(() => window.__DEBUG.puzzle.gather('a'));
-check('같은 단서는 한 번만 센다', await S(() => window.__DEBUG.puzzle.puzzle.got.length === 2));
-await S(() => window.__DEBUG.story.flags.set('earlyBook', true));
-await press('KeyX', 120);
-await press('KeyX', 120);
-await press('KeyX', 120);
-check('X 3번 → 실패, 시작 지점 복원 (단서 0·틀림 0·플래그 원복·시도 2)', await poll(() => { const s = window.__DEBUG.puzzle; return s.puzzle?.got.length === 0 && s.puzzle.wrong === 0 && s.attemptOf('T0') === 1 && !window.__DEBUG.story.flags.values.earlyBook; }));
-await press('KeyZ', 120);
-check('Z → 정답 → 성공 후 종료', await poll(() => !window.__DEBUG.puzzle.active && window.__DEBUG.puzzle.last?.outcome === 'solved' && document.getElementById('hud').textContent.includes('퍼즐: 없음')));
-// 추격 엔진 (단계 0b-3): C(디버그) 시작/중지, HUD 줄, 잡히면 시작 지점·플래그로 되돌리고 다시, 출구 여는 1초 조작 불가
-await press('KeyC', 120);
-check('C → 추격 C1 시작 + HUD 추격 줄', await poll(() => window.__DEBUG.chase.chase?.def.id === 'C1' && document.getElementById('hud').textContent.includes('추격 C1')));
-const caught = await S(() => {
-  const s = window.__DEBUG.chase;
-  const P = window.__DEBUG.player;
-  const start = [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)];
-  window.__DEBUG.story.flags.set('earlyBook', true);
-  P.setView([start[0] + 5, 1.6, start[1] + 5], 0, 0);
-  P.speed = 0;
-  s.update(8); // 가만히 서 있으면 (20 − 1.5) / 2.6 ≈ 7.1초에 잡힌다
-  return { attempt: s.chase?.attempt, gap: s.chase?.startGap, book: window.__DEBUG.story.flags.values.earlyBook, back: [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)], start };
-});
-check('잡힘 → 시작 지점·플래그 복원, 시도 2 (시작 거리 +2 m)', caught.attempt === 1 && caught.gap === 22 && !caught.book && caught.back.join() === caught.start.join(), JSON.stringify(caught));
-await press('KeyC', 120);
-check('C → 추격 중지', await poll(() => !window.__DEBUG.chase.active && document.getElementById('hud').textContent.includes('추격: 없음')));
-await S(() => { const s = window.__DEBUG.chase; s.start('C4', { atExit: 'collapse' }); Object.assign(s.chase, { phase: 'unlock', stall: 0, unlockLeft: 1, passed: true, arrivalGap: 5, gap: 5 }); });
-check('출구 여는 동안 조작 불가', await poll(() => window.__DEBUG.player.frozen && window.__DEBUG.chase.locked));
-await S(() => window.__DEBUG.chase.update(1.05)); // SwiftShader 는 프레임이 느려 1초를 직접 진행
-check('1초 뒤 통과 → collapse, 조작 복귀', await poll(() => !window.__DEBUG.chase.active && window.__DEBUG.chase.last?.finale === 'collapse' && !window.__DEBUG.player.frozen));
+await enginesSmoke({ S, press, check, poll }); // 퍼즐 실행기·추격 엔진 (단계 0b-3·0b-4)
 await mapSmoke({ S, check, poll, press }); // 단계 10: 위치 이름·보조배터리
+await roofSmoke({ S, press, check, poll }); // 단계 21: 옥상 수영장·엔딩 D·크레딧
 const info = await page.evaluate(() => ({ hud: document.getElementById('hud').textContent, pos: window.__DEBUG?.pos?.() }));
 console.log(info);
 console.log(errors.length ? `콘솔 에러 ${errors.length}건:\n${errors.join('\n')}` : '콘솔 에러 0');

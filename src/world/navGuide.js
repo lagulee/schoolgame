@@ -69,17 +69,22 @@ export class NavGuide {
     return null;
   }
 
-  // 길 위 진행: 가장 가까운 길 점 번호와 그 거리
+  // 길 위 진행: 가장 가까운 길 점 번호와 그 거리. 같은 층의 점을 먼저 보고, offPath 안에 없을 때만 levelTol 까지 넓힌다
+  // (v1.26.1: 계단통은 층계참이 위아래로 겹쳐 있어, 넓게만 보면 다른 층의 길 점을 내 자리로 잡아 화살표가 거꾸로 가리켰다)
   progress(c, x, z, level) {
-    let idx = -1;
-    let best = Infinity;
-    for (let i = 0; i < c.path.length; i++) {
-      const p = c.path[i];
-      if (Math.abs(p[2] - level) > this.cfg.levelTol) continue;
-      const e = Math.hypot(p[0] - x, p[1] - z);
-      if (e < best) [best, idx] = [e, i];
-    }
-    return { idx, off: best };
+    const near = (tol) => {
+      let idx = -1;
+      let best = Infinity;
+      for (let i = 0; i < c.path.length; i++) {
+        const p = c.path[i];
+        if (Math.abs(p[2] - level) > tol) continue;
+        const e = Math.hypot(p[0] - x, p[1] - z);
+        if (e < best) [best, idx] = [e, i];
+      }
+      return { idx, off: best };
+    };
+    const same = near(0.01);
+    return same.off <= this.cfg.offPath ? same : near(this.cfg.levelTol);
   }
 
   // 화면에 보일 안내. 반환 null(안내 없음) 또는

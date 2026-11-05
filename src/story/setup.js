@@ -7,6 +7,7 @@ import { STORY, PLAYER } from '../config.js';
 import { StoryRunner } from './runner.js';
 import { StoryUI, storyKey } from './ui.js';
 import { Interactions } from './interact.js';
+import { interactionsOpen } from './interactGate.js';
 import { FLAG_NAMES } from './flags.js';
 import { EndingsSeen } from './endingsSeen.js';
 import { applyLocal } from './names.js';
@@ -32,6 +33,7 @@ export function setupStory({ player, touch, toast }) {
 
   ui.onAdvance = () => runner.advance();
   ui.onPick = (i) => runner.choose(i);
+  ui.onRestart = () => location.reload(); // 엔딩 카드 "처음부터 다시" (단계 20): 이름 입력 화면부터, 본 엔딩 기록은 남아 다음 판이 2회차
   runner.flags.onChange = (name, value) => {
     note(`${name}=${value}`);
     toast(`플래그 ${name} = ${value}`);
@@ -50,7 +52,8 @@ export function setupStory({ player, touch, toast }) {
     runner,
     ui,
     interactions,
-    credits, // 옥상 수영장 간판 크레딧 (표시는 단계 8)
+    credits, // 옥상 수영장 간판 크레딧 (단계 21: src/world/roof/signs.js 가 그린다)
+    endings, // 본 엔딩 기록 (옥상에 닿으면 D, scene/roof.js)
     // 주인공 이름 주입 지점 (입력 화면은 단계 0c). 빈 값이면 "나"
     setPlayerName(name) {
       runner.setPlayerName(name);
@@ -80,7 +83,8 @@ export function setupStory({ player, touch, toast }) {
     update(dt) {
       runner.update(dt);
       player.frozen = runner.choosing; // 선택지가 떠 있는 동안 이동 정지 (W/S 가 선택 이동 키)
-      interactions.enabled = !runner.active || runner.mode === 'action'; // 추격·숨기 중(행동 줄)에는 문·물건을 쓸 수 있다
+      // 추격·숨기 중(행동 줄)에는 문·물건을 쓸 수 있다. 연출 행동 줄(look·escape·collapse·scare …)에는 안내를 숨긴다
+      interactions.enabled = interactionsOpen(runner);
       interactions.update(player.pos.x, player.pos.z, player.level);
     },
     hudLines() {

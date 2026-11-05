@@ -7,6 +7,7 @@ import { simulate } from '../src/chase/sim.js';
 import { FinaleView } from '../src/scene/finaleView.js';
 import { ChasePath } from '../src/scene/path.js';
 import { CHASE, PLAYER, SCENE, STAMINA, STORY } from '../src/config.js';
+import { PUZZLE } from '../src/config.js';
 import { story, chases, puzzles, C4, P2, P4, DT, SCARE, ev, world, toP4 } from './worldE13.mjs';
 
 const wrongKeys = ['74', '41', '38', '71'];
@@ -337,6 +338,44 @@ test('다른 루트·사건은 그대로: R3 의 E14~E15 트리거는 E13 전에
   w.me.z = -31.1;
   w.tick();
   assert.equal(w.runner.event, null, 'E13 전에는 E14 가 걸리지 않는다');
-  assert.deepEqual(story.events.filter((e) => e.ending).map((e) => `${e.id}/${e.ending}`), ['E14/B', 'E15/C'], '엔딩 B 는 R2 의 E14, C 는 R3 의 E15 (단계 17)');
+  assert.deepEqual(story.events.filter((e) => e.ending).map((e) => `${e.id}/${e.ending}`), ['E14/B', 'E15/C', 'R1-h/A'], '엔딩 B 는 R2 의 E14, C 는 R3 의 E15 (단계 17), A 는 R1 의 R1-h (단계 19)');
   assert.ok(STORY.endingsKey);
+});
+
+test('퍼즐 알림: P4 에서 틀리면 공통 "틀림" 알림이 이야기 문구를 덮어쓰지 않는다 (hookShown), 연출이 없는 퍼즐은 공통 알림이 나온다', async () => {
+  const { wireNotices } = await import('../src/puzzle/notices.js');
+  const data = JSON.parse((await import('node:fs')).readFileSync('data/puzzles.json', 'utf8'));
+  const w = world();
+  toP4(w);
+  w.setLight(true);
+  w.tick(P4.keys.ghost.fadeIn + 0.5);
+  const shown = [];
+  const msg = (k, v = {}) => data.messages[k].replace(/\{(\w+)\}/g, (_, n) => v[n] ?? '');
+  wireNotices({ session: w.puzzle, toast: (m) => shown.push(m), msg, clueName: (id) => id });
+  w.toasts.length = 0;
+  w.items.get(`p4:key:${wrongKeys[0]}`).onUse();
+  assert.equal(w.puzzle.puzzle.wrong, 1);
+  assert.equal(w.toasts.length, 1, 'P4 가 문구를 띄운다');
+  assert.deepEqual(shown.filter((m) => /틀림/.test(m)), [], '공통 틀림 알림 없음');
+  // 연출이 문구를 띄우지 않는 경우(디버그 퍼즐)는 공통 알림이 그대로 나온다
+  w.puzzle.stop();
+  for (const d of data.debugPuzzles) w.puzzle.defs.set(d.id, d);
+  w.puzzle.start(PUZZLE.debugId);
+  w.puzzle.submit(PUZZLE.debugWrongInput);
+  assert.ok(shown.some((m) => /틀림/.test(m)), '디버그 퍼즐은 공통 틀림 알림');
+});
+
+test('살펴보기 안내: 사건이 없거나 추격·퍼즐 행동 줄에서는 켜 두고, 연출 행동 줄(look·scare·collapse …)에서는 끈다', async () => {
+  const { interactionsOpen } = await import('../src/story/interactGate.js');
+  const { STORY } = await import('../src/config.js');
+  const mk = (active, mode, d) => ({ active, mode, action: d ? { do: d } : null });
+  assert.equal(interactionsOpen(mk(false, 'idle')), true, '사건 없음');
+  assert.equal(interactionsOpen(mk(true, 'line')), false, '대사 중');
+  for (const d of ['chase', 'puzzle', 'take', 'reach', 'sound']) assert.equal(interactionsOpen(mk(true, 'action', d)), true, d);
+  for (const d of ['look', 'scare', 'collapse', 'escape', 'switch', 'vanish', 'faint', 'blackout']) assert.equal(interactionsOpen(mk(true, 'action', d)), false, d);
+  // 설정 목록은 story.json 의 실제 행동 줄 이름과 어긋나지 않는다
+  const used = new Set();
+  const walk = (v) => (Array.isArray(v) ? v.forEach(walk) : v && typeof v === 'object' ? (v.do && used.add(v.do), Object.values(v).forEach(walk)) : 0);
+  walk(story);
+  for (const d of STORY.noInteractActions) assert.ok(used.has(d), `${d} 는 story.json 에 쓰인다`);
 });

@@ -1,4 +1,4 @@
-// 마지막 장면의 행동 줄 (단계 16, three·DOM 없음): { do: 'look', id } 시선 돌리기(E14), { do: 'collapse', id } 쓰러짐(E15, 엔딩 C).
+// 마지막 장면의 행동 줄 (단계 16, three·DOM 없음): { do: 'look', id } 시선 돌리기(E14, 단계 19 부터 고개 각도 pitch 도), { do: 'collapse', id } 쓰러짐(E15, 엔딩 C).
 // 모든 판단은 update() 에서 지금 상태(runner.action)를 보고 하므로 체크포인트 복원·디버그 건너뛰기에도 따로 맞출 것이 없다 (faint.js 와 같은 방식).
 // 화면(검은 막·붉은 막·눈높이·고개)은 finaleView.js 가 이 상태를 읽어 그린다. 막은 한 방향으로만 변한다(깜빡임 0회).
 const PI2 = Math.PI * 2;
@@ -42,9 +42,10 @@ export class Look {
       const to = def.at ? yawTo(this.base.pos[0], this.base.pos[2], def.at[0], def.at[1]) : ((def.yaw ?? 0) * Math.PI) / 180;
       this.from = this.base.yaw;
       this.delta = turnDelta(this.from, to);
+      this.pitchTo = ((def.pitch ?? 0) * Math.PI) / 180; // 고개 각도(도, 음수 = 아래, 단계 19: 바닥의 흔적을 내려다봄). 없으면 수평
     } else this.t += dt;
     const k = ease(this.t / def.time);
-    this.pose.set({ ...this.base, yaw: this.from + this.delta * k, pitch: this.base.pitch * (1 - k) });
+    this.pose.set({ ...this.base, yaw: this.from + this.delta * k, pitch: this.base.pitch + (this.pitchTo - this.base.pitch) * k });
     if (this.t >= def.time) {
       this.line = null;
       this.runner.resume('look');

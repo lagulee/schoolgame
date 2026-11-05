@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA, DEBUG } from './config.js';
+import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA, DEBUG, FINISH } from './config.js';
 import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
@@ -25,6 +25,8 @@ import { setupPuzzle } from './puzzle/setup.js';
 import { Prelude } from './story/prelude.js';
 import { setupStartFlow } from './ui/startFlow.js';
 import { setupScenes } from './scene/setup.js';
+import { Brightness } from './ui/brightness.js';
+import { mountBrightness } from './ui/brightnessUi.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -93,7 +95,7 @@ const guide = (dt) => {
   const angle = Math.round((Math.atan2(v.ax * -fz + v.az * fx, v.ax * fx + v.az * fz) * 180) / Math.PI);
   return { state: v.state, text: v.text, step: v.step, rough: v.rough, angle };
 };
-const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where, guide }); // 손전등 대신 핸드폰 라이트 (결정 D6) // 손전등 대신 핸드폰 라이트 (결정 D6)
+const phone = setupPhone({ scene, camera, story, touch: touchMode, toast, collision, where, guide, note: () => scenes.roof.keyNote() }); // 손전등 대신 핸드폰 라이트 (결정 D6). note = 옥상 열쇠 안내 (단계 21)
 player.phoneOpen = () => phone.phone.screenOpen; // 화면이 열린 동안 이동 ×0.7·달리기 불가
 const staminaBar = new StaminaBar(STAMINA);
 // 스태미나는 체크포인트 시점의 값으로 되돌린다 (단계 0b-3: 추격에서 잡히면 추격 시작 때의 값. 마지막 추격은 시작 때 가득)
@@ -112,6 +114,11 @@ player.onStep = (surface, running) => audio.step(surface, running);
 world.interior.attach({ interactions: story.interactions, toast, audio, player, hasKey: (name) => story.runner.flags.values[name] === true, runner: story.runner, lockSound: (id) => mapData.lockSound(id), take: (id) => scenes.steps.take(id) });
 // 사건 연출 (단계 12): E2 자리 진입·추격 C1·숨기 P1·흔적·E1 조작 안내
 const scenes = setupScenes({ scene, camera, story, chase, puzzle, player, phone, world, mapData, collision, audio, toast, touch: touchMode });
+// 실내 밝기 보정 (단계 20): 브라우저에 저장, 시작 화면·- = 키·터치 메뉴
+const brightness = new Brightness(FINISH.bright, (() => { try { return localStorage; } catch { return null; } })());
+const brightBox = mountBrightness(document.querySelector('#overlay .card'), brightness);
+world.interior.atmo.setBright(brightness);
+brightness.onChange = () => { world.interior.atmo.setBright(brightness); brightBox.sync(); toast(`실내 밝기 ${brightness.label}`); };
 const director = new Director({
   scene, camera, lights, audio,
   signs: [world.ctx.entrance.sign, world.ctx.sur.sign],
@@ -162,7 +169,7 @@ const act = {
   quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
-  storyReset: () => { chase.reset(); puzzle.reset(); story.reset(); phone.reset(); player.stamina.reset(); },
+  storyReset: () => { chase.reset(); puzzle.reset(); story.reset(); scenes.roof.stop(); phone.reset(); player.stamina.reset(); },
   chase: () => chase.debugToggle(),
   puzzle: () => puzzle.debugToggle(),
   puzzleClue: () => puzzle.debugClue(),
@@ -176,16 +183,19 @@ const act = {
   unlock: () => (gate.unlocked ? toast('디버그 잠금 해제됨') : gateUi.show()),
   shot: () => { requestScreenshot(); toast('스크린샷 저장'); },
   bob: () => toast(`헤드밥 ${Math.round(player.bob.cycleLevel() * 100)}%`),
+  brightDown: () => brightness.step(-1) === FINISH.bright.min && toast(`실내 밝기 ${brightness.label} (최저)`),
+  brightUp: () => brightness.step(1) === FINISH.bright.max && toast(`실내 밝기 ${brightness.label} (최고)`),
 };
 const KEYS = {
   KeyE: act.phone, KeyR: act.light, KeyU: act.bank, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
+  Minus: act.brightDown, Equal: act.brightUp, NumpadSubtract: act.brightDown, NumpadAdd: act.brightUp,
   KeyY: act.event, KeyC: act.chase, KeyI: act.puzzle, KeyO: act.puzzleClue, KeyZ: act.puzzleRight, KeyX: act.puzzleWrong, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob, KeyT: act.ghost, KeyF: act.infStamina,
 };
-// 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
-const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote']);
+// 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질·실내 밝기. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
+const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote', 'Minus', 'Equal', 'NumpadSubtract', 'NumpadAdd']);
 const unlocked = () => gate.unlocked;
-const verTap = tapCounter(DEBUG.tapCount, DEBUG.tapWindowMs, () => act.unlock());
+const verTap = tapCounter(DEBUG.tapCount, () => DEBUG.tapWindowMs, () => act.unlock());
 const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` 키로 해제)'));
 // E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
 addEventListener('keydown', (e) => {
@@ -217,6 +227,7 @@ if (touchMode) {
       { label: '이상 현상 발동', run: dbg(act.event), show: unlocked },
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
+      { label: () => `실내 밝기 ${brightness.label}`, run: () => brightness.cycle() },
       { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: dbg(act.bob), show: unlocked },
       { ...flag('bloom', '블룸'), show: unlocked },
       { ...flag('grain', '그레인'), show: unlocked },
@@ -277,7 +288,7 @@ function step(t, dt) {
   renderer.info.reset();
   U.time.value = t;
   if (dt > 0) player.update(dt);
-  if (!shot) director.update(t, dt);
+  if (!shot && !scenes.roof.paused) director.update(t, dt); // 옥상(엔딩 D)에서는 이상 현상도 멈춘다
   prelude.update(player.pos.x, player.pos.z, player.level);
   story.update(dt);
   scenes.update(dt); // 추격 진행(경로 투영)을 추격 update 보다 먼저
@@ -300,7 +311,7 @@ function step(t, dt) {
     });
   }
 }
-window.__DEBUG = { scene, camera, step, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
@@ -314,6 +325,8 @@ if (shot) {
   if (shot.noPost) post.enabled = false;
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch, shot.level);
   if (shot.open.includes('connector')) world.interior.connector.set(true);
+  if (shot.bright !== null) { brightness.level = brightness.clamp(shot.bright); world.interior.atmo.setBright(brightness); } // 저장값을 바꾸지 않고, 알림 없이
+  if (shot.power === false) { story.runner.used.add('power:off'); world.interior.atmo.powerOut = true; } // 정전 뒤 (스냅 전에)
   world.interior.snap(player, camera); // 자동문·실내 노출을 최종 상태로
   if (shot.event) {
     director.t = shot.time;

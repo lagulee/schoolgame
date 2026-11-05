@@ -4,6 +4,7 @@ import data from '../../data/puzzles.json';
 import { PUZZLE } from '../config.js';
 import { GhostHooks } from './hooks.js';
 import { PuzzleSession } from './session.js';
+import { wireNotices } from './notices.js';
 
 const fill = (tpl, vars) => tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 
@@ -15,12 +16,7 @@ export function setupPuzzle({ story, toast }) {
   const def = () => session.defs.get(PUZZLE.debugId);
   const clueName = (id) => def().clues.find((c) => c.id === id)?.name ?? id;
 
-  session.onStart = ({ id }) => toast(msg('start', { name: session.defs.get(id).name, total: session.puzzle.total }));
-  session.onClue = ({ clue, n, total, dup }) => toast(dup ? msg('clueDup', { clue: clueName(clue) }) : msg('clue', { clue: clueName(clue), n, total }));
-  session.onComplete = () => toast(msg('complete'));
-  session.onWrong = ({ wrong, limit }) => toast(msg('wrong', { wrong, limit }));
-  session.onSuccess = ({ id }) => toast(msg('success', { name: session.defs.get(id).name }));
-  session.onFail = ({ id, attempt }) => toast(msg('fail', { limit: session.defs.get(id).wrongLimit, attempt: attempt + 1 }));
+  wireNotices({ session, toast, msg, clueName });
 
   const need = (fn) => {
     if (!session.active) return toast(msg('none'));

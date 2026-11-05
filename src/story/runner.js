@@ -24,6 +24,7 @@ export class StoryRunner {
     this.pov = 'player';
     this.repeat = false; // 엔딩을 본 뒤의 판이면 true → objectiveRepeat 를 쓴다 (setup 이 endingsSeen 으로 정함)
     this.allEndings = false; // A·B·C 를 모두 본 뒤의 판이면 true → grantRoofKey 사건(E1)에서 hasRoofKey (setup 이 정함)
+    this.bonus = null; // 보너스 장면의 핸드폰 목표 키 (단계 21: 옥상 수영장 'roofPool'). 있으면 사건 목표 대신
     this.onEvent = null; // (id, phase: 'start'|'end') => void
     this.onChoice = null; // (eventId, optionId, timedOut) => void
     this.onEnding = null; // (endingKey, route) => void
@@ -97,6 +98,7 @@ export class StoryRunner {
 
   // 핸드폰 목표 키 (story.json objectives 의 키). 엔딩을 본 판이면 objectiveRepeat 우선. 길 안내(data/nav.json)도 이 키를 쓴다
   objectiveKey() {
+    if (this.bonus) return this.bonus;
     const ev = this.phoneEvent();
     // 아직 아무 사건도 시작하지 않았으면 시작 전 탐색 구간 목표 (story.prelude, 단계 0c). 끝난 사건에 objectiveDone 이 있으면 그것 (단계 12)
     let done = ev && this.event?.kind !== 'event' && ev.objectiveDone;
@@ -257,7 +259,7 @@ export class StoryRunner {
     this.lineLeft = Infinity;
     this.ui.showLine({
       style: 'ending',
-      speaker: `${route} → ${e ? e.title : '엔딩 없음'}`,
+      speaker: e?.hidden ? e.title : `${route} → ${e ? e.title : '엔딩 없음'}`, // 숨겨진 엔딩(D)은 루트와 상관없다
       text: e ? this.text(e.summary) : '이 루트의 엔딩이 정의되지 않았다',
     });
     this.onEnding?.(key, route);
@@ -333,6 +335,7 @@ export class StoryRunner {
     this.flags.reset();
     this.registry.reset();
     this.used.clear();
+    this.bonus = null;
     this.setPov('player');
   }
 

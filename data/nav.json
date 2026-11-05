@@ -26,13 +26,16 @@
     "dohyeonBook": [{ "to": "A4F-2", "text": "신관 4층 2-10 교실" }],
     "giveBook": [{ "to": "AC@1", "text": "신관 2층 복도" }],
     "goOld": [{ "to": "lobby", "text": "구관 현관 홀" }],
+    "goDuty": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "findClue": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "exitKeyPlan": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "findExitKey": [{ "to": "2F-staff", "text": "구관 교무실 열쇠함" }],
     "wait": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
     "followDuty": [{ "to": "2F-staff", "text": "구관 교무실" }],
     "waitDuty": [{ "to": "4F-duty", "text": "구관 4층 당직실" }],
+    "keyToLobby": [{ "to": "lobby", "text": "구관 현관 홀" }],
     "runExit": [{ "to": "lobby", "text": "구관 현관 홀" }],
-    "exit": [{ "to": "lobby", "text": "구관 현관 홀" }]
+    "exit": [{ "to": "lobby", "text": "구관 현관 홀" }],
+    "roofPool": []
   }
 }

@@ -29,6 +29,7 @@ export class PhoneUI {
       return el('div', 'ph-value', r);
     };
     this.objEl = row(this.t.objective);
+    this.noteEl = el('span', 'ph-note', this.objEl.parentElement); // 목표 아래 작은 줄 (옥상 열쇠 안내, 단계 21)
     this.placeEl = row(this.t.place);
     // 가는 길 (길 안내): 화살표(내가 보는 쪽 기준 방향) + 이름·거리 + 계단 안내. 안내가 없는 목표에서는 줄째 숨긴다
     this.routeRow = el('div', 'ph-row ph-route', this.root);
@@ -67,6 +68,8 @@ export class PhoneUI {
     this.lightEl.textContent = `${this.t.light} ${view.lightOn ? this.t.on : this.t.off}`;
     this.lightEl.classList.toggle('on', view.lightOn);
     this.objEl.textContent = view.objective || this.t.none;
+    this.noteEl.textContent = view.note ?? '';
+    this.noteEl.style.display = view.note ? '' : 'none';
     this.placeEl.textContent = view.place || this.t.none;
     const g = view.guide;
     this.routeRow.style.display = g ? '' : 'none';

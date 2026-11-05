@@ -4,8 +4,10 @@
 // 신관 2층에 있으면 야자 교실 창 밖의 번짐 광원을 교실 천장 아래로 옮긴다 (광원 수 그대로, 깜빡임 없음).
 // 정전(단계 14, E7): powerOut 이 켜지면 야자 교실 형광등·창 빛이 SCENE.blackout.off 초 만에 한 번 꺼지고(깜빡임 0회),
 // 신관·연결통로 안에서는 SCENE.blackout.fade 초에 걸쳐 노출·하늘빛을 더 낮춘다. 다시 켜지지 않는다.
+// 마감(단계 20): 조명 구역(FINISH.zones, STORY 15장 표)마다 하늘빛·눈 적응 빛 배율을 천천히 옮기고, 밝기 보정(setBright)과
+// 혼자일 때 조명 떨림(tremble, scene/alone.js 가 정한다 — 한 번 어두워졌다 돌아올 뿐)을 곱한다.
 import * as THREE from 'three';
-import { INTERIOR, LIGHTS, DIM, ANNEX, YAJA_LIGHT, SCENE } from '../../config.js';
+import { INTERIOR, LIGHTS, DIM, ANNEX, YAJA_LIGHT, SCENE, FINISH } from '../../config.js';
 import { locate } from './site.js';
 import { yAt } from './plan.js';
 import { contains } from './rects.js';
@@ -51,6 +53,24 @@ export class Atmosphere {
     this.yajaOut = lights.yaja?.position.clone() ?? null;
     this.yajaIn = room ? new THREE.Vector3((room.rect[0] + room.rect[2]) / 2, yAt(room.L) + ANNEX.yaja.y, (room.rect[1] + room.rect[3]) / 2) : null;
     this.yajaInRoom = null;
+    this.zone = 1; // 조명 구역 배율 (지금 값, 목표로 천천히)
+    this.bright = { light: 1, exposure: 0 }; // 밝기 보정 (setBright)
+    this.tremble = 1; // 혼자일 때 조명 떨림 (1 = 그대로)
+    this.applied = '';
+  }
+
+  // 밝기 보정 단계 반영 (ui/brightness.js 의 light·exposure)
+  setBright({ light, exposure }) {
+    this.bright = { light, exposure };
+  }
+
+  // 지금 자리의 조명 구역 배율 (STORY 15장 표). 바깥이면 1
+  zoneTarget(player) {
+    const Z = FINISH.zones;
+    if (!this.inside) return 1;
+    if (this.where === 'bridge') return Z.bridge;
+    if (this.where === 'annex') return Z.annex;
+    return (player.level ?? 0) >= 0.5 - 1e-6 ? Z.upper : Z.lobby;
   }
 
   // 건물 안인가: 본관·신관 실내 공간·계단·연결통로·현관 문턱
@@ -74,16 +94,21 @@ export class Atmosphere {
     this.k = this.t * this.t * (3 - 2 * this.t); // 부드럽게
     const darkPrev = this.dark;
     this.blackout(dt, snap);
-    if (this.k !== prev || this.dark !== darkPrev) {
+    const zt = this.zoneTarget(player);
+    const zs = dt / FINISH.zones.fade;
+    this.zone = snap ? zt : zt > this.zone ? Math.min(zt, this.zone + zs) : Math.max(zt, this.zone - zs);
+    const sig = `${this.zone}|${this.bright.light}|${this.bright.exposure}`;
+    if (this.k !== prev || this.dark !== darkPrev || sig !== this.applied) {
+      this.applied = sig;
       const B = SCENE.blackout;
-      const inside = INTERIOR.inside.exposure + (B.exposure - INTERIOR.inside.exposure) * this.dark;
+      const inside = INTERIOR.inside.exposure + (B.exposure - INTERIOR.inside.exposure) * this.dark + this.bright.exposure;
       this.renderer.toneMappingExposure = LIGHTS.exposure + (inside - LIGHTS.exposure) * this.k;
-      this.lights.setIndoor(this.k);
-      this.lights.setDark?.(1 + (B.hemi - 1) * this.dark);
+      if (prev !== this.k) this.lights.setIndoor(this.k);
+      this.lights.setDark?.((1 + (B.hemi - 1) * this.dark) * this.zone * this.bright.light);
     }
     this.lights.freezeMoon(this.k > 0.98);
     this.near.position.copy(camera.position);
-    this.near.intensity = INTERIOR.nearSight.intensity * this.k;
+    this.near.intensity = INTERIOR.nearSight.intensity * this.k * this.zone * this.bright.light * this.tremble;
     this.visibility(player, camera);
     this.signs(dt, camera, snap);
     this.yaja(player);
@@ -135,12 +160,12 @@ export class Atmosphere {
           const [nx, nz] = free.normal;
           slot.l.color.set(k.color);
           slot.l.distance = k.distance;
-          slot.l.position.set(x + nx * 0.25, y - 0.1, z + nz * 0.25);
+          slot.l.position.set(x + nx * S.out, y - S.drop, z + nz * S.out);
           slot.base = k.intensity;
         }
       }
       if (slot.sign && this.want.includes(slot.sign)) slot.w = snap ? 1 : Math.min(1, slot.w + dt / SWAP);
-      slot.l.intensity = slot.sign ? slot.base * slot.w * this.k : 0;
+      slot.l.intensity = slot.sign ? slot.base * slot.w * this.k * this.tremble : 0;
     }
   }
 
@@ -178,6 +203,6 @@ export class Atmosphere {
     const lv = player.level ?? 0;
     const floor = Number.isInteger(lv) ? `${lv + 1}층` : `${Math.floor(lv) + 1}층 위 계단참`;
     const where = `${BUILDING[this.where] ?? ''}${floor} ${s?.name ?? '현관 문턱'}`;
-    return `실내: ${this.inside ? where : '바깥'}${this.powerOut ? ' 정전' : ''}  노출 ${this.renderer.toneMappingExposure.toFixed(2)}  표시등 ${this.pool.filter((p) => p.l.intensity > 0).length}/${this.pool.length}`;
+    return `실내: ${this.inside ? where : '바깥'}${this.powerOut ? ' 정전' : ''}  노출 ${this.renderer.toneMappingExposure.toFixed(2)}  구역 ×${this.zone.toFixed(2)}  밝기 ×${this.bright.light.toFixed(2)}${this.tremble < 1 ? ` 떨림 ${this.tremble.toFixed(2)}` : ''}  표시등 ${this.pool.filter((p) => p.l.intensity > 0).length}/${this.pool.length}`;
   }
 }

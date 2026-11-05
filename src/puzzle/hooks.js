@@ -11,6 +11,7 @@ export class GhostHooks {
   constructor({ log = null } = {}) {
     this.log = log;
     this.impl = new Map(); // 훅 이름 → 연출 함수 목록
+    this.shown = false;
     this.history = []; // 최근 호출 기록 (디버그 HUD·테스트)
   }
 
@@ -28,7 +29,8 @@ export class GhostHooks {
     this.history.push(line);
     if (this.history.length > 8) this.history.shift();
     this.log?.(line);
-    for (const fn of this.impl.get(name) ?? []) fn({ puzzle: puzzleDef.id, ...info });
+    this.shown = false; // 연출 함수가 true 를 돌려주면 자기 문구를 띄운 것 — 공통 알림이 덮어쓰지 않게 (session.emit)
+    for (const fn of this.impl.get(name) ?? []) if (fn({ puzzle: puzzleDef.id, ...info }) === true) this.shown = true;
     return true;
   }
 }

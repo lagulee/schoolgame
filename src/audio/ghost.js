@@ -118,3 +118,26 @@ export function ghostKnock(audio, pos, gain = 0.7) {
     return 0.8;
   }, { ref: 3, rolloff: 1, max: 30 });
 }
+
+// 검은 연기로 흩어지는 소리 (단계 18, R1-d): 낮게 깔린 바람 같은 쉿 소리가 천천히 일었다 잦아든다 (날카로운 소리 없음)
+export function ghostHiss(audio, pos, gain = 0.35, dur = 2.6) {
+  audio.oneShot(pos, (ctx, out, t) => {
+    const n = ctx.createBufferSource();
+    n.buffer = audio.noise;
+    n.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 0.8;
+    bp.frequency.setValueAtTime(500, t);
+    bp.frequency.exponentialRampToValueAtTime(1600, t + dur * 0.4);
+    bp.frequency.exponentialRampToValueAtTime(300, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(bp).connect(g).connect(out);
+    n.start(t, Math.random() * 1.5);
+    n.stop(t + dur + 0.05);
+    return dur;
+  }, { ref: 3, rolloff: 1, max: 30 });
+}

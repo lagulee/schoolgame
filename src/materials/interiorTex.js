@@ -202,21 +202,26 @@ export function noticeTexture(seed = 7) {
 
 // 비상구 유도등: 초록 바탕 + 흰 달리는 사람 + 문 (그림만, 글자 없음)
 export function exitSignTexture() {
-  const W = 256;
-  const H = 100;
+  // 피난구 유도등 (단계 20 마감: 해상도 2배, 가장자리 테두리): 초록 바탕에 흰 문과 그쪽으로 달려가는 사람, 왼쪽 화살표. 글자는 넣지 않는다 (글꼴 없이도 같게)
+  const W = 512;
+  const H = 200;
   const [c, x] = canvas(W, H);
-  x.fillStyle = '#18c060';
+  x.fillStyle = '#14b257';
   x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#0b6e35';
+  x.lineWidth = 10;
+  x.strokeRect(5, 5, W - 10, H - 10);
   x.fillStyle = '#f4fff6';
   x.fillRect(W * 0.62, H * 0.14, W * 0.22, H * 0.72); // 문
-  x.fillStyle = '#18c060';
+  x.fillStyle = '#14b257';
   x.fillRect(W * 0.66, H * 0.2, W * 0.14, H * 0.6);
   x.strokeStyle = '#f4fff6';
   x.lineCap = 'round';
-  x.lineWidth = 9;
+  x.lineJoin = 'round';
+  x.lineWidth = 18;
   const P = (a, b) => [W * a, H * b];
   x.beginPath();
-  x.arc(...P(0.42, 0.22), 9, 0, Math.PI * 2);
+  x.arc(...P(0.42, 0.22), 18, 0, Math.PI * 2);
   x.fillStyle = '#f4fff6';
   x.fill();
   for (const seg of [[[0.4, 0.33], [0.36, 0.58]], [[0.36, 0.58], [0.27, 0.82]], [[0.36, 0.58], [0.46, 0.7]], [[0.46, 0.7], [0.48, 0.86]], [[0.39, 0.38], [0.5, 0.48]], [[0.39, 0.38], [0.28, 0.46]]]) {

@@ -65,8 +65,9 @@ export class PuzzleSession {
 
   // 훅(연출) 다음 콜백(사건 진행)
   emit(def, name, info) {
+    this.hooks.shown = false;
     this.hooks.call(def, name, info);
-    this[name]?.(info);
+    this[name]?.({ ...info, hookShown: this.hooks.shown }); // hookShown: 연출이 자기 문구를 띄웠으면 공통 알림은 건너뛴다
   }
 
   gather(clueId) {

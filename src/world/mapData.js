@@ -26,6 +26,8 @@ export class MapData {
       const r = this.map.rooms.find((t) => t.building === b && t.level === L && contains(t.rect, x, z));
       if (r) return { building: b, id: r.id, kind: r.kind, name: r.name, level };
     }
+    const R = this.map.roof; // 옥상 수영장 (단계 21, data/roof.json 의 데크·계단탑 자리)
+    if (R && Math.abs(level - R.level) < 1e-6 && contains(R.rect, x, z)) return { building: null, id: 'roof', kind: 'outdoor', name: R.name, level };
     if (level !== 0) return null;
     const o = this.map.outdoor.find((t) => contains(t.rect, x, z));
     return o ? { building: null, id: o.id, kind: 'outdoor', name: o.name, level } : null;

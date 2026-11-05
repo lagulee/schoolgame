@@ -8,7 +8,7 @@ import { addFurnitureCollision } from '../src/world/interior/furniture.js';
 import { MapData } from '../src/world/mapData.js';
 import { NavGuide } from '../src/world/navGuide.js';
 import { site, furniture, read, openWorld, distances, POINTS } from './mapWorld.mjs';
-import { PLAYER } from '../src/config.js';
+import { PLAYER, NAV } from '../src/config.js';
 
 const navData = read('nav.json');
 const story = read('story.json');
@@ -84,6 +84,10 @@ test('모든 목표가 현관 홀·교무실·연결문·신관에서 열쇠를 
     for (const f of from) {
       const g = mk(flags);
       const v = g.update(0, f[0], f[1], f[2], k);
+      if (!navData.goals[k].length) { // 빈 목록 = 안내 없음 (단계 21 옥상 수영장 roofPool)
+        assert.equal(v, null, k);
+        continue;
+      }
       assert.ok(v, k);
       if (v.state === 'arrived') continue;
       assert.equal(v.state, 'path', `${k} ← ${f}`);
@@ -142,4 +146,18 @@ test('Collision.hit 의 ignore: 무시한 박스는 통과, 나머지는 그대�
   assert.equal(c.hit(0.5, 0.5, PLAYER.radius), true);
   assert.equal(c.hit(0.5, 0.5, PLAYER.radius, 0, new Set([b])), false);
   assert.equal(c.hit(0.5, 0.5, PLAYER.radius, 0, new Set()), true);
+});
+
+// v1.26.1 사용자 제보: "가는 길 화살표가 엉뚱한 쪽". 휴리스틱 가중치 2 는 1-1 교실 → 교무실에서 최단(약 65 m)보다
+// 30% 넘게 먼 계단으로 안내해, 걸어가는 동안 화살표가 반대쪽을 가리켰다.
+test('가는 길은 최단 길(가중치 1)과 5% 안 — 1층 교실·현관·연결문 앞에서 초반 목표들', () => {
+  const opt = { ...NAV, weight: 1, maxExpand: 4000000 };
+  const cases = [['room11', 'findConnectorKey', {}], ['room11', 'goFifth', {}], ['lobby', 'findConnectorKey', {}], ['bridgeDoor', 'findConnectorKey', {}], ['staff', 'openConnector', { hasConnectorKey: true }], ['hydrant', 'hide', {}]];
+  for (const [from, obj, flags] of cases) {
+    const hasKey = (n) => flags[n] === true;
+    const a = new NavGuide({ col: W.col, info: W.info, mapData, data: navData, hasKey }).update(0, ...POINTS[from], obj);
+    const b = new NavGuide({ col: W.col, info: W.info, mapData, data: navData, hasKey, cfg: opt }).update(0, ...POINTS[from], obj);
+    assert.equal(a.state, 'path', `${from} → ${obj}`);
+    assert.ok(a.dist <= b.dist * 1.05 + 1, `${from} → ${obj}: ${a.dist} m (최단 ${b.dist} m)`);
+  }
 });

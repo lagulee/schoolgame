@@ -16,7 +16,9 @@
     },
     {
       "id": "C3", "name": "{mingeon} 시점 도주", "events": ["R1-g"], "place": "교무실 앞 → 복도 → 현관", "final": true,
-      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": []
+      "ghostSpeed": 3.4, "startGap": 3, "pathLength": 40, "companionKillDelay": 4, "unlockTime": 1.0, "delays": [],
+      "path": { "_comment": "단계 19 [가정]: C4 와 같은 실제 경로 — R1-f({duty} 가 붙잡힌 자리, 교무실을 나와 2층 동쪽 복도 남쪽 z −31) → 현관 쪽 계단 → 1층 동쪽 복도 → 현관 홀 → 유리문 앞. STORY 10-1 의 지형 중 '계단으로 아래층 이동'·'복도 모퉁이'만 쓰고 '사물함 숨기'는 넣지 않았다(지형 1~2개 원칙, 40 m 안에 지연 없음). 수치가 C4 와 같아 시뮬레이션 결과도 같다",
+        "points": [[17.0, -40.0, 1], [17.0, -31.0, 1], [17.3, -20.25, 1], [23.4, -20.25, 0.5], [23.4, -18.5, 0.5], [19.0, -18.5, 0], [16.7, -17.0, 0], [16.7, -0.6, 0]], "startAt": 9, "level": 1 }
     },
     {
       "id": "C4", "name": "열쇠를 들고 현관으로", "events": ["E14"], "place": "교무실 → 복도 → 계단 → 현관 홀", "final": true,
