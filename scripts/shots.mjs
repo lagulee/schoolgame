@@ -34,6 +34,7 @@ for (const s of SHOTS) {
   if (s.lv) q.set('lv', s.lv);
   if (s.inspect) q.set('inspect', '1');
   if (s.story) q.set('story', s.story);
+  if (s.line != null) q.set('line', s.line);
   if (s.open) q.set('open', s.open);
   for (const [k, v] of Object.entries(s.q ?? {})) q.set(k, v); // 단계 20: bright·power·ending 등
   if (args.extra) for (const kv of args.extra.split('&')) { const [k, v] = kv.split('='); q.set(k, v); }

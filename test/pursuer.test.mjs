@@ -15,7 +15,7 @@ addSchoolCollision(col);
 const h = addSiteCollision(col, site);
 for (const F of furniture) addFurnitureCollision(col, F);
 const nav = new Navigator(col);
-nav.setPassable(new Set([...h.doors.values(), h.connector.closed]), 'ghost');
+nav.setPassable(new Set([...h.doors.values(), h.connector.closed, h.connector.annex.closed]), 'ghost');
 
 const DT = 1 / 30;
 const path = new ChasePath({ points: [[16.5, -6], [16.5, -51.5], [-17, -51.5]], startAt: 17.5 });

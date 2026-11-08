@@ -1,4 +1,6 @@
-// 단계 12(2a): E1 → E2 자리 진입 → 추격 C1(실제 경로) → 숨기 P1 → {gyuha} 퇴장 → 흔적. 잡힘 → 체크포인트 복원 → 재시도 gap 증가.
+// 단계 12(2a): 추격(실제 경로) → 숨기 P1 → {gyuha} 퇴장 → 흔적. 잡힘 → 체크포인트 복원 → 재시도 gap 증가.
+// 2026-11-08: 게임의 E2 는 3층 연결통로 가는 길의 원경 목격으로 바뀌어 추격·퍼즐이 없다(맨 아래 시험). 추격 엔진·숨기 실행기는 그대로 남아 있어,
+// 아래 시험은 예전 E2(1층 동쪽 복도 추격 C1 → 숨기 P1)를 시험용 사건으로 되살려 계속 확인한다.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,7 +17,25 @@ import { MapData } from '../src/world/mapData.js';
 import { CHASE, PUZZLE, PLAYER } from '../src/config.js';
 import { loadStory, loadSkeletons, fakeUI } from './helpers.mjs';
 
-const { story, characters } = loadStory();
+const { story: current, characters } = loadStory();
+const story = structuredClone(current); // 시험용: E2 를 예전 모양(추격 C1 + 숨기 P1, 1층 동쪽 복도)으로 되돌린 사본
+{
+  const i = story.events.findIndex((e) => e.id === 'E2');
+  story.events[i] = {
+    id: 'E2', title: '복도의 그것(예전 E2)', place: '구관 1층 복도·교실', routes: ['R1', 'R2', 'R3'], stage: 2, pov: 'player', objective: 'hide', objectiveDone: 'goFifth', chase: 'C1', puzzle: 'P1',
+    lines: [
+      { who: 'gyuha', text: '방금… 저기 뭐 있었어. 봤어?' },
+      { style: 'subtitle', text: '현관 쪽 복도 끝에서 그것이 다가온다. 둘이 함께 달린다.' },
+      { do: 'chase' },
+      { do: 'puzzle' },
+      { style: 'subtitle', text: '발소리가 문 앞에서 멈췄다가, 천천히 멀어진다.' },
+      { who: 'gyuha', text: '나 도저히 못 가겠다. 밖에서 기다릴게. 내 책도 좀 부탁해.' },
+      { style: 'subtitle', text: '{gyuha:이} 왔던 길로 돌아간다. 발소리가 멀어진다.' },
+    ],
+  };
+  story.triggers = story.triggers.filter((t) => t.event !== 'E2');
+  story.triggers.unshift({ event: 'E2', after: 'E1', rect: [15, -30, 18, -22], level: 0 });
+}
 const { chases, puzzles } = loadSkeletons();
 const map = new MapData(JSON.parse(readFileSync('data/map.json', 'utf8')));
 const C1 = chases.find((c) => c.id === 'C1');
@@ -244,4 +264,27 @@ test('귀신 자리: 경로에서 벗어나도 플레이어가 지나온 자리�
   assert.ok(d <= w.chase.chase.gap + 1e-6, `직선 거리 ${d.toFixed(2)} ≤ gap ${w.chase.chase.gap.toFixed(2)}`);
   // 발자취 위: 동쪽 복도(x ≈ 16.5) 또는 북쪽 복도(z ≈ −51.5) 위
   assert.ok(Math.abs(g.x - 16.5) < 0.6 || Math.abs(g.z + 51.5) < 2.2, `귀신 (${g.x.toFixed(1)}, ${g.z.toFixed(1)})`);
+});
+
+// 게임의 E2 (2026-11-08 사용자 지시): 3층 연결통로 가는 길의 원경 목격 — 추격·퍼즐 없음
+test('현재 E2: 구관 3층 복도에서 시작, 추격·퍼즐 없이 원경 귀신 목격 → {gyuha} 퇴장 → 흔적', () => {
+  const ev = current.events.find((e) => e.id === 'E2');
+  assert.ok(!ev.chase && !ev.puzzle && !ev.lines.some((l) => l.do), '추격·퍼즐·행동 줄 없음');
+  const trig = current.triggers.filter((t) => t.event === 'E2');
+  assert.equal(trig.length, 2, '동쪽 복도(현관 쪽 계단)·북쪽 복도(북서쪽 계단) 두 길');
+  assert.ok(trig.every((t) => t.level === 2), '3층');
+  const sight = current.sightings.find((x) => x.event === 'E2');
+  assert.equal(sight.level, 2);
+  assert.ok(map.locate(...sight.pos, 2), '목격 자리가 맵 안');
+  const { x, z } = { x: sight.pos[0], z: sight.pos[1] };
+  assert.ok(Math.abs(x - 16.5) < 1.5 && z < -50 && z > -53, '연결통로 입구 앞 모퉁이');
+
+  const runner = new StoryRunner({ story: current, characters, ui: fakeUI(), timing: { subtitleBase: 1, subtitlePerChar: 0 } });
+  const triggers = new EventTriggers({ runner, defs: current.triggers, locate: (a, b, l) => map.locate(a, b, l) });
+  runner.start('E1');
+  for (let i = 0; i < 40 && runner.mode === 'line'; i++) runner.advance();
+  triggers.update(16.5, -24, 0);
+  assert.notEqual(runner.event?.id, 'E2', '1층 동쪽 복도에서는 더 이상 E2 가 아니다');
+  triggers.update(16.5, -44, 2);
+  assert.equal(runner.event?.id, 'E2', '3층 동쪽 복도에서 E2');
 });

@@ -22,14 +22,17 @@ const STEP = 0.25;
 const AREA = { x0: -30, x1: 31, z0: -96, z1: 10 };
 const inAnnex = (x, z) => x > SCHOOL.annex.x0 && x < SCHOOL.annex.x1 && z > SCHOOL.annex.z0 && z < SCHOOL.annex.z1;
 
-// open: 열 문 id 목록 | 'all'(현관 유리문 빼고 전부). connector: 연결문 열림
+// open: 열 문 id 목록 | 'all'(현관 유리문 빼고 전부). connector: 연결문(본관 쪽)·신관 쪽 끝 문 열림
 function world({ open = [], connector = false } = {}) {
   const col = new Collision();
   addSchoolCollision(col);
   const h = addSiteCollision(col, site);
   for (const [id, d] of h.doors) if ((open === 'all' && id !== 'entrance') || open.includes(id)) d.on = false;
   const st = new ConnectorState(site.bridge, h.connector, () => true);
-  if (connector) st.set(true);
+  if (connector) {
+    st.set(true);
+    new ConnectorState(site.bridge, h.connector.annex, () => false, site.bridge.annexDoor).set(true); // 신관 쪽 끝 문도 연다
+  }
   return { col, h, st };
 }
 
@@ -158,7 +161,27 @@ test('연결문: 열쇠(hasConnectorKey)가 없으면 잠김, 있으면 열리�
   assert.equal(h.connector.open.on, true);
   st.update(2, far);
   assert.equal(st.f, 1);
-  assert.ok(explore(col, START).can(...ANNEX3), '열면 신관 3층까지');
+  assert.ok(!explore(col, START).can(...ANNEX3), '본관 쪽 문만 열어서는 신관 쪽 끝 문에 막힘');
+  // 신관 쪽 끝 문: 열쇠 없이 열린다 (사용자 지시 2026-11-08). 신관 홀 쪽으로 열려, 통로에서는 문에 바짝 붙어도 열리고 홀 쪽 문짝이 쓸고 갈 자리에 서 있으면 못 연다
+  const stA = new ConnectorState(site.bridge, h.connector.annex, () => false, site.bridge.annexDoor);
+  assert.equal(stA.locked, false, '잠기지 않음');
+  assert.equal(h.connector.annex.closed.on, true);
+  const sweepA = { pos: { x: 18.0, z: -84.0 }, level: 2 }; // 홀 쪽 경첩 앞, 문짝이 쓸고 가는 자리
+  assert.equal(stA.use(sweepA), 'blocked');
+  const nearA = { pos: { x: 18.5, z: -82.7 }, level: 2 }; // 통로 쪽에서 닫힌 문에 바짝 붙음
+  assert.equal(stA.use(nearA), 'open');
+  assert.equal(h.connector.annex.closed.on, false);
+  assert.equal(h.connector.annex.open.on, true);
+  stA.update(2, nearA);
+  assert.equal(stA.f, 1);
+  assert.ok(explore(col, START).can(...ANNEX3), '두 문을 다 열면 신관 3층까지');
+  assert.equal(stA.use({ pos: { x: 18.5, z: -83.2 }, level: 2 }), 'blocked', '문 자리에 서 있으면 닫지 않음');
+  const backA = { pos: { x: 18.5, z: -81.5 }, level: 2 };
+  assert.equal(stA.use(backA), 'close');
+  stA.update(2, backA);
+  assert.equal(h.connector.annex.closed.on, true);
+  assert.ok(!explore(col, START).can(...ANNEX3), '신관 쪽 문을 닫으면 다시 막힘');
+  stA.set(true);
   const doorway = { pos: { x: 18.5, z: -61.8 }, level: 2 }; // 셸 구멍(문 자리)에 서 있음
   assert.equal(st.use(doorway), 'blocked', '문 자리에 서 있으면 닫지 않음');
   assert.equal(st.use(far), 'close');

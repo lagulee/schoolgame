@@ -51,7 +51,9 @@ test('체크포인트: 진행 중인 사건은 저장된 줄(선택지면 선택
   assert.equal(r.registry.active, 'E2');
   assert.equal(r.lineIdx, 1);
   assert.equal(r.ui.shown.text, r.text(story.events[1].lines[1].text));
-  // 행동 줄(추격)에서 저장하면 같은 행동 줄로 돌아오고, 복원이라고 알린다 (단계 12)
+  // 행동 줄(추격)에서 저장하면 같은 행동 줄로 돌아오고, 복원이라고 알린다 (단계 12). E2 는 추격이 없어져 E10 으로 시험한다
+  r.reset();
+  r.jump('E10', 1);
   const acts = [];
   r.onAction = (line, info) => acts.push([line.do, info.restoring]);
   r.advance();
@@ -59,11 +61,12 @@ test('체크포인트: 진행 중인 사건은 저장된 줄(선택지면 선택
   assert.equal(r.action?.do, 'chase');
   const atChase = r.snapshot();
   r.resume('chase');
-  assert.equal(r.action?.do, 'puzzle');
+  r.update(60);
+  assert.equal(r.action?.do, 'scare');
   assert.equal(r.resume('chase'), false, '다른 행동을 기다리는 중이면 무시');
   r.restore(atChase);
   assert.equal(r.action?.do, 'chase');
-  assert.deepEqual(acts, [['chase', false], ['puzzle', false], ['chase', true]]);
+  assert.deepEqual(acts, [['chase', false], ['scare', false], ['chase', true]]);
   r.onAction = null;
 
   r.jump('E12', 1); // 대사 1줄 뒤 = 선택지

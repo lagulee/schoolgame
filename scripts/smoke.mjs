@@ -47,7 +47,7 @@ check('이름 칸은 첫 시작 뒤 숨김', !(await page.isVisible('#name-input
 await brightKeySmoke({ press, check, poll });
 check('자유 탐색 안내 문구 (6초 뒤 사라짐, headless 는 느려 문구만 확인)', await S(() => document.getElementById('notice').textContent.includes('운동장')));
 await press('Digit1', 200);
-await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 동쪽 복도 E2 (단계 0c·12)
+await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 3층 동쪽 복도 E2 (단계 0c·12, 3층 목격으로 변경)
 await aloneSmoke({ S, check, poll }); // 혼자일 때 연출 (단계 20, STORY 13-3)
 await press('KeyR', 120);
 await e3e6Smoke({ S, press, check, poll }); // E3~E6 (단계 13)
@@ -237,7 +237,12 @@ check('닫힌 연결문 앞에서 멈춤 (본관 셸 안쪽)', stuck.z > -61.7 &
 await S(() => window.__DEBUG.story.flags.set('hasConnectorKey', true));
 await press('KeyF', 120);
 check('hasConnectorKey → E → 연결문 열림 + 안내가 닫기로', await poll(() => window.__DEBUG.interior.connector.state.target === 1 && document.getElementById('interact').textContent.includes('연결문 닫기')));
-const cross = await walkIn(null, 0, 16);
+const atAnnexDoor = await walkIn(null, 0, 16);
+check('연 연결문 뒤 통로 끝에서 신관 쪽 문에 막혀 멈춤 (닫힘)', atAnnexDoor.z > -83.1 && atAnnexDoor.lv === 2 && (await S(() => window.__DEBUG.interior.connectorA.state.f)) === 0, JSON.stringify(atAnnexDoor));
+check('신관 쪽 문 안내 (열쇠 없이)', await poll(() => document.getElementById('interact').textContent.includes('연결통로 문') || document.getElementById('interact').textContent.includes('문 열기')));
+await press('KeyF', 120);
+check('E → 신관 쪽 문 열림 (hasConnectorKey 와 무관, 잠김 없음)', await poll(() => window.__DEBUG.interior.connectorA.state.target === 1 && !window.__DEBUG.interior.connectorA.state.locked));
+const cross = await walkIn(null, 0, 4);
 check('연 문으로 통로를 지나 신관 3층 홀까지 (바닥 7.65, 층 그대로)', cross.z < -84 && cross.lv === 2 && near(cross.y, 7.65) && cross.inside, JSON.stringify(cross));
 check('HUD 에 신관 3층 표시', await poll(() => document.getElementById('hud').textContent.includes('실내: 신관 3층')));
 await walkIn([17.75, 1.6, -91.05], -90, 3.2, 2);

@@ -1,4 +1,4 @@
-// smoke 의 사건 앞부분 (smoke.mjs 에서 나눔, 단계 20): 학교 앞 → 현관 홀 E1 → 동쪽 복도 E2 (단계 0c·12), 3층 연결문 E3 → 2층 열쇠함 E4 → E5 → 신관 5층 E6 (단계 13)
+// smoke 의 사건 앞부분 (smoke.mjs 에서 나눔, 단계 20): 학교 앞 → 현관 홀 E1 → 3층 동쪽 복도 E2 (단계 0c·12, 2026-11-08 3층 목격으로 변경), 3층 연결문 E3 → 2층 열쇠함 E4 → E5 → 신관 5층 E6 (단계 13)
 export async function e1e2Smoke({ page, S, press, check, poll }) {
   const pre0 = await S(() => ({ bat: window.__DEBUG.phone.battery, begun: window.__DEBUG.phone.begun, obj: window.__DEBUG.story.objective(), where: window.__DEBUG.where(), hist: window.__DEBUG.story.registry.history.length }));
   await page.waitForTimeout(1500);
@@ -19,27 +19,18 @@ export async function e1e2Smoke({ page, S, press, check, poll }) {
   await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
   await page.waitForTimeout(1500);
   check('다시 들어와도 E1 은 한 번만', await S(() => window.__DEBUG.story.registry.history.join() === 'E1' && window.__DEBUG.story.mode === 'idle'));
-  // E2 (단계 12): 동쪽 복도에 들어서면 E2 → 추격 C1(실루엣·잠긴 방 3개) → 1-2 교실에 들어서면 숨기 P1 → 그림자 통과 → 퇴장·흔적.
-  // headless 는 프레임이 느려 걷지 않고 자리를 옮기며, 그림자가 지나가는 8초는 시간을 건너뛴다
+  // E2 (2026-11-08): 구관 3층 동쪽 복도에서 연결통로 입구 쪽으로 가다 보면 E2 → 복도 모퉁이의 귀신 목격(추격·퍼즐 없음) → 퇴장·흔적.
+  // headless 는 프레임이 느려 걷지 않고 자리를 옮긴다 (1층 동쪽 복도에서는 더 이상 E2 가 아니다)
   await S(() => window.__DEBUG.player.setView([16.5, 1.6, -25], 180, 0));
-  check('E1 뒤 동쪽 복도 → E2 시작', await poll(() => window.__DEBUG.story.event?.id === 'E2'));
-  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyF', 120);
-  check('E2 대사 뒤 추격 C1 (경로 진행·귀신 실루엣·다른 방 잠김)', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'chase' && D.chase.active && D.scenes.e2.path && D.scenes.view.ghost.visible && D.interior.doors.list.filter((s) => s.forced).length === 6; }));
-  await S(() => window.__DEBUG.player.setView([14.8, 1.6, -52], 180, 0));
-  await poll(() => document.getElementById('interact').textContent.includes('행정실')); // 새 자리 첫 프레임(셰이더 준비)을 기다린다
-  await press('KeyF', 120);
-  check('행정실 문은 잠겨 있다 (추격 중 E = 문)', await poll(() => document.getElementById('toast').textContent.includes('행정실') && window.__DEBUG.story.action?.do === 'chase'));
-  await S(() => window.__DEBUG.player.setView([6.3, 1.6, -54], 180, 0));
-  check('1-2 교실에 들어서면 추격 도착 → 숨기 시작, 안내 = 라이트 끄기', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'puzzle' && D.scenes.e2.hide.phase === 'prep' && document.getElementById('hide-hint').textContent.includes('라이트'); }));
-  await press('KeyR', 120);
-  await S(() => window.__DEBUG.player.setView([2.5, 1.6, -58], 0, 0));
-  check('라이트 끄고 책상 사이 → 그림자가 지나간다', await poll(() => window.__DEBUG.scenes.e2.hide.phase === 'pass'));
-  await S(() => { window.__DEBUG.scenes.e2.hide.t = 7.9; });
-  check('다 지나가면 숨기 성공 → 잠금 해제', await poll(() => window.__DEBUG.puzzle.last?.outcome === 'solved' && window.__DEBUG.interior.doors.list.every((s) => !s.forced)));
+  await page.waitForTimeout(1000);
+  check('1층 동쪽 복도에서는 E2 없음', (await S(() => window.__DEBUG.story.event?.id ?? null)) === null);
+  await S(() => window.__DEBUG.player.setView([16.5, 1.6, -44], 0, 0, 2));
+  check('E1 뒤 3층 동쪽 복도 → E2 시작', await poll(() => window.__DEBUG.story.event?.id === 'E2'));
+  check('E2: 모퉁이에 귀신 목격(추격·퍼즐 없음)', await poll(() => { const D = window.__DEBUG; return !D.chase.active && !D.puzzle.active && D.scenes.steps.sightings.some((g) => g.def.event === 'E2' && g.alpha > 0); }));
   for (let i = 0; i < 30 && (await S(() => window.__DEBUG.story.registry.active)) === 'E2'; i++) await press('KeyF', 200);
   await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
   const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
-  check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
+  check('E2 끝 → 목표 문구 5층, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
 }
 
 export async function e3e6Smoke({ S, press, check, poll }) {

@@ -51,11 +51,14 @@
     "switchboards": [[-9.0, -90.15, "n", 1]]
   },
   "connector": {
-    "_comment": "3층 연결통로의 연결문 (본관 쪽 끝, 셸 벽 두께 안. 신관 쪽으로 열림). 열쇠 = hasConnectorKey (STORY E3·E4·E5)",
+    "_comment": "3층 연결통로의 연결문 (본관 쪽 끝, 셸 벽 두께 안. 신관 쪽으로 열림). 열쇠 = hasConnectorKey (STORY E3·E4·E5). annex* = 반대편(신관 쪽 끝)의 문: 잠기지 않았고 신관 홀 쪽으로 열린다 (2026-11-08)",
     "name": "연결문",
     "label": "연결문 열기",
     "close": "연결문 닫기",
     "locked": "연결문이 잠겨 있다.",
+    "annexName": "연결통로 문",
+    "annexLabel": "문 열기",
+    "annexClose": "문 닫기",
     "space": "연결통로"
   },
   "messages": {

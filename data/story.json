@@ -50,7 +50,8 @@
     "hint": "운동장을 둘러볼 수 있다. 준비되면 본관 현관으로 들어가자."
   },
   "triggers": [
-    { "_comment": "단계 12: 앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude.", "event": "E2", "after": "E1", "rect": [15, -30, 18, -22], "level": 0 },
+    { "_comment": "앞 사건(after)이 끝난 뒤 이 자리(공간 space 또는 사각형 rect [x0, z0, x1, z1], 층 level)에 들어서면 event 를 한 번 시작한다. E1 은 prelude. E2(첫 귀신 목격) = 구관 3층에서 연결통로 입구로 가는 복도 — 동쪽 복도(현관 쪽 계단에서 올 때) 또는 북쪽 복도(북서쪽 계단에서 올 때). 어느 쪽에서도 복도 모퉁이의 귀신이 보인다. 추격·퍼즐 없음 [사용자 지시 2026-11-08]", "event": "E2", "after": "E1", "rect": [15, -47, 18, -41], "level": 2 },
+    { "event": "E2", "after": "E1", "rect": [-18, -53, 8, -50], "level": 2 },
     { "_comment": "단계 13: E3 = 3층 연결문 앞, E4 = 2층 동쪽 복도(현관 쪽 계단에서 교무실 쪽으로 몇 걸음) 또는 북쪽 복도(북서쪽 계단에서 올 때) — 어느 쪽에서도 복도 모퉁이의 귀신이 보인다, E5 = 열쇠를 챙긴 뒤 다시 온 3층 연결문 앞(연결문을 열고 넘어간다; 가짜 {gyuha}는 E3 에서 연결통로에 가기 전에 만난다), E6 = 신관 5층 복도", "event": "E3", "after": "E2", "space": "3F-bridge", "level": 2 },
     { "event": "E4", "after": "E3", "rect": [15, -34, 18, -24], "level": 1 },
     { "event": "E4", "after": "E3", "rect": [-18, -53, 8, -50], "level": 1 },
@@ -124,7 +125,8 @@
     "wake4F": { "pos": [16.5, -31.5], "level": 3, "yaw": -90 }
   },
   "sightings": [
-    { "_comment": "단계 13: 원경 귀신 (STORY E4, 점프스케어 아님). 사건(event) 동안 그 자리에 발소리 없이 서 있고, 줍기(after)를 마친 뒤 플레이어가 고개를 돌리면(시야 밖) fade 초 동안 흐려져 사라진다. 시야 안에 계속 두면 maxStay 초 뒤에 흐려진다", "id": "staffGhost", "event": "E4", "after": "connectorKey", "level": 1, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 }
+    { "_comment": "단계 13: 원경 귀신 (STORY E4, 점프스케어 아님). 사건(event) 동안 그 자리에 발소리 없이 서 있고, 줍기(after)를 마친 뒤 플레이어가 고개를 돌리면(시야 밖) fade 초 동안 흐려져 사라진다. 시야 안에 계속 두면 maxStay 초 뒤에 흐려진다", "id": "staffGhost", "event": "E4", "after": "connectorKey", "level": 1, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 },
+    { "_comment": "첫 귀신 목격 (STORY E2, 점프스케어 아님, 사용자 지시 2026-11-08). 구관 3층 복도 모퉁이(연결통로 입구 앞)에 서 있다가, 사건(대화)이 끝난 뒤 플레이어가 고개를 돌리면 흐려져 사라진다. after 가 없으므로 사건이 시작되자마자 시야 밖이면 사라진다", "id": "connectorGhost", "event": "E2", "level": 2, "pos": [16.5, -51.5], "fade": 2.5, "maxStay": 25 }
   ],
   "sounds": {
     "_comment": "단계 13: 행동 줄 { do: sound, id } 이 내는 소리. kind = 소리 종류(scene/stepsView.js), dy = 플레이어 기준 높이(m, 음수 = 아래층)",
@@ -155,14 +157,12 @@
       ]
     },
     {
-      "id": "E2", "title": "복도의 그것", "place": "구관 1층 복도·교실", "routes": ["R1", "R2", "R3"], "stage": 2,
-      "pov": "player", "objective": "hide", "objectiveDone": "goFifth", "chase": "C1", "puzzle": "P1",
+      "id": "E2", "title": "복도 끝의 그것", "place": "구관 3층 복도(연결통로 가는 길)", "routes": ["R1", "R2", "R3"], "stage": 2,
+      "pov": "player", "objective": "goFifth",
+      "_comment": "[사용자 지시 2026-11-08] 첫 귀신 목격을 1층 추격(C1)·숨기(P1)에서 3층 연결통로로 가는 중의 원경 목격으로 바꿨다. 추격·퍼즐 없음. 귀신은 sightings 의 connectorGhost(점프스케어 아님)",
       "lines": [
         { "who": "gyuha", "text": "방금… 저기 뭐 있었어. 봤어?" },
-        { "style": "subtitle", "text": "현관 쪽 복도 끝에서 그것이 다가온다. 둘이 함께 달린다." },
-        { "do": "chase" },
-        { "do": "puzzle" },
-        { "style": "subtitle", "text": "발소리가 문 앞에서 멈췄다가, 천천히 멀어진다." },
+        { "style": "subtitle", "text": "복도 끝, 연결통로 입구 쪽에 무언가 서 있다. …움직이지 않는다." },
         { "who": "gyuha", "text": "나 도저히 못 가겠다. 밖에서 기다릴게. 내 책도 좀 부탁해." },
         { "style": "subtitle", "text": "{gyuha:이} 왔던 길로 돌아간다. 발소리가 멀어진다." }
       ]
