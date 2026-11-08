@@ -96,11 +96,13 @@ function classroom(k) {
   k.solid([D - 1.95, D - 0.75], tv);
   // 학생 책상: 짝(2개) × 3줄 × rows 행. 앞줄 책상 앞 = D − C.front
   const pairW = C.desk.w * 2 + 0.06;
-  const aisle = (W - 2 * C.margin - 3 * pairW) / 2;
+  // 좁은 교실(신관 W≈6.8)에서도 통로 폭이 플레이어(지름 0.6)가 지나갈 만큼 남도록 옆 여백을 줄인다
+  const margin = Math.max(C.marginMin, Math.min(C.margin, (W - 3 * pairW - 2 * C.aisleMin) / 2));
+  const aisle = (W - 2 * margin - 3 * pairW) / 2;
   for (let r = 0; r < C.rows; r++) {
     const uc = D - C.front - C.desk.d - r * C.pitch; // 책상 뒤 모서리
     for (let p = 0; p < 3; p++) {
-      const v0 = C.margin + p * (pairW + aisle);
+      const v0 = margin + p * (pairW + aisle);
       for (let s = 0; s < 2; s++) {
         const a = v0 + s * (C.desk.w + 0.06);
         desk(k, [uc, uc + C.desk.d], [a, a + C.desk.w], C.desk.h);
