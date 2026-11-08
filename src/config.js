@@ -211,7 +211,7 @@ export const INTERIOR = {
     leg: 0.035,
     chair: { seat: 0.44, back: 0.84 },
     lockerD: 0.42,
-    classroom: { board: 4.2, boardH: 1.2, rows: 5, pitch: 0.92, front: 2.3, margin: 0.85, desk: { w: 0.62, d: 0.45, h: 0.72 }, lockerH: 1.15 },
+    classroom: { board: 4.2, boardH: 1.2, rows: 5, pitch: 0.92, front: 2.3, margin: 0.85, marginMin: 0.35, aisleMin: 0.85, desk: { w: 0.62, d: 0.45, h: 0.72 }, lockerH: 1.15 },
     staff: { islands: [1.4, 4.2], runs: [[2.6, 6.2], [7.4, 11.0]] },
     lobby: { shoes: [18.5, 24.5], shoesH: 1.8, shoesD: 0.4, board: [25, 27.5] },
     fixture: { l: 1.25, w: 0.18, h: 0.07, every: 3.2, room: 2.8 },
