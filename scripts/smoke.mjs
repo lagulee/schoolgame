@@ -237,7 +237,12 @@ check('닫힌 연결문 앞에서 멈춤 (본관 셸 안쪽)', stuck.z > -61.7 &
 await S(() => window.__DEBUG.story.flags.set('hasConnectorKey', true));
 await press('KeyE', 120);
 check('hasConnectorKey → E → 연결문 열림 + 안내가 닫기로', await poll(() => window.__DEBUG.interior.connector.state.target === 1 && document.getElementById('interact').textContent.includes('연결문 닫기')));
-const cross = await walkIn(null, 0, 16);
+const atAnnexDoor = await walkIn(null, 0, 16);
+check('연 연결문 뒤 통로 끝에서 신관 쪽 문에 막혀 멈춤 (닫힘)', atAnnexDoor.z > -83.1 && atAnnexDoor.lv === 2 && (await S(() => window.__DEBUG.interior.connectorA.state.f)) === 0, JSON.stringify(atAnnexDoor));
+check('신관 쪽 문 안내 (열쇠 없이)', await poll(() => document.getElementById('interact').textContent.includes('연결통로 문') || document.getElementById('interact').textContent.includes('문 열기')));
+await press('KeyE', 120);
+check('E → 신관 쪽 문 열림 (hasConnectorKey 와 무관, 잠김 없음)', await poll(() => window.__DEBUG.interior.connectorA.state.target === 1 && !window.__DEBUG.interior.connectorA.state.locked));
+const cross = await walkIn(null, 0, 4);
 check('연 문으로 통로를 지나 신관 3층 홀까지 (바닥 7.65, 층 그대로)', cross.z < -84 && cross.lv === 2 && near(cross.y, 7.65) && cross.inside, JSON.stringify(cross));
 check('HUD 에 신관 3층 표시', await poll(() => document.getElementById('hud').textContent.includes('실내: 신관 3층')));
 await walkIn([17.75, 1.6, -91.05], -90, 3.2, 2);

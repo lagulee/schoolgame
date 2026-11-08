@@ -1,7 +1,7 @@
 // 3층 연결통로 실내 + 잠긴 연결문 (단계 9 = 옛 1c, three 없음). STORY 4-1 "통로 안에 잠긴 연결문", E3·E4·E5.
 // 통로 = 본관 뒷면 셸 ~ 신관 남쪽 면 셸 사이 (바닥 = 본관·신관 3층 바닥 7.65 m). 연결문은 본관 쪽 끝 셸 벽 두께 안에 있고
 // 신관 쪽으로 90° 열리는 여닫이 철문이다. 열쇠(hasConnectorKey)가 있어야 열린다. 그리기는 connectorView.js.
-// 반대편(신관 쪽 끝)에도 같은 문(annexDoor)이 있다. 잠겨 있지 않고, 통로 안쪽(본관 쪽)으로 열린다 (사용자 지시 2026-11-08).
+// 반대편(신관 쪽 끝)에도 같은 문(annexDoor)이 있다. 잠겨 있지 않고, 신관 3층 홀 쪽으로 열린다 — 통로에서 오는 사람이 문짝에 막히지 않게 (사용자 지시 2026-11-08).
 import { SCHOOL, ANNEX, INTERIOR, PLAYER } from '../../config.js';
 import { bridgeOpening } from '../layout.js';
 
@@ -27,11 +27,11 @@ export function connectorPlan(msg = {}) {
       open: [hx - 0.02, hz - C.w - 0.02, hx + C.leaf + 0.03, hz], // 90° 열린 문짝 (통로 서쪽에 붙음)
       pos: [hx + C.w / 2, (hz + zIn) / 2],
     },
-    // 신관 쪽 끝 문: 셸 벽 두께(zA − w ~ zA) 안, 경첩은 통로 쪽 면(zA), 통로 안쪽(+z)으로 90° 열린다. 열쇠 없음
+    // 신관 쪽 끝 문: 셸 벽 두께(zA − w ~ zA) 안, 경첩은 신관 홀 쪽 면(zA − w), 홀 쪽(−z)으로 90° 열린다. 열쇠 없음
     annexDoor: {
-      id: 'connectorAnnex', name: msg.annexName ?? '연결통로 문', key: null, label: msg.annexLabel ?? '문 열기', close: msg.annexClose ?? '문 닫기', dir: 1, hinge: [hx, zA], w: C.w, h: C.h, y: o.y0, leaf: C.leaf,
+      id: 'connectorAnnex', name: msg.annexName ?? '연결통로 문', key: null, label: msg.annexLabel ?? '문 열기', close: msg.annexClose ?? '문 닫기', dir: -1, hinge: [hx, zA - w], w: C.w, h: C.h, y: o.y0, leaf: C.leaf,
       closed: [hx, zA - w, hx + C.w, zA],
-      open: [hx - 0.02, zA, hx + C.leaf + 0.03, zA + C.w + 0.02],
+      open: [hx - 0.02, zA - w - C.w - 0.02, hx + C.leaf + 0.03, zA - w],
       pos: [hx + C.w / 2, zA - w / 2],
     },
     windows: [], // { side: 'w'|'e', z0, z1 } 창살 사이 띠창 한 칸

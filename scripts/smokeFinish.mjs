@@ -60,7 +60,7 @@ export async function enginesSmoke({ S, press, check, poll }) {
   check('Z → 정답 → 성공 후 종료', await poll(() => !window.__DEBUG.puzzle.active && window.__DEBUG.puzzle.last?.outcome === 'solved' && document.getElementById('hud').textContent.includes('퍼즐: 없음')));
   // 추격 엔진 (단계 0b-3): C(디버그) 시작/중지, HUD 줄, 잡히면 시작 지점·플래그로 되돌리고 다시, 출구 여는 1초 조작 불가
   await press('KeyC', 120);
-  check('C → 추격 C1 시작 + HUD 추격 줄', await poll(() => window.__DEBUG.chase.chase?.def.id === 'C1' && document.getElementById('hud').textContent.includes('추격 C1')));
+  check('C → 추격 C2 시작 + HUD 추격 줄', await poll(() => window.__DEBUG.chase.chase?.def.id === 'C2' && document.getElementById('hud').textContent.includes('추격 C2')));
   const caught = await S(() => {
     const s = window.__DEBUG.chase;
     const P = window.__DEBUG.player;
