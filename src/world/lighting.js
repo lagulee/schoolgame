@@ -120,22 +120,41 @@ export function buildLighting(scene, ctx) {
   out.freezeMoon = (on) => {
     if (on === frozen) return;
     frozen = on;
-    moon.shadow.autoUpdate = !on;
-    moon.shadow.needsUpdate = true;
+    moon.shadow.needsUpdate = true; // 얼리기 직전·풀린 직후 한 번은 다시 그린다
   };
 
+  // 달 그림자는 매 프레임이 아니라 (1) 플레이어가 그림자 칸(SNAP m)을 벗어났을 때 (2) 움직이는 그림자(귀신·문)를 위해
+  // REFRESH 초마다 다시 그린다. 그림자 행렬은 다시 그릴 때만 갱신되므로 그림자와 행렬은 항상 맞는다 (성능: 바깥 그림자 비용 약 1/6)
   const tmp = new THREE.Vector3();
   const texel = (2 * L.moon.shadowRange) / L.moon.shadowRes;
-  out.update = (playerPos) => {
+  const snap = Math.max(1, Math.round(L.moon.snap / texel)) * texel; // 텍셀의 배수로 맞춰 가장자리 떨림도 없다
+  let lastX = NaN;
+  let lastZ = NaN;
+  let since = 0;
+  moon.shadow.autoUpdate = false;
+  moon.shadow.needsUpdate = true;
+  out.update = (playerPos, dt = 1 / 60) => {
     if (frozen) return;
-    // 그림자 텍셀 단위로 스냅 → 이동 중 그림자 가장자리 떨림 감소
-    tmp.set(Math.round(playerPos.x / texel) * texel, 0, Math.round(playerPos.z / texel) * texel);
-    moon.target.position.copy(tmp);
-    moon.position.copy(tmp).add(new THREE.Vector3(...L.moon.offset));
-    moon.target.updateMatrixWorld();
+    since += dt;
+    const x = Math.round(playerPos.x / snap) * snap;
+    const z = Math.round(playerPos.z / snap) * snap;
+    if (x !== lastX || z !== lastZ) {
+      lastX = x;
+      lastZ = z;
+      tmp.set(x, 0, z);
+      moon.target.position.copy(tmp);
+      moon.position.copy(tmp).add(new THREE.Vector3(...L.moon.offset));
+      moon.target.updateMatrixWorld();
+      moon.shadow.needsUpdate = true;
+      since = 0;
+    } else if (since >= L.moon.refresh) {
+      moon.shadow.needsUpdate = true;
+      since = 0;
+    }
   };
   out.setShadows = (on) => {
     moon.castShadow = on;
+    moon.shadow.needsUpdate = true;
   };
   return out;
 }

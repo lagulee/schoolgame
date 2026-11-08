@@ -313,6 +313,19 @@ function step(t, dt) {
     });
   }
 }
+// 셰이더 미리 만들기: 핸드폰 라이트를 처음 켜고 끌 때(광원 수·그림자 수가 바뀜) 모든 재질이 한꺼번에 다시 컴파일되어
+// 몇 초씩 멈추던 문제를 막는다. 로딩 중에 라이트 켬/끔 두 상태를 실내 묶음까지 모두 보이게 한 채 한 번씩 그려 둔다.
+function prewarmShaders() {
+  const groups = Object.values(world.interior.atmo.groups).filter((g) => g?.isObject3D);
+  const saved = groups.map((g) => g.visible);
+  const on = phone.light.on;
+  for (const g of groups) g.visible = true;
+  for (const v of [!on, on]) {
+    phone.light.setOn(v);
+    post.render(0);
+  }
+  groups.forEach((g, i) => { g.visible = saved[i]; });
+}
 window.__DEBUG = { scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
@@ -354,6 +367,7 @@ if (shot) {
     }
   });
 } else {
+  prewarmShaders();
   const timer = new THREE.Timer();
   let t = 0;
   renderer.setAnimationLoop(() => {
