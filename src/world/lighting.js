@@ -115,6 +115,11 @@ export function buildLighting(scene, ctx) {
       r.intensity = r.userData.base * r.userData.dim;
     }
   };
+  // 실내(k > 0.98)에서는 가로등 점광원을 아예 끈다 (실내 배율 12 % 라 거의 안 보이고, 점광원 하나마다 모든 재질의 계산이 늘어난다).
+  // 켜고 끌 때 셰이더가 다시 컴파일되므로 main.js prewarmShaders 가 두 상태를 미리 만들어 둔다
+  out.setOutdoorLamps = (on) => {
+    for (const lamp of out.lamps) lamp.light.visible = on;
+  };
   // 실내에서는 달 그림자를 마지막 자리에 고정해 매 프레임 다시 그리지 않는다
   let frozen = false;
   out.freezeMoon = (on) => {

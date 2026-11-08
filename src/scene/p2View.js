@@ -15,6 +15,24 @@ export class P2View {
     this.mesh.material.opacity = 0;
     this.mesh.visible = false;
     scene.add(this.mesh);
+    // 다음에 나타날 귀신이 단서를 얻기 전부터 그 자리에 미리 서 있다 (퍼즐 진행 중에만, 점프스케어 아님). 나타날 때는 같은 자리에서 이어진다
+    this.standing = new GhostFigure({ name: 'dutyStanding' });
+    this.standing.material.opacity = 0;
+    this.standing.visible = false;
+    scene.add(this.standing);
+    this.standAlpha = 0;
+  }
+
+  // 미리 서 있는 귀신: 아직 안 나타난 귀신이 남았고 지금 나타난 귀신이 없을 때 다음 자리에 1.5초에 걸쳐 짙어진다
+  updateStanding(dt) {
+    const p2 = this.p2;
+    const want = p2.active && !p2.ghost && p2.shown < (p2.puzzle.puzzle?.total ?? 0);
+    this.standAlpha = want ? Math.min(1, this.standAlpha + dt / 1.5) : 0;
+    this.standing.visible = this.standAlpha > 0;
+    if (!this.standing.visible) return;
+    const [x, z] = p2.D.ghosts[p2.shown % p2.D.ghosts.length].pos;
+    this.standing.position.set(x, this.collision.floorHeight(x, z, p2.D.level) + SCENE.ghost.h / 2, z);
+    this.standing.material.opacity = SCENE.duty.opacity * this.standAlpha;
   }
 
   // 그 귀신 자리가 지금 화면 안(시야 반각·거리 안, 같은 층)인가
@@ -38,6 +56,7 @@ export class P2View {
   update(dt) {
     const appeared = this.p2.update(dt, (d) => this.inView(d));
     if (appeared) this.sound(appeared.def);
+    this.updateStanding(dt);
     const g = this.p2.ghost;
     this.mesh.visible = !!g && g.alpha > 0;
     if (!g) return;

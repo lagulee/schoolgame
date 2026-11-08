@@ -107,6 +107,7 @@ export class Atmosphere {
       this.lights.setDark?.((1 + (B.hemi - 1) * this.dark) * this.zone * this.bright.light);
     }
     this.lights.freezeMoon(this.k > 0.98);
+    this.lights.setOutdoorLamps?.(this.k <= 0.98);
     this.near.position.copy(camera.position);
     this.near.intensity = INTERIOR.nearSight.intensity * this.k * this.zone * this.bright.light * this.tremble;
     this.visibility(player, camera);

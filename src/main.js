@@ -320,10 +320,14 @@ function prewarmShaders() {
   const saved = groups.map((g) => g.visible);
   const on = phone.light.on;
   for (const g of groups) g.visible = true;
-  for (const v of [!on, on]) {
-    phone.light.setOn(v);
-    post.render(0);
+  for (const lampsOn of [false, true]) { // 바깥 가로등 점광원: 실내(끔)·바깥(켬) 두 상태 (lighting.setOutdoorLamps)
+    lights.setOutdoorLamps(lampsOn);
+    for (const v of [!on, on]) {
+      phone.light.setOn(v);
+      post.render(0);
+    }
   }
+  lights.setOutdoorLamps(true);
   groups.forEach((g, i) => { g.visible = saved[i]; });
 }
 window.__DEBUG = { scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
