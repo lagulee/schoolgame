@@ -59,6 +59,8 @@ export function buildInterior(scene, M, col, ctx, renderer) {
   groups.bridge.add(buildConnector(site.bridge, batch, MI));
   const connector = new ConnectorDoor(site.bridge, connectorHandles, MI);
   groups.bridge.add(connector.pivot);
+  const connectorA = new ConnectorDoor(site.bridge, connectorHandles.annex, MI, site.bridge.annexDoor); // 신관 쪽 끝 문 (잠기지 않음)
+  groups.bridge.add(connectorA.pivot);
   // 현관 문턱 (셸 벽 두께, 계단 위 높이)
   const e = P.entrance;
   batch.box('L0', 'floorStone', e.x - 0.05, 0, e.z0 - e.frame, e.x + SCHOOL.shellWall + 0.05, e.y, e.z1 + e.frame, 't');
@@ -94,6 +96,7 @@ export function buildInterior(scene, M, col, ctx, renderer) {
     doors,
     doorsA,
     connector,
+    connectorA,
     entrance,
     atmo,
     // 상호작용(E)·소리 연결 (main.js 에서 스토리 준비 뒤). hasKey(플래그 이름) = 열쇠 문, runner = 상호작용 사건(책),
@@ -106,6 +109,7 @@ export function buildInterior(scene, M, col, ctx, renderer) {
       doors.attach(ctx);
       doorsA.attach(ctx);
       connector.attach(ctx);
+      connectorA.attach(ctx);
       // 필로티 끝·출입문 홀 유리벽 (안팎 어디서나, 잠김)
       const pz = pilotiBackZ() - SCHOOL.shellWall / 2;
       const pos = new THREE.Vector3(0, 1.5, pz);
@@ -135,6 +139,7 @@ export function buildInterior(scene, M, col, ctx, renderer) {
       doors.update(dt);
       doorsA.update(dt);
       connector.update(dt);
+      connectorA.update(dt);
       entrance.update(dt, player, audio);
       atmo.update(dt, player, camera);
       for (const b of books) b.mesh.visible = !((b.interaction && runner?.used?.has(b.interaction)) || (b.take && runner?.used?.has(`take:${b.take}`)));

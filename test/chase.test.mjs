@@ -220,7 +220,7 @@ test('마지막 추격 분기: R1 escape / R3 collapse 는 출구 통과, R2 는
   const variants = chaseVariants(story.events);
   const fin = Object.fromEntries(variants.filter((v) => v.atExit).map((v) => [v.atExit, v.id]));
   assert.deepEqual(fin, { collapse: 'C4', playerCaught: 'C4', escape: 'C3' });
-  assert.deepEqual(variants.filter((v) => !v.atExit).map((v) => v.id), ['C1', 'C2']);
+  assert.deepEqual(variants.filter((v) => !v.atExit).map((v) => v.id), ['C2']); // C1 은 E2 에서 빠짐 (2026-11-08, 보관)
   for (const [atExit, outcome, at] of [['escape', 'exit', 40], ['collapse', 'exit', 40], ['playerCaught', 'trigger', 35]]) {
     const w = world();
     w.session.start(fin[atExit], { atExit });

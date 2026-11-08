@@ -53,5 +53,9 @@ export const SHOTS = [
   { name: '44_roof_pool_neon', pos: [-2, 1.6, -46.6], yaw: 0, pitch: -8, lv: 5 },
   { name: '45_roof_tile_text', pos: [-2, 1.6, -50.4], yaw: 0, pitch: -50, lv: 5 },
   { name: '46_roof_stand', pos: [-16.4, 1.6, -47.5], yaw: -90, pitch: -14, lv: 5 },
+  // 2026-11-08: 첫 귀신 목격(E2, 3층 동쪽 복도에서 연결통로 입구 쪽), 연결통로 신관 쪽 끝 문 닫힘(통로 안에서)·열림(신관 3층 홀에서)
+  { name: '48_e2_ghost_3f', pos: [16.5, 1.6, -44], yaw: 0, pitch: 0, lv: 2, light: 1, story: 'E2', line: 1 },
+  { name: '49_bridge_annex_door', pos: [18.5, 1.6, -77.5], yaw: 0, pitch: 2, lv: 2, light: 1 },
+  { name: '50_annex_door_open', pos: [18.5, 1.6, -77.5], yaw: 0, pitch: 2, lv: 2, light: 1, open: 'connector' },
   { name: '47_roof_ending_d', pos: [-2, 1.6, -46.6], yaw: 0, pitch: -8, lv: 5, story: 'ending', q: { ending: 'D' } },
 ];

@@ -31,6 +31,7 @@ export function passableBoxes(info, hasKey, lenient) {
     if (d && d.kind === 'room' && !d.locked && (!d.key || lenient || hasKey(d.key))) set.add(box);
   }
   if (info.connector && (lenient || hasKey(info.connectorKey))) set.add(info.connector.closed);
+  if (info.connector?.annex) set.add(info.connector.annex.closed); // 신관 쪽 끝 문은 잠기지 않았다
   return set;
 }
 

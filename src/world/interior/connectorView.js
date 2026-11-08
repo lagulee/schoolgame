@@ -39,18 +39,19 @@ export function buildConnector(P, batch, MI) {
     }
     for (const r of P.bars.filter((v) => v.side === side)) batch.box(G, 'railTop', xw - inX * 0.05 - 0.03, y + Br.sill, r.z - 0.04, xw - inX * 0.05 + 0.03, y + Br.head, r.z + 0.04, 'tnsew');
   }
-  // 셸 구멍 안: 문 양옆 벽·문 위 벽, 문틀 (양면)
-  const d = P.door;
-  const top = d.y + d.h;
+  // 셸 구멍 안: 문 양옆 벽·문 위 벽, 문틀 (양면). 본관 쪽 연결문과 신관 쪽 문 둘 다
   for (const [a0, c0, a1, c1] of P.jambs) batch.box(G, 'wall', a0, y, c0, a1, ceil, c1, 'nsew');
-  const [hx, hz] = d.hinge;
-  const zIn = d.closed[3];
-  batch.box(G, 'wall', hx, top, hz, hx + d.w, ceil, zIn, 'nsb');
   const k = ANNEX.connector.frame;
-  for (const [za, zb] of [[hz - 0.02, hz + 0.01], [zIn - 0.01, zIn + 0.02]]) {
-    batch.box(G, 'doorFrame', hx - k, d.y, za, hx, top + k, zb, 'nsew');
-    batch.box(G, 'doorFrame', hx + d.w, d.y, za, hx + d.w + k, top + k, zb, 'nsew');
-    batch.box(G, 'doorFrame', hx, top, za, hx + d.w, top + k, zb, 'nsb');
+  for (const d of [P.door, P.annexDoor]) {
+    const top = d.y + d.h;
+    const [hx] = d.hinge;
+    const [, za0, , za1] = d.closed;
+    batch.box(G, 'wall', hx, top, za0, hx + d.w, ceil, za1, 'nsb');
+    for (const [za, zb] of [[za0 - 0.02, za0 + 0.01], [za1 - 0.01, za1 + 0.02]]) {
+      batch.box(G, 'doorFrame', hx - k, d.y, za, hx, top + k, zb, 'nsew');
+      batch.box(G, 'doorFrame', hx + d.w, d.y, za, hx + d.w + k, top + k, zb, 'nsew');
+      batch.box(G, 'doorFrame', hx, top, za, hx + d.w, top + k, zb, 'nsb');
+    }
   }
   // 꺼진 형광등 (통로 가운데 줄)
   const X = INTERIOR.furniture.fixture;
@@ -69,22 +70,25 @@ const ease = (f) => f * f * (3 - 2 * f);
 
 // 연결문: 셸 북쪽 면 경첩을 축으로 신관 쪽(−z)으로 90° 열린다. E 로 열고 닫기, 열쇠 없으면 덜컹 + 안내
 export class ConnectorDoor {
-  constructor(P, handles, MI) {
+  // door: 본관 쪽 연결문(기본 P.door, handles = {closed, open}) 또는 신관 쪽 문(P.annexDoor, handles.annex)
+  constructor(P, handles, MI, door = P.door) {
     this.P = P;
+    this.door = door;
     this.hasKey = () => false;
-    this.state = new ConnectorState(P, handles, (name) => this.hasKey(name));
-    const d = P.door;
+    this.state = new ConnectorState(P, handles, (name) => this.hasKey(name), door);
+    const d = door;
     this.pivot = new THREE.Group();
-    this.pivot.name = 'connectorDoor';
+    this.pivot.name = d.id === 'connector' ? 'connectorDoor' : `connectorDoor:${d.id}`;
     this.pivot.position.set(d.hinge[0], d.y, d.hinge[1]);
     const leaf = new THREE.Mesh(new THREE.BoxGeometry(d.w, d.h, d.leaf), MI.exitDoor);
-    leaf.position.set(d.w / 2, d.h / 2, d.leaf / 2);
+    const sg = d.dir; // 문짝 두께는 열리는 쪽(경첩에서 셸 안쪽) 반대로 깔린다: 본관 쪽은 +z(셸 안), 신관 쪽은 −z(셸 안)
+    leaf.position.set(d.w / 2, d.h / 2, (-sg * d.leaf) / 2);
     leaf.castShadow = leaf.receiveShadow = true;
     this.pivot.add(leaf);
     const bar = new THREE.BoxGeometry(1, 1, 1);
     for (const zs of [-1, 1]) {
       const h = new THREE.Mesh(bar, MI.railTop);
-      h.position.set(d.w - 0.16, 1.0, d.leaf / 2 + zs * (d.leaf / 2 + 0.03));
+      h.position.set(d.w - 0.16, 1.0, (-sg * d.leaf) / 2 + zs * (d.leaf / 2 + 0.03));
       h.scale.set(0.16, 0.035, 0.035); // 손잡이 (양면)
       this.pivot.add(h);
     }
@@ -98,14 +102,15 @@ export class ConnectorDoor {
     const M = this.P.msg;
     const s = this.state;
     const C = ANNEX.connector;
+    const d = this.door;
     interactions.add({
-      id: 'door:connector', pos: this.P.door.pos, level: this.P.L, radius: C.reach,
-      get label() { return s.target ? M.close : M.label; },
+      id: `door:${d.id}`, pos: d.pos, level: this.P.L, radius: C.reach,
+      get label() { return s.target ? d.close : d.label; },
       onUse: () => {
         const r = s.use(player);
         if (r === 'locked') {
           this.shakeT = 0;
-          doorLocked(audio, this.sound, lockSound('door:connector'));
+          doorLocked(audio, this.sound, lockSound(`door:${d.id}`));
           toast(M.locked);
         } else if (r !== 'blocked') {
           doorSwing(audio, this.sound, C.time, r === 'close');
@@ -117,12 +122,12 @@ export class ConnectorDoor {
 
   update(dt) {
     this.state.update(dt, this.player);
-    let a = ease(this.state.f) * (Math.PI / 2);
+    let a = ease(this.state.f) * (Math.PI / 2) * -this.door.dir; // 본관 쪽(dir −1)은 +90°(+x → −z), 신관 쪽(dir +1)은 −90°(+x → +z)
     if (this.shakeT >= 0) {
       // 덜컹: 0.3초 동안 1° 안에서 세 번 (깜빡임 아님)
       this.shakeT += dt;
       if (this.shakeT > 0.3) this.shakeT = -1;
-      else a += 0.017 * Math.abs(Math.sin(this.shakeT * Math.PI * 10));
+      else a -= this.door.dir * 0.017 * Math.abs(Math.sin(this.shakeT * Math.PI * 10));
     }
     this.pivot.rotation.y = a;
   }

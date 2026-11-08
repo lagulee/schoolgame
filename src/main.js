@@ -326,7 +326,7 @@ if (shot) {
   if (shot.noShadow) { lights.setShadows(false); phone.light.spot.castShadow = false; }
   if (shot.noPost) post.enabled = false;
   if (shot.pos) player.setView(shot.pos, shot.yaw, shot.pitch, shot.level);
-  if (shot.open.includes('connector')) world.interior.connector.set(true);
+  if (shot.open.includes('connector')) { world.interior.connector.set(true); world.interior.connectorA.set(true); } // 양쪽 문
   if (shot.bright !== null) { brightness.level = brightness.clamp(shot.bright); world.interior.atmo.setBright(brightness); } // 저장값을 바꾸지 않고, 알림 없이
   if (shot.power === false) { story.runner.used.add('power:off'); world.interior.atmo.powerOut = true; } // 정전 뒤 (스냅 전에)
   world.interior.snap(player, camera); // 자동문·실내 노출을 최종 상태로

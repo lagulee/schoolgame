@@ -7,7 +7,7 @@
     "ghostHooks": "이 퍼즐이 쓰는 귀신 연출 훅 이름 (src/puzzle/hooks.js 의 HOOK_NAMES). 연출 구현은 단계 12 이후"
   },
   "puzzles": [
-    { "id": "P1", "name": "{gyuha:과} 함께 숨기", "events": ["E2"], "place": "구관 1층 복도·교실",
+    { "id": "P1", "name": "{gyuha:과} 함께 숨기", "events": [], "retired": "사용자 지시 2026-11-08: E2 에서 퍼즐을 없앴다. 숨기 실행기 시험용으로 보관", "place": "구관 1층 복도·교실",
       "clues": [], "answer": "hidden", "wrongLimit": 1, "ghostHooks": ["onStart", "onWrong"],
       "hide": { "_comment": "단계 12 [가정, 사용자 확인 대기]: 1층 방 4개 중 room 만 열림(나머지 lockedRooms 는 E2 동안 잠김). 숨기 조건 = 그 방의 문이 모두 닫힘 + 라이트 꺼짐 + spot(책상 사이) 안. 추격이 끝난 뒤 prep 초 안에 조건을 맞추면 그림자가 pass 초 동안 문 앞(passFrom→passTo, 복도)을 지나간다. 조건을 다 맞추지 못한 채 prep 이 끝나거나 지나가는 동안 하나라도 깨지면 잡힘(answer 가 아닌 값 → wrongLimit 1 → 퍼즐 시작 지점에서 다시)",
         "room": "1F-2", "lockedRooms": ["1F-counsel", "1F-1", "1F-admin"],

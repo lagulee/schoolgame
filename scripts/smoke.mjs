@@ -47,7 +47,7 @@ check('이름 칸은 첫 시작 뒤 숨김', !(await page.isVisible('#name-input
 await brightKeySmoke({ press, check, poll });
 check('자유 탐색 안내 문구 (6초 뒤 사라짐, headless 는 느려 문구만 확인)', await S(() => document.getElementById('notice').textContent.includes('운동장')));
 await press('Digit1', 200);
-await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 동쪽 복도 E2 (단계 0c·12)
+await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 3층 동쪽 복도 E2 (단계 0c·12, 3층 목격으로 변경)
 await aloneSmoke({ S, check, poll }); // 혼자일 때 연출 (단계 20, STORY 13-3)
 await press('KeyR', 120);
 await e3e6Smoke({ S, press, check, poll }); // E3~E6 (단계 13)

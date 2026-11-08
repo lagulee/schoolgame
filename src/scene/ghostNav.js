@@ -5,7 +5,10 @@ import { Navigator } from '../world/nav.js';
 export function ghostNavigator(collision, info) {
   const nav = new Navigator(collision, { ...NAV, maxExpand: 60000 }); // 길이 없을 때 오래 헤매지 않게 한도를 낮춘다
   const open = new Set(info.handles.values());
-  if (info.connector) open.add(info.connector.closed);
+  if (info.connector) {
+    open.add(info.connector.closed);
+    if (info.connector.annex) open.add(info.connector.annex.closed);
+  }
   nav.setPassable(open, 'ghost');
   return nav;
 }

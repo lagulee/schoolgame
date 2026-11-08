@@ -189,7 +189,7 @@ test('puzzles.json 스키마: P1~P4 필수 필드, 훅 이름·단서 id 정합�
   assert.deepEqual(raw.puzzles.map((p) => p.id), ['P1', 'P2', 'P3', 'P4']);
   for (const p of [...raw.puzzles, ...raw.debugPuzzles]) {
     assert.ok(p.id && p.name && p.place, p.id);
-    if (raw.puzzles.includes(p)) assert.ok(p.events.length, `${p.id} events`);
+    if (raw.puzzles.includes(p) && !p.retired) assert.ok(p.events.length, `${p.id} events`);
     assert.ok(Array.isArray(p.clues), `${p.id} clues`);
     assert.ok('answer' in p, `${p.id} answer`);
     assert.ok(Number.isInteger(p.wrongLimit) && p.wrongLimit >= 1, `${p.id} wrongLimit`);

@@ -72,8 +72,8 @@ test('v3 확정 사항: E1 문자·E5 선택지 없음, earlyBook 은 상호작�
   const keyEvents = story.events.filter((e) => e.set?.hasExitKey).map((e) => `${e.id}/${e.routes.join('')}`);
   // R3 의 출구 열쇠는 E13 에서(교무실 열쇠 걸이 P4 를 푼 순간, 단계 16), R2 도 E13(단계 17, 당직과 함께 P4), R1 은 아직 이전 위치(단계 6a 에서 확정)
   assert.deepEqual(keyEvents.sort(), ['E13/R2', 'E13/R3', 'R1-e/R1']);
-  assert.deepEqual(ev('E2').chase, 'C1');
-  assert.deepEqual(ev('E2').puzzle, 'P1');
+  assert.ok(!ev('E2').chase && !ev('E2').puzzle, 'E2(첫 귀신 목격, 연결통로 가는 길)에는 추격·퍼즐이 없다');
+  assert.ok(story.sightings.some((s) => s.event === 'E2' && s.level === 2), 'E2 의 귀신은 3층 원경 목격');
   assert.deepEqual(ev('E15').routes, ['R3'], 'R2 는 E14 뒤 엔딩 B');
 });
 
@@ -123,7 +123,7 @@ test('뼈대: P1~P4·C1~C4·PB1~PB9, 사건과 양방향으로 연결', () => {
   assert.deepEqual(powerbanks.map((b) => b.id), Array.from({ length: 9 }, (_, i) => `PB${i + 1}`));
   for (const [list, field] of [[puzzles, 'puzzle'], [chases, 'chase']]) {
     for (const item of list) {
-      assert.ok(item.name && item.place && item.events.length, item.id);
+      assert.ok(item.name && item.place && (item.retired || item.events.length), item.id); // retired = 쓰지 않는 보관 항목(P1·C1)
       for (const id of item.events) {
         const evs = story.events.filter((e) => e.id === id);
         assert.ok(evs.length, `${item.id} → 없는 사건 ${id}`);

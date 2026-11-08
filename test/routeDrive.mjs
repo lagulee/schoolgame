@@ -2,10 +2,9 @@
 // e13e15·e17r2·r1ad·r1eh)과 같은 자리·행동을 이어 붙였다). 사건마다 기대한 사건이 걸렸는지 확인하며 간다.
 import assert from 'node:assert/strict';
 import { PLAYER } from '../src/config.js';
-import { story, chases, puzzles, mid, SCARE } from './worldFull.mjs';
+import { story, chases, mid, SCARE } from './worldFull.mjs';
 import { playToR1d, toP4 as r1ToP4, solveP4 as r1SolveP4, toChase as r1ToChase, runRoute as r1RunRoute } from './worldR1.mjs';
 
-const P1 = puzzles.find((p) => p.id === 'P1');
 const C4 = chases.find((c) => c.id === 'C4');
 const advanceTo = (w, pred, limit = 900) => {
   for (let i = 0; i < limit && !pred(); i++) {
@@ -14,31 +13,18 @@ const advanceTo = (w, pred, limit = 900) => {
   }
 };
 
-// 학교 앞 → 현관 홀(E1) → 1층 동쪽 복도(E2: 추격 C1 → 숨기 P1 → {gyuha} 퇴장)
+// 학교 앞 → 현관 홀(E1) → 구관 3층 동쪽 복도(E2: 연결통로 입구 앞 모퉁이의 귀신 목격 → {gyuha} 퇴장, 추격·퍼즐 없음)
 export function playE1E2(w) {
   w.tick(1);
   assert.equal(w.runner.event, null, '학교 앞에서는 사건이 없다 (자유 탐색)');
   w.at(...mid('lobby'));
   assert.equal(w.runner.event?.id, 'E1', '현관 홀 → E1');
   w.finish('E1');
-  w.at(16.5, -14, 0);
-  w.walk(16.5, -24, PLAYER.walk);
-  assert.equal(w.runner.event?.id, 'E2', '동쪽 복도 → E2');
-  advanceTo(w, () => w.runner.action?.do === 'chase');
-  assert.equal(w.chase.current?.id, 'C1');
-  w.walk(16.5, -51.5, PLAYER.run);
-  w.walk(6.3, -51.5, PLAYER.run);
-  w.walk(6.3, -54.5, PLAYER.walk);
-  assert.equal(w.chase.last?.outcome, 'exit', 'C1 도착');
-  w.tick();
-  assert.equal(w.puzzle.puzzle?.id, 'P1');
-  w.doors.closed = true;
-  w.tick();
-  w.phone.setLight(false);
-  w.walk(2.5, -58, PLAYER.walk);
-  w.tick(P1.hide.pass + 0.3);
-  assert.equal(w.puzzle.last?.outcome, 'solved', 'P1 숨기 성공');
-  w.doors.closed = false;
+  w.at(16.5, -30, 2);
+  w.walk(16.5, -44, PLAYER.walk);
+  assert.equal(w.runner.event?.id, 'E2', '3층 동쪽 복도 → E2');
+  assert.equal(w.chase.current, null, 'E2 에는 추격이 없다');
+  assert.equal(w.puzzle.puzzle, null, 'E2 에는 퍼즐이 없다');
   w.finish('E2');
 }
 

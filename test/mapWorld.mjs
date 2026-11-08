@@ -26,6 +26,7 @@ export function openWorld() {
   const doors = [...site.main.doors, ...site.annex.doors];
   for (const [id, d] of h.doors) if (id === 'entrance' || doors.some((t) => t.id === id && (!t.locked || t.key))) d.on = false;
   new ConnectorState(site.bridge, h.connector, () => true).set(true);
+  new ConnectorState(site.bridge, h.connector.annex, () => false, site.bridge.annexDoor).set(true);
   return col;
 }
 
