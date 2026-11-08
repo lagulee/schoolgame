@@ -71,6 +71,17 @@ export class P3View {
     this.smoke = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTexture(), color: 0x000000, transparent: true, opacity: 0, depthWrite: false }));
     this.smoke.visible = false;
     scene.add(this.ghost, this.smoke);
+    // 틀린 교실에 미리 서 있는 귀신 (P3 진행 중에만 보인다)
+    this.standing = Object.entries(p3.S?.standing ?? {})
+      .filter(([k]) => !k.startsWith('_'))
+      .map(([room, d]) => {
+        const m = new GhostFigure({ name: `p3Standing:${room}` });
+        m.material.opacity = SCENE.ghost.opacity;
+        m.visible = false;
+        m.position.set(d.pos[0], collision.floorHeight(d.pos[0], d.pos[1], d.level) + SCENE.ghost.h / 2, d.pos[1]);
+        scene.add(m);
+        return { room, m };
+      });
     this.pullSeen = null;
     this.stepDone = false;
   }
@@ -101,6 +112,7 @@ export class P3View {
     const C = SCENE.p3;
     this.prints.visible = p3.printsVisible;
     const pull = p3.pull;
+    for (const { room, m } of this.standing) m.visible = p3.active && pull?.room !== room;
     if (pull && this.pullSeen !== pull) {
       this.pullSeen = pull;
       this.begin(pull);
