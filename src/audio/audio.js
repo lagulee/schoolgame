@@ -174,6 +174,15 @@ export class AudioSystem {
     });
   }
 
+  // 일시정지: 소리 컨텍스트 시간을 멈췄다가 이어서 재생
+  pause() {
+    if (this.started) this.ctx.suspend();
+  }
+
+  resume() {
+    if (this.started) this.ctx.resume();
+  }
+
   // 일회성 소리 -------------------------------------------------------
   oneShot(pos, build, opts) {
     if (!this.started) return;

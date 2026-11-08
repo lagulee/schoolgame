@@ -47,6 +47,21 @@ check('이름 칸은 첫 시작 뒤 숨김', !(await page.isVisible('#name-input
 await brightKeySmoke({ press, check, poll });
 check('자유 탐색 안내 문구 (6초 뒤 사라짐, headless 는 느려 문구만 확인)', await S(() => document.getElementById('notice').textContent.includes('운동장')));
 await press('Digit1', 200);
+// 일시정지 (ESC): 프레임·소리 정지, 입력 무시, ESC 로 재개
+{
+  const frames = () => S(() => window.__DEBUG.renderer.info.render.frame);
+  await press('Escape', 80);
+  check('ESC → 일시정지 화면', await poll(() => window.__DEBUG.pause.paused && document.getElementById('pause').classList.contains('show')));
+  check('일시정지 중 소리 정지', await poll(() => window.__DEBUG.audio.ctx.state === 'suspended'));
+  const f0 = await frames();
+  const p0 = await S(() => window.__DEBUG.pos());
+  await press('KeyW', 400);
+  await page.waitForTimeout(500);
+  check('일시정지 중 프레임·이동 정지', (await frames()) === f0 && JSON.stringify(await S(() => window.__DEBUG.pos())) === JSON.stringify(p0));
+  await press('Escape', 80);
+  check('ESC 한 번 더 → 재개', await poll(() => !window.__DEBUG.pause.paused && !document.getElementById('pause').classList.contains('show')));
+  check('재개 뒤 프레임이 다시 진행 + 소리 재개', (await poll((f) => window.__DEBUG.renderer.info.render.frame > f, f0)) && (await poll(() => window.__DEBUG.audio.ctx.state === 'running')));
+}
 await e1e2Smoke({ page, S, press, check, poll }); // 학교 앞 → 현관 홀 E1 → 3층 동쪽 복도 E2 (단계 0c·12, 3층 목격으로 변경)
 await aloneSmoke({ S, check, poll }); // 혼자일 때 연출 (단계 20, STORY 13-3)
 await press('KeyR', 120);

@@ -46,6 +46,20 @@ await page.waitForTimeout(500);
 check('이름 입력 뒤 탭으로 시작 (오버레이 숨김)', await dbg(() => document.getElementById('overlay').classList.contains('hidden') && window.__DEBUG.story.text('{player}') === '하늘'));
 await dbg(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.auto = false; }); // 현관 홀 E1 자동 진입은 smoke 가 점검. 여기서는 메뉴로 사건을 부른다
 
+// 일시정지: ⏸ 버튼 → 정지 화면 → 계속하기
+{
+  const frames = () => dbg(() => window.__DEBUG.renderer.info.render.frame);
+  await page.tap('#pause-btn-touch');
+  await page.waitForTimeout(400);
+  check('터치: ⏸ → 일시정지 화면', await dbg(() => window.__DEBUG.pause.paused && document.getElementById('pause').classList.contains('show')));
+  const f0 = await frames();
+  await page.waitForTimeout(600);
+  check('터치: 일시정지 중 프레임 정지', (await frames()) === f0);
+  await page.tap('.pause-btn');
+  await page.waitForTimeout(500);
+  check('터치: 계속하기 → 재개', await dbg(() => !window.__DEBUG.pause.paused && !document.getElementById('pause').classList.contains('show')));
+  check('터치: 재개 뒤 프레임 진행', (await frames()) > f0);
+}
 // 메뉴: 열기 → 품질 Low 로 낮춰 SwiftShader 에서도 빠르게
 await page.tap('.menu-toggle');
 check('메뉴 열림', await dbg(() => document.querySelector('.menu-panel').classList.contains('open')));

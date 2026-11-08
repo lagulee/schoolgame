@@ -27,6 +27,7 @@ import { setupStartFlow } from './ui/startFlow.js';
 import { setupScenes } from './scene/setup.js';
 import { Brightness } from './ui/brightness.js';
 import { mountBrightness } from './ui/brightnessUi.js';
+import { PauseState, mountPause } from './ui/pause.js';
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -127,6 +128,21 @@ const director = new Director({
   litInfo: world.ctx.bld.litInfo,
 });
 
+// 일시정지 (ESC): 시작한 뒤에만. 루프가 step 을 건너뛰고 소리를 멈춘다. 데스크톱은 포인터락 해제 = 일시정지, 재개는 다시 락을 잡을 때
+const pause = new PauseState({
+  canPause: () => startFlow.started,
+  onPause: () => {
+    player.keys.clear();
+    player.analog = null;
+    audio.pause();
+    pauseUi.show(true);
+    if (!touchMode) player.controls.unlock();
+  },
+  onResume: () => { audio.resume(); pauseUi.show(false); },
+});
+const resumeGame = () => (touchMode ? pause.set(false) : player.controls.lock());
+const pauseUi = mountPause({ touch: touchMode, onResume: resumeGame, onPauseTap: () => pause.set(true) });
+
 const hud = new Hud(renderer);
 const state = { quality: 'high', inspect: false, fog: FOG.density };
 
@@ -202,6 +218,8 @@ const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` �
 // F = 대화 넘기기·선택지 결정·근처 상호작용 (story.key). E = 핸드폰 화면 열기/닫기
 addEventListener('keydown', (e) => {
   if (e.repeat || gateUi.open) return;
+  if (e.code === 'Escape') { pause.paused ? resumeGame() : pause.set(true); return; }
+  if (pause.paused) return;
   if (story.key(e.code)) return;
   const fn = KEYS[e.code];
   if (!fn) return;
@@ -230,6 +248,7 @@ if (touchMode) {
       { label: () => (audio.muted ? '소리 켜기' : '음소거'), run: act.mute },
       { label: () => `품질 ${qlabel[state.quality]}`, run: () => act.quality(nextQuality[state.quality]) },
       { label: () => `실내 밝기 ${brightness.label}`, run: () => brightness.cycle() },
+      { label: '일시정지', run: () => pause.set(true) },
       { label: () => `헤드밥 ${Math.round(player.bob.level * 100)}%`, run: dbg(act.bob), show: unlocked },
       { ...flag('bloom', '블룸'), show: unlocked },
       { ...flag('grain', '그레인'), show: unlocked },
@@ -267,8 +286,13 @@ if (touchMode) {
     audio.start();
     player.controls.lock();
   });
-  player.controls.addEventListener('lock', () => overlay.classList.add('hidden'));
-  player.controls.addEventListener('unlock', () => overlay.classList.remove('hidden'));
+  player.controls.addEventListener('lock', () => { overlay.classList.add('hidden'); pause.set(false); });
+  player.controls.addEventListener('unlock', () => {
+    if (!startFlow.started) overlay.classList.remove('hidden');
+    else if (!gateUi.open) pause.set(true); // 시작 뒤 ESC 는 일시정지 화면 (디버그 비밀번호 창을 여느라 풀린 때는 제외)
+  });
+  renderer.domElement.addEventListener('click', () => startFlow.started && !pause.paused && !player.controls.isLocked && !gateUi.open && player.controls.lock()); // 락이 풀린 채 남았을 때 클릭으로 다시 잡기
+  document.addEventListener('pointerlockerror', () => pauseUi.hint('화면을 클릭하면 계속합니다'));
 }
 
 addEventListener('resize', () => {
@@ -330,7 +354,7 @@ function prewarmShaders() {
   lights.setOutdoorLamps(true);
   groups.forEach((g, i) => { g.visible = saved[i]; });
 }
-window.__DEBUG = { scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { pause, audio, scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
@@ -376,6 +400,7 @@ if (shot) {
   let t = 0;
   renderer.setAnimationLoop(() => {
     timer.update();
+    if (pause.paused) return; // 일시정지: 시간·AI·연출·소리 모두 정지 (마지막 프레임이 화면에 남음)
     const dt = Math.min(timer.getDelta(), 0.05);
     t += dt;
     step(t, dt);
