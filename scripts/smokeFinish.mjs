@@ -28,6 +28,7 @@ export async function aloneSmoke({ S, check, poll }) {
   check('혼자일 때: 속삭임 (E2 뒤 구간)', await poll((n) => { const a = window.__DEBUG.scenes.alone; return a.log.length > n && a.log.some((e) => e.key === 'E2'); }, aloneN));
   await S(() => { const a = window.__DEBUG.scenes.alone; a.next = 'dim'; a.wait = 0; });
   check('혼자일 때: 조명 떨림 → 실내 표시등·눈 적응 빛이 어두워진다', await poll(() => window.__DEBUG.interior.atmo.tremble < 0.9));
+  await S(() => { const a = window.__DEBUG.scenes.alone; if (a.dimT >= 0) a.dimT = 1000; }); // 느린 headless 는 떨림(약 2초)이 실제로 수십 초 걸려 남은 시간을 건너뛴다
   check('떨림이 끝나면 그대로', await poll(() => window.__DEBUG.interior.atmo.tremble === 1 && window.__DEBUG.scenes.alone.dimT < 0));
 }
 
