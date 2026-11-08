@@ -89,7 +89,7 @@ export const PLAYER = {
 
 export const LIGHTS = {
   exposure: 0.9,
-  moon: { intensity: 0.95, shadowRange: 30, shadowRes: 1024, offset: [22, 42, 30] },
+  moon: { intensity: 0.95, shadowRange: 30, shadowRes: 1024, offset: [22, 42, 30], snap: 2, refresh: 0.1 },
   hemi: 0.26,
   lamp: { intensity: 26, distance: 18, decay: 2 },
   entrance: { intensity: 5, distance: 9 },

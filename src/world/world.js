@@ -36,7 +36,7 @@ export function buildWorld(scene, col, renderer) {
   ctx.lights = buildLighting(scene, ctx);
   ctx.interior = buildInterior(scene, M, col, ctx, renderer); // 단계 8: 본관 실내 (바깥과 한 월드)
   const updaters = [];
-  updaters.push((t, dt, camera) => ctx.lights.update(camera.position));
+  updaters.push((t, dt, camera) => ctx.lights.update(camera.position, dt));
   updaters.push((t) => ctx.entrance.sign.update(t));
   updaters.push((t) => ctx.sur.sign.update(t));
   updaters.push((t, dt, camera) => ctx.props.cams.update(dt, camera.position));
