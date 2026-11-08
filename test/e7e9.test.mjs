@@ -264,3 +264,9 @@ test('정전: 스토리 초기화 → 불이 다시 켜진 상태, 점프스케�
   assert.equal(w.steps.powerOut, false);
   assert.equal(w.steps.scare, null);
 });
+
+test('P3: 틀린 교실마다 미리 서 있는 귀신 자리가 있다', async () => {
+  const { readFileSync } = await import('node:fs');
+  const S = JSON.parse(readFileSync(new URL('../data/puzzles.json', import.meta.url), 'utf8')).puzzles.find((p) => p.id === 'P3').search;
+  for (const room of S.wrong) assert.ok(S.standing[room]?.pos && S.standing[room].level != null, `${room} 서 있는 귀신`);
+});
