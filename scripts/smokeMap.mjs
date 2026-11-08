@@ -42,11 +42,11 @@ export async function mapSmoke({ S, check, poll, press }) {
   await S(() => window.__DEBUG.player.setView([17.5, 1.6, -22.25], 90, -30, 0));
   const prompt = (t) => poll((t) => { const el = document.getElementById('interact'); return el.style.display !== 'none' && el.textContent.includes(t); }, t); // 다음 프레임의 안내 (이전 글자가 남아 있어도 숨김이면 아님)
   check('PB2 소화전 옆: 줍기 안내', await prompt('보조배터리'));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('E → PB2 주움 (+15%), 물체 사라짐', await poll(() => window.__DEBUG.phone.picked.has('PB2') && !window.__DEBUG.bankView.items.get('PB2').m.visible && window.__DEBUG.phone.battery > 54));
   await S(() => window.__DEBUG.player.setView([22.25, 1.6, -47.75], 180, -20, 1));
   check('PB3 교무실: 서랍 살펴보기 안내 (물체 없음)', await prompt('서랍 살펴보기'));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('E4 전에는 PB3 를 못 줍고 게임 속 잠김 문구만', await poll(() => document.getElementById('toast').textContent.includes('서랍이 잠겨')) && !(await S(() => window.__DEBUG.phone.picked.has('PB3'))));
   await S(() => window.__DEBUG.story.reset());
 }

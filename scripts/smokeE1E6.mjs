@@ -13,7 +13,7 @@ export async function e1e2Smoke({ page, S, press, check, poll }) {
   const e1 = await poll(() => window.__DEBUG.story.event?.id === 'E1');
   const e1s = await S(() => ({ where: window.__DEBUG.where(), begun: window.__DEBUG.phone.begun, lv: window.__DEBUG.phone.level }));
   check('현관 홀에 들어서면 E1 시작 + 배터리 확정 (86~92)', e1 && e1s.begun && e1s.lv >= 86 && e1s.lv <= 92, JSON.stringify(e1s));
-  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
+  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyF', 120);
   await S(() => window.__DEBUG.player.setView([13, 1.6, -1], -90, 0));
   await page.waitForTimeout(800);
   await S(() => window.__DEBUG.player.setView([16.2, 1.6, -1], -90, 0));
@@ -23,11 +23,11 @@ export async function e1e2Smoke({ page, S, press, check, poll }) {
   // headless 는 프레임이 느려 걷지 않고 자리를 옮기며, 그림자가 지나가는 8초는 시간을 건너뛴다
   await S(() => window.__DEBUG.player.setView([16.5, 1.6, -25], 180, 0));
   check('E1 뒤 동쪽 복도 → E2 시작', await poll(() => window.__DEBUG.story.event?.id === 'E2'));
-  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyE', 120);
+  for (let i = 0; i < 12 && (await S(() => window.__DEBUG.story.mode)) === 'line'; i++) await press('KeyF', 120);
   check('E2 대사 뒤 추격 C1 (경로 진행·귀신 실루엣·다른 방 잠김)', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'chase' && D.chase.active && D.scenes.e2.path && D.scenes.view.ghost.visible && D.interior.doors.list.filter((s) => s.forced).length === 6; }));
   await S(() => window.__DEBUG.player.setView([14.8, 1.6, -52], 180, 0));
   await poll(() => document.getElementById('interact').textContent.includes('행정실')); // 새 자리 첫 프레임(셰이더 준비)을 기다린다
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('행정실 문은 잠겨 있다 (추격 중 E = 문)', await poll(() => document.getElementById('toast').textContent.includes('행정실') && window.__DEBUG.story.action?.do === 'chase'));
   await S(() => window.__DEBUG.player.setView([6.3, 1.6, -54], 180, 0));
   check('1-2 교실에 들어서면 추격 도착 → 숨기 시작, 안내 = 라이트 끄기', await poll(() => { const D = window.__DEBUG; return D.story.action?.do === 'puzzle' && D.scenes.e2.hide.phase === 'prep' && document.getElementById('hide-hint').textContent.includes('라이트'); }));
@@ -36,7 +36,7 @@ export async function e1e2Smoke({ page, S, press, check, poll }) {
   check('라이트 끄고 책상 사이 → 그림자가 지나간다', await poll(() => window.__DEBUG.scenes.e2.hide.phase === 'pass'));
   await S(() => { window.__DEBUG.scenes.e2.hide.t = 7.9; });
   check('다 지나가면 숨기 성공 → 잠금 해제', await poll(() => window.__DEBUG.puzzle.last?.outcome === 'solved' && window.__DEBUG.interior.doors.list.every((s) => !s.forced)));
-  for (let i = 0; i < 30 && (await S(() => window.__DEBUG.story.registry.active)) === 'E2'; i++) await press('KeyE', 200);
+  for (let i = 0; i < 30 && (await S(() => window.__DEBUG.story.registry.active)) === 'E2'; i++) await press('KeyF', 200);
   await poll(() => window.__DEBUG.scenes.traces.visible('gyuhaPhone'));
   const e2end = await S(() => ({ done: window.__DEBUG.story.registry.done.has('E2'), obj: window.__DEBUG.story.objective(), trace: window.__DEBUG.scenes.traces.visible('gyuhaPhone') }));
   check('E2 끝 → 목표 문구 바뀜, 현관 출구 앞 떨어진 핸드폰', e2end.done && e2end.obj.includes('5층') && e2end.trace, JSON.stringify(e2end));
@@ -51,7 +51,7 @@ export async function e3e6Smoke({ S, press, check, poll }) {
       const m = await S((e) => (window.__DEBUG.story.registry.active === e ? window.__DEBUG.story.mode : null), id);
       if (m === null) break;
       if (m === 'action') await new Promise((res) => setTimeout(res, 150));
-      else await press('KeyE', 150);
+      else await press('KeyF', 150);
     }
     return poll((e) => window.__DEBUG.story.registry.done.has(e), id);
   };
@@ -59,10 +59,10 @@ export async function e3e6Smoke({ S, press, check, poll }) {
   check('E2 뒤 3층 연결문 앞 → E3 (잠김 확인, 가짜 {gyuha} 등장은 e3e6 단위 테스트)', await poll(() => window.__DEBUG.story.registry.history.includes('E3')) && (await busyDone('E3')));
   await S(() => window.__DEBUG.player.setView([16.5, 1.6, -30], 0, 0, 1));
   check('2층 동쪽 복도 → E4, 복도 모퉁이에 원경 귀신', await poll(() => window.__DEBUG.story.event?.id === 'E4' && window.__DEBUG.scenes.stepsView.ghosts[0].m.visible));
-  for (let i = 0; i < 40 && (await S(() => window.__DEBUG.story.action?.do)) !== 'take'; i++) await press('KeyE', 150); // 자막 넘기기
+  for (let i = 0; i < 40 && (await S(() => window.__DEBUG.story.action?.do)) !== 'take'; i++) await press('KeyF', 150); // 자막 넘기기
   await S(() => window.__DEBUG.player.setView([18.9, 1.6, -43], 90, 0, 1));
   check('교무실 열쇠함 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('열쇠함')));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('열쇠함 E → 연결문 열쇠(hasConnectorKey), E4 끝', await poll(() => window.__DEBUG.story.flags.values.hasConnectorKey) && (await busyDone('E4')));
   await S(() => window.__DEBUG.player.setView([18, 1.6, -57], 0, 0, 2));
   check('열쇠 들고 3층 연결문 앞 → E5 (문 열고 넘어감)', await poll(() => window.__DEBUG.story.event?.id === 'E5') && (await busyDone('E5')));

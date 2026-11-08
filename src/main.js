@@ -192,14 +192,14 @@ const KEYS = {
   KeyE: act.phone, KeyR: act.light, KeyU: act.bank, KeyB: act.bloom, KeyG: act.grain, KeyV: act.vignette, BracketLeft: act.fogLess, BracketRight: act.fogMore,
   KeyL: act.inspect, Digit1: () => act.quality('low'), Digit2: () => act.quality('mid'), Digit3: () => act.quality('high'),
   Minus: act.brightDown, Equal: act.brightUp, NumpadSubtract: act.brightDown, NumpadAdd: act.brightUp,
-  KeyY: act.event, KeyC: act.chase, KeyI: act.puzzle, KeyO: act.puzzleClue, KeyZ: act.puzzleRight, KeyX: act.puzzleWrong, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob, KeyT: act.ghost, KeyF: act.infStamina,
+  KeyY: act.event, KeyC: act.chase, KeyI: act.puzzle, KeyO: act.puzzleClue, KeyZ: act.puzzleRight, KeyX: act.puzzleWrong, KeyN: act.storyNext, KeyJ: act.storyBook, KeyK: act.storyReset, KeyM: act.mute, Backquote: act.hud, KeyP: act.shot, KeyH: act.bob, KeyT: act.ghost, KeyQ: act.infStamina,
 };
 // 잠금 없이 쓰는 키: 핸드폰·라이트·음소거·품질·실내 밝기. ` 키는 잠겨 있으면 비밀번호 창을 연다. 나머지는 모두 디버그 기능
 const FREE_CODES = new Set(['KeyE', 'KeyR', 'KeyM', 'Digit1', 'Digit2', 'Digit3', 'Backquote', 'Minus', 'Equal', 'NumpadSubtract', 'NumpadAdd']);
 const unlocked = () => gate.unlocked;
 const verTap = tapCounter(DEBUG.tapCount, () => DEBUG.tapWindowMs, () => act.unlock());
 const dbg = (run) => () => (gate.unlocked ? run() : toast('디버그 잠금 (` 키로 해제)'));
-// E 우선순위: ① 대화·선택지 ② 근처 상호작용 대상 ③ 핸드폰 화면 열기/닫기. 앞의 둘(story.key)이 소비하지 않은 키만 단축키로 넘긴다
+// F = 대화 넘기기·선택지 결정·근처 상호작용 (story.key). E = 핸드폰 화면 열기/닫기
 addEventListener('keydown', (e) => {
   if (e.repeat || gateUi.open) return;
   if (story.key(e.code)) return;

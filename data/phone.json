@@ -25,6 +25,6 @@
     "bankPov": "지금은 보조배터리를 쓸 수 없다",
     "bankTooEarly": "지금은 열 수 없다",
     "bankNone": "남은 보조배터리 없음",
-    "bankPlaced": "{id} 놓음 (디버그) — 앞으로 가서 E"
+    "bankPlaced": "{id} 놓음 (디버그) — 앞으로 가서 F"
   }
 }

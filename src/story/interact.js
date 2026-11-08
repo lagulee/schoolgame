@@ -43,7 +43,7 @@ export class Interactions {
     if (best !== this.current) {
       this.current = best;
       this.prompt.style.display = best ? '' : 'none';
-      if (best) this.prompt.textContent = `${this.opts.touch ? '✋' : 'E'}  ${best.label}`;
+      if (best) this.prompt.textContent = `${this.opts.touch ? '✋' : 'F'}  ${best.label}`;
     }
   }
 

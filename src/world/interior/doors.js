@@ -1,5 +1,5 @@
 // 실내 문 (단계 8 본관, 단계 9 신관): 교실·교무실 미닫이 문짝(열면 벽 속으로 밀려 들어감)과 문틀, 잠긴 철문 장식(exit).
-// E 로 연다/닫는다. 잠긴 방은 덜컹거리고 안내만 띄운다 (data/*Interior.json messages). 열쇠 문(key)은 그 플래그가 켜져야 열린다.
+// F 로 연다/닫는다. 잠긴 방은 덜컹거리고 안내만 띄운다 (data/*Interior.json messages). 열쇠 문(key)은 그 플래그가 켜져야 열린다.
 // 처음부터 열려 있는 문(open)은 열린 채 시작한다 (신관 야자 교실 뒷문). 사건이 잠시 잠그는 방은 setForced (단계 12, E2 의 P1).
 // 문짝은 InstancedMesh 하나, 문틀·연결통로 문은 정적 Batch. 충돌은 plan.js 가 만든 문 박스 핸들(on)을 켜고 끈다.
 import * as THREE from 'three';

@@ -33,7 +33,7 @@ export async function e10e12Smoke({ S, check, poll, press }) {
   check('P2 시작, 목표 = 당직실 단서', await poll(() => window.__DEBUG.puzzle.puzzle?.id === 'P2' && window.__DEBUG.story.objective().includes('열쇠 번호')));
   await S((p) => window.__DEBUG.player.setView([p[0], p[1], p[2]], 0, -30, 3), LOG);
   check('당직 일지 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('당직 일지')));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('E → 단서(일지), 귀신 실루엣 등장', await poll(() => window.__DEBUG.puzzle.puzzle?.got.includes('log') && window.__DEBUG.scenes.p2.ghost && window.__DEBUG.scenes.p2View.mesh.visible));
   await S(() => { const D = window.__DEBUG; D.scenes.p2.use('calendar'); D.scenes.p2.use('blackboard'); });
   for (let i = 0; i < 60 && (await S(() => window.__DEBUG.puzzle.active)); i++) {

@@ -58,11 +58,11 @@ export function setupStory({ player, touch, toast }) {
     setPlayerName(name) {
       runner.setPlayerName(name);
     },
-    // 키 입력 우선순위: ① 대화·선택지 ② E = 근처(interactRadius) 대상 상호작용. 소비했으면 true
-    // 소비하지 않은 E 는 main.js 가 핸드폰 화면 열기/닫기로 쓴다 (③)
+    // 키 입력 우선순위: ① 대화·선택지 ② F = 근처(interactRadius) 대상 상호작용. 소비했으면 true
+    // E 는 상호작용이 아니라 항상 main.js 가 핸드폰 화면 열기/닫기로 쓴다 (③)
     key(code) {
       if (storyKey(runner, code)) return true;
-      return code === 'KeyE' && interactions.use();
+      return code === 'KeyF' && interactions.use();
     },
     // 디버그: 순서상 다음 사건 불러오기
     next() {

@@ -33,7 +33,7 @@ export async function e7e9Smoke({ S, check, poll, press }) {
   await advanceTo('puzzle');
   await S(() => window.__DEBUG.player.setView([-9.4, 1.6, -89.6], 180, 0, 1));
   check('3-5 교실 가방 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('가방')));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('가방 E → 단서(소지품), 젖은 발자국 보임', await poll(() => window.__DEBUG.puzzle.puzzle?.got.includes('belongings') && window.__DEBUG.scenes.p3View.prints.visible));
   await S(() => window.__DEBUG.player.setView([1.5, 1.6, -87], 0, 0, 1));
   check('틀린 교실(3-6) → 검은 연기', await poll(() => window.__DEBUG.scenes.p3.pull && window.__DEBUG.scenes.p3View.smoke.visible));
@@ -47,6 +47,6 @@ export async function e7e9Smoke({ S, check, poll, press }) {
   await advanceTo('take');
   await S((p) => window.__DEBUG.player.setView([p[0], 1.6, p[1]], 180, -30, p[2]), DESK4);
   check('4층 2-10 책상 위 책 살펴보기', await poll(() => document.getElementById('interact').textContent.includes('책')));
-  await press('KeyE', 120);
+  await press('KeyF', 120);
   check('E9 책 → 끝, 목표 = 구관으로', (await busyDone('E9')) && (await S(() => window.__DEBUG.story.objective().includes('구관'))));
 }

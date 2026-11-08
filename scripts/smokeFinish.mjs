@@ -38,7 +38,7 @@ export async function endingRestartSmoke({ S, press, check, poll }) {
   await S(() => document.querySelector('#story .story-restart').click()); // 포인터락 중이라 화면 클릭 대신 (키보드 click 과 같은 경로)
   await press('Enter', 100);
   check('버튼·Enter → 처음부터 다시 (2번), 카드는 그대로', await poll(() => window.__restart === 2 && window.__DEBUG.story.mode === 'ending'));
-  await press('KeyE', 100);
+  await press('KeyF', 100);
   check('E → 카드 닫힘, 대화창에서는 버튼 숨김', await poll(() => window.__DEBUG.story.mode !== 'ending') && (await S(() => { window.__DEBUG.story.ui.showLine({ style: 'dialog', speaker: 'x', text: 'y' }); const v = getComputedStyle(document.querySelector('#story .story-restart')).display; window.__DEBUG.story.ui.hide(); return v === 'none'; })));
 }
 

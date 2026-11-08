@@ -64,7 +64,7 @@ await S(() => { window.__DEBUG.prelude.enabled = false; window.__DEBUG.scenes.au
 await press('KeyB', 100);
 check('잠금: B(블룸) 무시', await S(() => window.__DEBUG.world.ctx && !window.__DEBUG.player.ghost && !window.__DEBUG.gate.unlocked));
 await press('KeyT', 100);
-await press('KeyF', 100);
+await press('KeyQ', 100);
 check('잠금: T·F 무시', await S(() => !window.__DEBUG.player.ghost && !window.__DEBUG.player.stamina.infinite));
 await press('Backquote', 100);
 check('잠금: ` 키 → 비밀번호 창', await poll(() => getComputedStyle(document.getElementById('gate')).display !== 'none'));
@@ -75,10 +75,10 @@ await page.fill('#gate input', '3141');
 await page.keyboard.press('Enter');
 check('3141 → 잠금 해제 + 창 닫힘', await poll(() => window.__DEBUG.gate.unlocked && getComputedStyle(document.getElementById('gate')).display === 'none'));
 await press('KeyT', 100);
-await press('KeyF', 100);
-check('T → 유령 모드, F → 무한 스태미나', await S(() => window.__DEBUG.player.ghost && window.__DEBUG.player.stamina.infinite));
+await press('KeyQ', 100);
+check('T → 유령 모드, Q → 무한 스태미나', await S(() => window.__DEBUG.player.ghost && window.__DEBUG.player.stamina.infinite));
 await press('KeyT', 100);
-await press('KeyF', 100);
+await press('KeyQ', 100);
 check('T·F 다시 → 꺼짐', await S(() => !window.__DEBUG.player.ghost && !window.__DEBUG.player.stamina.infinite));
 await page.waitForTimeout(3000);
 const p0 = await page.evaluate(() => window.__DEBUG.pos());
@@ -218,24 +218,24 @@ check('S1 계단으로 2층 (level 1, 바닥 높이 4.05)', up.lv === 1 && near(
 check('HUD 에 층·실내 표시', await poll(() => /층 1 /.test(document.getElementById('hud').textContent) && document.getElementById('hud').textContent.includes('실내: 2층')));
 await walkIn([-16.8, 1.6, -52], 0, 0, 1);
 check('잠긴 교실 문 안내 (2층 1-3)', await poll(() => document.getElementById('interact').textContent.includes('1-3 문 열기')));
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('잠긴 문: E → 잠김 안내, 문은 그대로', await poll(() => document.getElementById('toast').textContent.includes('잠겨 있다')) && !(await S(() => window.__DEBUG.interior.doors.openIds.length)));
 await walkIn([-8.3, 1.6, -52], 0, 0, 0);
 check('1층 1-1 교실 문 안내', await poll(() => document.getElementById('interact').textContent.includes('1-1 문 열기')));
 const blocked = await walkIn(null, 0, 2);
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('E → 문 열림 + 안내가 닫기로 바뀜', await poll(() => window.__DEBUG.interior.doors.openIds.includes('1F-1-1') && document.getElementById('interact').textContent.includes('1-1 문 닫기')));
 const inRoom = await walkIn(null, 0, 2.5);
 check('닫힌 문은 막고, 연 문으로 교실에 들어감 (마루 바닥)', blocked.z > -53 && inRoom.z < -53.6 && inRoom.surf === 'wood', JSON.stringify([blocked, inRoom]));
 // 단계 9 신관: 본관 3층 연결통로 입구 → 연결문(열쇠 없으면 잠김, hasConnectorKey 면 열림) → 통로 → 신관 3층 → 계단으로 4층
 await walkIn([18.5, 1.6, -60.9], 0, 0, 2);
 check('연결문 안내 (본관 3층 연결통로 입구)', await poll(() => document.getElementById('interact').textContent.includes('연결문 열기')));
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('열쇠 없으면 연결문 잠김 안내, 문은 닫힌 채', await poll(() => document.getElementById('toast').textContent.includes('연결문이 잠겨')) && (await S(() => window.__DEBUG.interior.connector.state.f)) === 0);
 const stuck = await walkIn(null, 0, 2);
 check('닫힌 연결문 앞에서 멈춤 (본관 셸 안쪽)', stuck.z > -61.7 && stuck.lv === 2, JSON.stringify(stuck));
 await S(() => window.__DEBUG.story.flags.set('hasConnectorKey', true));
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('hasConnectorKey → E → 연결문 열림 + 안내가 닫기로', await poll(() => window.__DEBUG.interior.connector.state.target === 1 && document.getElementById('interact').textContent.includes('연결문 닫기')));
 const cross = await walkIn(null, 0, 16);
 check('연 문으로 통로를 지나 신관 3층 홀까지 (바닥 7.65, 층 그대로)', cross.z < -84 && cross.lv === 2 && near(cross.y, 7.65) && cross.inside, JSON.stringify(cross));
@@ -246,11 +246,11 @@ const up4 = await walkIn(null, 90, 3.6);
 check('신관 동쪽 계단으로 4층 (level 3, 바닥 11.25)', up4.lv === 3 && near(up4.y, 11.25), JSON.stringify(up4));
 await walkIn([1.5, 1.6, -89.6], 90, 0, 3);
 check('4층 책상 위 책 살펴보기 안내', await poll(() => document.getElementById('interact').textContent.includes('책상 위 책')));
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('E5 전이면 임시 문구만 (earlyBook 그대로)', await poll(() => document.getElementById('toast').textContent.includes('누군가의 책')) && !(await S(() => window.__DEBUG.story.flags.values.earlyBook)));
 await walkIn([4.4, 1.6, -91], 0, 0, 4);
 check('5층 내 책 교실(2-13) 문 안내', await poll(() => document.getElementById('interact').textContent.includes('2-13 문 열기')));
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('열쇠 교실은 잠김 (hasClassKey 없음)', await poll(() => document.getElementById('toast').textContent.includes('2-13 — 잠겨 있다')) && !(await S(() => window.__DEBUG.interior.doorsA.openIds.includes('A5F-2-2'))));
 await walkIn([8, 1.6, -91.5], 0, 0.1, 1);
 const yl = await S(() => ({ inside: window.__DEBUG.interior.atmo.inside, inRoom: window.__DEBUG.interior.atmo.yajaInRoom, open: window.__DEBUG.interior.doorsA.openIds }));
@@ -289,7 +289,7 @@ const finishEvent = async () => {
   for (let i = 0; i < 40; i++) { // R1-d 는 대화가 길다 (단계 18)
     const mode = await S(() => window.__DEBUG.story.mode);
     if (mode === 'action') await S(() => window.__DEBUG.story.resume()); // 추격·숨기(행동 줄)는 위 E2 점검에서 봤으므로 건너뜀
-    else if (mode === 'line') await press('KeyE', 120);
+    else if (mode === 'line') await press('KeyF', 120);
     else break;
   }
 };
@@ -313,7 +313,7 @@ for (let i = 0; i < 15; i++) {
     await S(() => { window.__DEBUG.phone.s.battery = 50; });
     await press('KeyU', 120);
     check('U → 보조배터리 안내 표시', await poll(() => document.getElementById('interact').style.display !== 'none' && document.getElementById('interact').textContent.includes('보조배터리')));
-    await press('KeyE', 120);
+    await press('KeyF', 120);
     const pb = await ph();
     check('근처 대상이 있으면 E = 줍기 (화면 안 열림), +15%', pb.picked.includes('PB1') && !pb.open && Math.abs(pb.bat - 65) < 0.5, JSON.stringify(pb));
     check('주운 뒤 안내 사라짐', await poll(() => document.getElementById('interact').style.display === 'none'));
@@ -362,7 +362,7 @@ check('숫자키 선택 → 남는다', await poll(() => window.__DEBUG.story.mo
 check('선택 중 숫자키가 품질을 바꾸지 않음', (await S(() => document.getElementById('hud').textContent.match(/품질 (\w+)/)?.[1])) === q, q);
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); });
 await press('KeyS', 120);
-await press('KeyE', 120);
+await press('KeyF', 120);
 check('S 로 항목 이동(기본값 남는다 → 따라간다, 순환) → E 결정', await poll(() => window.__DEBUG.story.mode === 'idle' && window.__DEBUG.story.flags.values.dutyCompanion && !window.__DEBUG.player.frozen));
 await S(() => { const r = window.__DEBUG.story; r.jump('E12'); while (r.mode === 'line') r.advance(); r.update(10.5); });
 check('무응답 10초 → 기본값 남는다', await S(() => window.__DEBUG.story.mode === 'idle' && !window.__DEBUG.story.flags.values.dutyCompanion));

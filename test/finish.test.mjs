@@ -166,7 +166,7 @@ test('엔딩 카드: Enter = 처음부터 다시(onRestart), E = 닫기. 엔딩�
   assert.equal(storyKey(runner, 'Enter'), true);
   assert.equal(restarts, 1);
   assert.equal(runner.mode, 'ending', 'Enter 는 카드를 닫지 않는다');
-  assert.equal(storyKey(runner, 'KeyE'), true);
+  assert.equal(storyKey(runner, 'KeyF'), true);
   assert.equal(runner.mode, 'idle', 'E 는 닫기');
   assert.ok(runner.start('E1'));
   assert.equal(storyKey(runner, 'Enter'), true);

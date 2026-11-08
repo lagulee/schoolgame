@@ -29,7 +29,7 @@ export class StoryUI {
     this.name = el('div', 'story-name', this.dlg);
     this.body = el('div', 'story-text', this.dlg);
     this.hint = el('div', 'story-hint', this.dlg);
-    this.hintText = opts.touch ? '탭하여 계속 ▶' : 'E 계속 ▶';
+    this.hintText = opts.touch ? '탭하여 계속 ▶' : 'F 계속 ▶';
     this.hint.textContent = this.hintText;
     this.restart = el('button', 'story-restart', this.dlg);
     this.restart.type = 'button';
@@ -57,7 +57,7 @@ export class StoryUI {
       const ending = style === 'ending';
       this.dlg.classList.toggle('ending', ending);
       this.restart.style.display = ending ? '' : 'none';
-      this.hint.textContent = ending ? (this.opts.touch ? '탭하여 닫고 둘러보기 ▶' : 'E 닫고 둘러보기 ▶') : this.hintText;
+      this.hint.textContent = ending ? (this.opts.touch ? '탭하여 닫고 둘러보기 ▶' : 'F 닫고 둘러보기 ▶') : this.hintText;
       this.name.textContent = speaker;
       this.name.style.display = speaker ? '' : 'none';
       this.target = this.body;
@@ -141,7 +141,7 @@ export function storyKey(runner, code) {
   if (runner.choosing) {
     if (code === 'ArrowUp' || code === 'KeyW') runner.moveSelection(-1);
     else if (code === 'ArrowDown' || code === 'KeyS') runner.moveSelection(1);
-    else if (code === 'KeyE' || code === 'Enter' || code === 'Space') runner.choose();
+    else if (code === 'KeyF' || code === 'Enter' || code === 'Space') runner.choose();
     else if (/^Digit[1-9]$/.test(code)) runner.choose(Number(code.slice(5)) - 1);
     else return false;
     return true;
@@ -152,7 +152,7 @@ export function storyKey(runner, code) {
     return true;
   }
   // 행동 줄(추격·숨기) 동안 E 는 문·물건 상호작용으로 넘긴다 (단계 12)
-  if (runner.active && runner.mode !== 'action' && (code === 'KeyE' || code === 'Enter' || code === 'Space')) {
+  if (runner.active && runner.mode !== 'action' && (code === 'KeyF' || code === 'Enter' || code === 'Space')) {
     runner.advance();
     return true;
   }

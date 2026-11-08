@@ -11,7 +11,7 @@ export async function toMingeonLine({ S, press }) {
     const c = await S(() => { const r = window.__DEBUG.story; const l = r.mode === 'line' ? r.event.lines[r.lineIdx] : null; return { mode: r.mode, me: l?.who === 'mingeon' && (l.style ?? 'dialog') === 'dialog' }; });
     if (c.me || (c.mode !== 'line' && c.mode !== 'action')) return;
     if (c.mode === 'action') await S(() => window.__DEBUG.story.resume());
-    else await press('KeyE', 120);
+    else await press('KeyF', 120);
   }
 }
 
