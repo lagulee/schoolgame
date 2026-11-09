@@ -118,8 +118,42 @@ export function buildLighting(scene, ctx) {
   // 실내(k > 0.98)에서는 가로등 점광원을 아예 끈다 (실내 배율 12 % 라 거의 안 보이고, 점광원 하나마다 모든 재질의 계산이 늘어난다).
   // 켜고 끌 때 셰이더가 다시 컴파일되므로 main.js prewarmShaders 가 두 상태를 미리 만들어 둔다
   out.setOutdoorLamps = (on) => {
-    for (const lamp of out.lamps) lamp.light.visible = on;
+    for (const lamp of out.lamps) lamp.light.userData.forceOff = !on;
+    outdoor = on;
+    applyBudget(lastCam);
   };
+
+  // 점광원 예산 (렉 점검, v1.28.6): three 의 앞쪽 렌더링은 켜진(visible) 점광원 전부를 모든 재질의 픽셀 셰이더에서 돌린다.
+  // 장면에는 점광원이 18개(가로등 6·현관·LED 2·필로티·야자·실내 표시등·눈앞 빛·옥상 2…)인데 플레이어 근처에서 실제로 쓰이는 건 몇 개뿐이라,
+  // 카메라에 영향이 큰 순서로 K 개만 켠다. 켜진 개수가 늘 같아서 셰이더가 다시 컴파일되지 않는다 (바깥/실내 두 값만 main.js prewarmShaders 가 미리 만든다)
+  const B = LIGHTS.budget;
+  const lightList = [];
+  let outdoor = true;
+  const lastCam = new THREE.Vector3();
+  let listAge = Infinity;
+  const wp = new THREE.Vector3();
+  const collect = () => {
+    lightList.length = 0;
+    scene.traverse((o) => { if (o.isPointLight) lightList.push(o); });
+    listAge = 0;
+  };
+  const score = (l, cam) => {
+    if (l.userData.forceOff) return -1;
+    l.getWorldPosition(wp);
+    const over = Math.max(0, wp.distanceTo(cam) - l.distance * B.reach); // 이 반경 안이면 거리 무관, 밖이면 급히 줄어든다
+    return (l.intensity * (l.visible ? B.keep : 1)) / (1 + over * over);
+  };
+  const applyBudget = (cam) => {
+    lastCam.copy(cam);
+    if (!lightList.length) collect();
+    const k = outdoor ? B.outdoor : B.indoor;
+    const ranked = lightList.map((l) => [score(l, cam), l]).sort((a, b) => b[0] - a[0]);
+    ranked.forEach(([sc, l], i) => { l.visible = i < k && sc >= 0; });
+    // 켜진 개수는 늘 k 로 맞춘다 (개수가 바뀌면 셰이더가 다시 컴파일된다). 모자라면 꺼 둔 순서대로 채운다
+    let on = ranked.filter(([, l]) => l.visible).length;
+    for (let i = 0; i < ranked.length && on < k; i++) if (!ranked[i][1].visible) { ranked[i][1].visible = true; on++; }
+  };
+  out.applyBudget = applyBudget;
   // 실내에서는 달 그림자를 마지막 자리에 고정해 매 프레임 다시 그리지 않는다
   let frozen = false;
   out.freezeMoon = (on) => {
@@ -138,7 +172,15 @@ export function buildLighting(scene, ctx) {
   let since = 0;
   moon.shadow.autoUpdate = false;
   moon.shadow.needsUpdate = true;
+  let budgetT = 0;
   out.update = (playerPos, dt = 1 / 60) => {
+    budgetT += dt;
+    listAge += dt;
+    if (budgetT >= B.every) {
+      budgetT = 0;
+      if (listAge > B.rescan) collect();
+      applyBudget(playerPos);
+    }
     if (frozen) return;
     since += dt;
     const x = Math.round(playerPos.x / snap) * snap;

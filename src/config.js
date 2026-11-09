@@ -98,6 +98,8 @@ export const LIGHTS = {
   led: { intensity: 8, distance: 11 },
   envIntensity: 0.2,
   inspectBoost: 6, // 점검 모드 hemi 배율
+  // 점광원 예산 (lighting.js): 켜 두는 점광원 수. 바깥은 가로등·현관 등 여럿, 실내는 표시등·눈앞 빛 정도면 충분하다
+  budget: { outdoor: 10, indoor: 6, every: 0.15, rescan: 3, reach: 0.8, keep: 1.3 },
 };
 
 export const FOG = { density: 0.02, min: 0.015, max: 0.04, step: 0.0025 };
