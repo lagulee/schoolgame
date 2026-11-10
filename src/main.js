@@ -58,7 +58,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(PALETTE.fog);
 scene.fog = new THREE.FogExp2(PALETTE.fog, FOG.density);
 
-const camera = new THREE.PerspectiveCamera(PLAYER.fov, innerWidth / innerHeight, 0.05, 500);
+const camera = new THREE.PerspectiveCamera(PLAYER.fov, innerWidth / innerHeight, PLAYER.near, 500);
 camera.position.set(...PLAYER.start);
 
 // 월드

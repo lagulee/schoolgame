@@ -82,7 +82,7 @@ export function buildRoof(scene, M, { def, credits, text, floor5 }) {
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * len, uv.getY(i) * h);
     const m = new THREE.Mesh(geo, wallMat);
     m.rotation.y = ry;
-    m.position.set(x, yB + h / 2, z);
+    m.position.set(x + Math.sin(ry) * 0.006, yB + h / 2, z + Math.cos(ry) * 0.006); // 데크·테의 안쪽 면과 같은 평면이면 지지직거린다 → 수영장 안쪽으로 6 mm (v1.28.9)
     g.add(m);
   }
   const wave = causticTexture();

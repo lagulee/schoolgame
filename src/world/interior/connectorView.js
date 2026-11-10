@@ -8,6 +8,7 @@ import { ConnectorState, connectorFixtures } from './connector.js';
 import { doorSwing, doorLocked } from '../../audio/door.js';
 
 const G = 'bridge';
+const E = INTERIOR.proud; // 같은 평면의 바깥 면보다 이만큼 앞으로
 
 export function buildConnector(P, batch, MI) {
   const Br = SCHOOL.bridge;
@@ -23,7 +24,7 @@ export function buildConnector(P, batch, MI) {
   for (const side of ['w', 'e']) {
     const inX = side === 'w' ? 1 : -1; // 통로 안쪽 방향
     const xw = side === 'w' ? x0 : x1;
-    const [a, b] = side === 'w' ? [xw - t, xw] : [xw, xw + t];
+    const [a, b] = side === 'w' ? [xw - t, xw + E] : [xw - E, xw + t]; // 바깥 통로 벽(bridge.js)의 안쪽 면과 같은 평면이라 지지직거렸다 → 안으로 E (v1.28.9)
     const face = side === 'w' ? 'e' : 'w';
     batch.box(G, 'wall', a, y, z0, b, y + Br.sill, z1, face); // 띠창 아래
     batch.box(G, 'wall', a, y + Br.head, z0, b, ceil, z1, face); // 띠창 위
@@ -40,17 +41,21 @@ export function buildConnector(P, batch, MI) {
     for (const r of P.bars.filter((v) => v.side === side)) batch.box(G, 'railTop', xw - inX * 0.05 - 0.03, y + Br.sill, r.z - 0.04, xw - inX * 0.05 + 0.03, y + Br.head, r.z + 0.04, 'tnsew');
   }
   // 셸 구멍 안: 문 양옆 벽·문 위 벽, 문틀 (양면). 본관 쪽 연결문과 신관 쪽 문 둘 다
-  for (const [a0, c0, a1, c1] of P.jambs) batch.box(G, 'wall', a0, y, c0, a1, ceil, c1, 'nsew');
+  // 양쪽 면이 건물 외벽 셸의 안팎 면과 같은 평면이다 → 양쪽으로 E 만큼 내민다
+  const proud = (c0, c1) => [c0 - E, c1 + E];
+  for (const [a0, c0, a1, c1] of P.jambs) { const [p0, p1] = proud(c0, c1); batch.box(G, 'wall', a0, y, p0, a1, ceil, p1, 'nsew'); }
   const k = ANNEX.connector.frame;
   for (const d of [P.door, P.annexDoor]) {
     const top = d.y + d.h;
     const [hx] = d.hinge;
     const [, za0, , za1] = d.closed;
-    batch.box(G, 'wall', hx, top, za0, hx + d.w, ceil, za1, 'nsb');
+    const [pa0, pa1] = proud(za0, za1);
+    batch.box(G, 'wall', hx, top, pa0, hx + d.w, ceil, pa1, 'nsb');
+    const o = 0.004; // 문틀은 문 자리 안쪽으로 살짝 겹쳐, 옆벽·문 위 벽의 면과 같은 평면이 되지 않게
     for (const [za, zb] of [[za0 - 0.02, za0 + 0.01], [za1 - 0.01, za1 + 0.02]]) {
-      batch.box(G, 'doorFrame', hx - k, d.y, za, hx, top + k, zb, 'nsew');
-      batch.box(G, 'doorFrame', hx + d.w, d.y, za, hx + d.w + k, top + k, zb, 'nsew');
-      batch.box(G, 'doorFrame', hx, top, za, hx + d.w, top + k, zb, 'nsb');
+      batch.box(G, 'doorFrame', hx - k, d.y, za, hx + o, top + k, zb, 'nsew');
+      batch.box(G, 'doorFrame', hx + d.w - o, d.y, za, hx + d.w + k, top + k, zb, 'nsew');
+      batch.box(G, 'doorFrame', hx, top - o, za, hx + d.w, top + k, zb, 'nsb');
     }
   }
   // 꺼진 형광등 (통로 가운데 줄)

@@ -121,10 +121,16 @@ function addSpace(P, sp, here, shells, faces) {
       const pb = Math.min(b, p.b);
       if (pb - pa < 1e-3) continue;
       if (p.type === 'out') {
-        for (const rr of subtractRect(sideStrip(r, d, pa, pb, INTERIOR.wall, 1), shells)) {
+        const kept = subtractRect(sideStrip(r, d, pa, pb, INTERIOR.wall, 1), shells);
+        for (const rr of kept) {
           P.walls.push({ L, rect: rr, y0, y1, mat: 'wall' });
           P.solids.push({ rect: rr, level: L });
         }
+        // 외벽 셸과 겹쳐 잘린 구간: 셸의 벽돌 옆면이 드러나고 셸끼리 모서리만 닿은 곳은 바깥이 보였다 (v1.28.9).
+        // 그 구간은 칸 안쪽으로 얇은 마감 판을 덧댄다 (충돌은 셸이 맡는다)
+        const at = SIDE[d].at(r);
+        const whole = kept.filter((rr) => near(SIDE[OPP[d]].at(rr), at)).map((rr) => SIDE[d].span(rr));
+        for (const [la, lb] of subtractSpans([pa, pb], whole)) P.walls.push({ L, rect: sideStrip(r, d, la, lb, INTERIOR.patch, -1), y0, y1, mat: 'wall', patch: true });
       } else if (p.type === 'rail') {
         const rr = sideStrip(r, d, pa, pb, INTERIOR.rail.t, -1);
         P.rails.push({ L, rect: rr, y: y0, side: d });

@@ -21,7 +21,8 @@ export function buildAnnex(root, M) {
   const wall = addWorldStain(M.whiteWall.clone(), 0.7);
   wall.color.setHex(A.wallColor);
   for (const [x0, z0, x1, z1] of annexWalls()) addBlock(g, wall, x0, 0, z0, x1, top, z1, { tile: 3 });
-  addBlock(g, M.concrete, A.x0, roof - 0.3, A.z0, A.x1, roof, A.z1, { tile: 3 });
+  const inset = 0.02; // 지붕 슬래브 옆면이 외벽 면과 같은 평면이면 지붕선이 지지직거린다 → 벽 안쪽으로 (v1.28.9)
+  addBlock(g, M.concrete, A.x0 + inset, roof - 0.3, A.z0 + inset, A.x1 - inset, roof, A.z1 - inset, { tile: 3 });
 
   const [cx0, cx1] = A.classes[A.yaja.cls];
   const fl = A.yaja.floor;

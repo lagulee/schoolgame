@@ -60,7 +60,8 @@ export function buildStructure(P, batch, MI) {
   }
   for (const c of P.columns) {
     const [x0, z0, x1, z1] = c.rect;
-    batch.box(SH, 'wall', x0, INTERIOR.courtyardFloor, z0, x1, roof, z1, 'nsew');
+    const e = INTERIOR.proud * 2; // 슬래브 끝면·난간과 같은 평면이면 지지직거린다 → 기둥을 사방으로 조금 키워 그린다 (v1.28.9, 충돌은 그대로)
+    batch.box(SH, 'wall', x0 - e, INTERIOR.courtyardFloor, z0 - e, x1 + e, roof, z1 + e, 'nsew');
   }
   // 중정: 1층 화단 바닥 + 지붕 아래 천장 (본관만)
   if (P.court) {
@@ -72,7 +73,7 @@ export function buildStructure(P, batch, MI) {
   // 유리벽 (출입문 홀 남쪽): 안쪽에서 본 뿌연 유리 + 틀
   for (const g of P.glass) {
     const S = SIDE[g.side];
-    const at = g.at - S.out * 0.002;
+    const at = g.at - S.out * INTERIOR.proud; // 뒤의 외벽 면과 2 mm 차이라 멀리서 지지직거렸다 (v1.28.9)
     const pts = S.along === 'x' ? [[g.a, g.y0, at], [g.b, g.y0, at], [g.b, g.y1, at], [g.a, g.y1, at]] : [[at, g.y0, g.a], [at, g.y0, g.b], [at, g.y1, g.b], [at, g.y1, g.a]];
     const n = S.along === 'x' ? [0, 0, -S.out] : [-S.out, 0, 0];
     batch.quad(G(g.L), 'frosted', pts, n, (p) => [(S.along === 'x' ? p[0] - g.a : p[2] - g.a) / (g.b - g.a), (p[1] - g.y0) / (g.y1 - g.y0)]);
