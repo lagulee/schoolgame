@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DIM, SCHOOL_NAME } from '../config.js';
+import { DIM, SCHOOL, INTERIOR, SCHOOL_NAME } from '../config.js';
 import { addBlock, addBox, addPlane, instanced, mat4 } from './geom.js';
 import { LedSign } from './ledSign.js';
 
@@ -49,8 +49,11 @@ export function buildEntrance(root, M, col) {
   const dw = dz1 - dz0;
   const fx0 = wx - E.frame;
   const fx1 = wx + 0.02;
-  addBlock(g, M.silver, fx0, doorY, dz0 - E.frame, fx1, doorY + E.top - 0.02, dz0, { cast: false });
-  addBlock(g, M.silver, fx0, doorY, dz1, fx1, doorY + E.top - 0.02, dz1 + E.frame, { cast: false });
+  // 틀 기둥·윗틀은 셸 두께 + 실내 마감까지 채운다: 예전에는 바깥 2 cm 뿐이라 문 옆 안쪽 면에 셸 벽돌이 보였다 (v1.28.10)
+  const rx1 = wx + SCHOOL.shellWall + INTERIOR.lining;
+  addBlock(g, M.silver, fx0, doorY, dz0 - E.frame, rx1, doorY + E.top - 0.02, dz0, { cast: false });
+  addBlock(g, M.silver, fx0, doorY, dz1, rx1, doorY + E.top - 0.02, dz1 + E.frame, { cast: false });
+  addBlock(g, M.silver, fx1, doorY + E.top - E.frame, dz0, rx1, doorY + E.top, dz1, { cast: false });
   addBlock(g, M.silver, fx0, doorY + E.h, dz0, fx1, doorY + E.h + E.frame, dz1, { cast: false });
   addBlock(g, M.silver, fx0, doorY + E.top - E.frame, dz0, fx1, doorY + E.top, dz1, { cast: false });
   const transom = new THREE.Mesh(new THREE.PlaneGeometry(dw, E.top - E.h - 2 * E.frame), M.glass);

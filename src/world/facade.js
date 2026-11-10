@@ -55,9 +55,9 @@ export class FacadeKit {
 
     // 붉은 가로띠 (층 슬래브 높이, 0.1m 돌출) + 화강암 기단 + 파라펫 두겁
     for (let k = 1; k <= DIM.floors; k++) {
-      strip(L.band, k * H - DIM.band.h / 2, k * H + DIM.band.h / 2, DIM.band.out / 2, DIM.band.out + 0.02);
+      strip(L.band, k * H - DIM.band.h / 2, k * H + DIM.band.h / 2, DIM.band.out / 2, DIM.band.out); // 벽면에서 시작: 끝면이 옆 벽면과 겹쳐 지지직거리지 않게 (v1.28.10)
     }
-    strip(L.plinth, 0, 0.5, 0.03, 0.08);
+    strip(L.plinth, 0, 0.5, 0.035, 0.07);
     strip(L.coping, top - 0.02, top + 0.12, 0.06, 0.28);
 
     const bays = Math.floor(f.length / DIM.bay);

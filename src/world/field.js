@@ -65,9 +65,10 @@ export function buildField(root, M, col) {
   g.add(instanced(new THREE.CylinderGeometry(0.04, 0.06, 9, 8), M.silver, flags));
 
   // 공 막이 그물 (동·북쪽 끝) + 서쪽 낮은 울타리
-  buildNet(g, M, [F.x1, F.z1 - 0.5], [F.x1, F.z0], F.netH);
-  buildNet(g, M, [F.x1, F.z0], [F.x0, F.z0], F.netH);
-  for (const [a, b] of fieldFenceRuns()) buildNet(g, M, a, b, 1.2, M.iron);
+  const seen = new Set(); // 두 그물·울타리가 만나는 모서리 기둥은 하나만 (겹쳐 그리면 지지직거림, v1.28.10)
+  buildNet(g, M, [F.x1, F.z1 - 0.5], [F.x1, F.z0], F.netH, undefined, seen);
+  buildNet(g, M, [F.x1, F.z0], [F.x0, F.z0], F.netH, undefined, seen);
+  for (const [a, b] of fieldFenceRuns()) buildNet(g, M, a, b, 1.2, M.iron, seen);
 
   // 꺼진 조명탑 2개 (동쪽)
   const towers = [[F.x1 - 1.2, T.cz + 22], [F.x1 - 1.2, T.cz - 22]];
@@ -121,14 +122,21 @@ function buildGoal(g, M, col, cx, z, s) {
 }
 
 // 기둥 + 위아래 레일 + (높은 것은) 그물 면. 충돌은 layout.js (서쪽 울타리) 와 field 경계
-function buildNet(g, M, a, b, hgt, railMat = M.lampPole ?? M.iron) {
+function buildNet(g, M, a, b, hgt, railMat = M.lampPole ?? M.iron, seen = new Set()) {
   const dx = b[0] - a[0];
   const dz = b[1] - a[1];
   const len = Math.hypot(dx, dz);
   const ry = Math.atan2(-dz, dx);
   const n = Math.ceil(len / 6);
   const posts = [];
-  for (let i = 0; i <= n; i++) posts.push(mat4(a[0] + (dx * i) / n, hgt / 2, a[1] + (dz * i) / n, 0, 1, hgt, 1));
+  for (let i = 0; i <= n; i++) {
+    const x = a[0] + (dx * i) / n;
+    const z = a[1] + (dz * i) / n;
+    const key = `${x.toFixed(2)},${z.toFixed(2)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    posts.push(mat4(x, hgt / 2, z, 0, 1, hgt, 1));
+  }
   g.add(instanced(new THREE.BoxGeometry(0.08, 1, 0.08), railMat, posts));
   const mx = (a[0] + b[0]) / 2;
   const mz = (a[1] + b[1]) / 2;
