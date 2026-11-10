@@ -117,6 +117,14 @@ export const QUALITY = {
   high: { pixelRatio: 1.5, shadows: true, post: true, bloom: true, grade: true, fx: 2 },
 };
 
+// 렉 수정 (v1.28.8): 자동 해상도(src/ui/autoRes.js)·미리 올릴 텍스처 한도(src/world/prewarm.js)·전광판 다시 그리기 조건(world.js)
+export const PERF_TUNE = {
+  // target FPS 미만이 window 초 이어지면 해상도 배율을 steps 의 다음 칸으로. settle = 시작·변경 직후 재지 않는 시간, maxGap = 이보다 긴 프레임은 무시
+  autoRes: { target: 40, window: 3, settle: 2, maxGap: 0.5, steps: [1, 0.85, 0.72, 0.6], minRatio: 0.6 },
+  preload: { maxTextures: 400, maxPixels: 2048 * 2048, later: 1.2, debounce: 0.6 }, // later = 나머지 광원 상태를 한 번씩 그려 두는 간격 (초), debounce = 품질을 바꾼 뒤 다시 준비하기까지
+  sign: { behind: -0.25, far: 90 }, // 전광판이 카메라 뒤(방향 내적 < behind)거나 far m 보다 멀면 다시 그리지 않는다
+};
+
 export const EVENTS = {
   lampCooldown: 90,
   ledCooldown: 120,

@@ -118,6 +118,7 @@ export function buildLighting(scene, ctx) {
   // 실내(k > 0.98)에서는 가로등 점광원을 아예 끈다 (실내 배율 12 % 라 거의 안 보이고, 점광원 하나마다 모든 재질의 계산이 늘어난다).
   // 켜고 끌 때 셰이더가 다시 컴파일되므로 main.js prewarmShaders 가 두 상태를 미리 만들어 둔다
   out.setOutdoorLamps = (on) => {
+    if (on === outdoor) return; // 매 프레임 불리므로 바뀔 때만 (예산 정렬을 다시 하지 않게)
     for (const lamp of out.lamps) lamp.light.userData.forceOff = !on;
     outdoor = on;
     applyBudget(lastCam);
@@ -137,8 +138,16 @@ export function buildLighting(scene, ctx) {
     scene.traverse((o) => { if (o.isPointLight) lightList.push(o); });
     listAge = 0;
   };
+  // 켜진 개수를 정확히 k 로 맞추기 위한 빈 점광원(세기 0). 숨긴 묶음(다른 층·옥상) 안의 광원은 그려지지 않으므로 세지 않고,
+  // 모자란 만큼은 이것으로 채운다 → 광원 수가 바깥 k·실내 k 두 값뿐이라 미리 만든 셰이더(prewarm.js)와 항상 맞는다 (v1.28.8)
+  for (let i = 0; i < Math.max(B.outdoor, B.indoor); i++) {
+    const pad = new THREE.PointLight(0x000000, 0, 0.01);
+    pad.visible = false;
+    scene.add(pad);
+  }
+  const shown = (l) => { for (let p = l.parent; p; p = p.parent) if (!p.visible) return false; return true; };
   const score = (l, cam) => {
-    if (l.userData.forceOff) return -1;
+    if (l.userData.forceOff || !shown(l)) return -1;
     l.getWorldPosition(wp);
     const over = Math.max(0, wp.distanceTo(cam) - l.distance * B.reach); // 이 반경 안이면 거리 무관, 밖이면 급히 줄어든다
     return (l.intensity * (l.visible ? B.keep : 1)) / (1 + over * over);
@@ -149,11 +158,10 @@ export function buildLighting(scene, ctx) {
     const k = outdoor ? B.outdoor : B.indoor;
     const ranked = lightList.map((l) => [score(l, cam), l]).sort((a, b) => b[0] - a[0]);
     ranked.forEach(([sc, l], i) => { l.visible = i < k && sc >= 0; });
-    // 켜진 개수는 늘 k 로 맞춘다 (개수가 바뀌면 셰이더가 다시 컴파일된다). 모자라면 꺼 둔 순서대로 채운다
-    let on = ranked.filter(([, l]) => l.visible).length;
-    for (let i = 0; i < ranked.length && on < k; i++) if (!ranked[i][1].visible) { ranked[i][1].visible = true; on++; }
   };
   out.applyBudget = applyBudget;
+  out.outdoorLamps = () => outdoor;
+  out.redrawMoon = () => { moon.shadow.needsUpdate = true; };
   // 실내에서는 달 그림자를 마지막 자리에 고정해 매 프레임 다시 그리지 않는다
   let frozen = false;
   out.freezeMoon = (on) => {

@@ -29,6 +29,7 @@ export class LedSign {
     this.group.add(back, face);
 
     this.glitchUntil = 0;
+    this.hidden = false;
     this.lastDraw = -1;
     this.offsets = this.lines.map(() => 0);
     this.light = null; // 외부에서 붙이는 붉은 PointLight
@@ -67,7 +68,7 @@ export class LedSign {
     // 20fps 로 다시 그림, 글리치 중에는 상태를 0.4초 단위로만 바꿔 깜빡임을 초당 3회 미만으로 유지
     if (t - this.lastDraw < 0.05) return;
     this.lastDraw = t;
-    this.draw(t);
+    if (!this.hidden) this.draw(t); // 안 보일 때는 캔버스·텍스처 갱신을 건너뛴다 (world.js 가 정한다)
     if (this.light) {
       const g = t < this.glitchUntil ? 0.6 : 1;
       this.light.intensity = this.light.userData.base * g * (this.light.userData.dim ?? 1); // dim: 실내 배율

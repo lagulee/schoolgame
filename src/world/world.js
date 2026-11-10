@@ -12,7 +12,7 @@ import { buildSurroundings } from './surroundings.js';
 import { buildLighting } from './lighting.js';
 import { buildSky, buildEnvironment } from './sky.js';
 import { buildInterior } from './interior/index.js';
-import { LIGHTS } from '../config.js';
+import { LIGHTS, PERF_TUNE } from '../config.js';
 
 // 월드 조립. 각 빌더는 (root, M, collision, ctx) 를 받고 필요한 핸들을 돌려준다.
 export function buildWorld(scene, col, renderer) {
@@ -37,8 +37,18 @@ export function buildWorld(scene, col, renderer) {
   ctx.interior = buildInterior(scene, M, col, ctx, renderer); // 단계 8: 본관 실내 (바깥과 한 월드)
   const updaters = [];
   updaters.push((t, dt, camera) => ctx.lights.update(camera.position, dt));
-  updaters.push((t) => ctx.entrance.sign.update(t));
-  updaters.push((t) => ctx.sur.sign.update(t));
+  // 전광판: 20fps 로 캔버스를 다시 그려 텍스처를 올린다 → 카메라 뒤에 있거나 멀면 건너뛴다 (렉 수정, v1.28.8)
+  const signPos = new THREE.Vector3();
+  const camDir = new THREE.Vector3();
+  const signUpdate = (sign) => (t, dt, camera) => {
+    sign.group.getWorldPosition(signPos).sub(camera.position);
+    const d = signPos.length();
+    camera.getWorldDirection(camDir);
+    sign.hidden = d > PERF_TUNE.sign.far || (d > 1 && signPos.dot(camDir) / d < PERF_TUNE.sign.behind);
+    sign.update(t);
+  };
+  updaters.push(signUpdate(ctx.entrance.sign));
+  updaters.push(signUpdate(ctx.sur.sign));
   updaters.push((t, dt, camera) => ctx.props.cams.update(dt, camera.position));
   return {
     M,

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA, DEBUG, FINISH } from './config.js';
+import { LIGHTS, PLAYER, FOG, PALETTE, QUALITY, STAMINA, DEBUG, FINISH, PERF_TUNE } from './config.js';
 import { U } from './world/shared.js';
 import { Collision } from './player/collision.js';
 import { Player } from './player/controller.js';
@@ -16,6 +16,7 @@ import { isTouchDevice, setupTouch, enterImmersive, toggleImmersive } from './pl
 import { setupStory } from './story/setup.js';
 import { setupPhone } from './phone/setup.js';
 import { MapData, placeLabeler } from './world/mapData.js';
+import { prewarmer } from './world/prewarm.js';
 import { NavGuide } from './world/navGuide.js';
 import navData from '../data/nav.json';
 import mapJson from '../data/map.json';
@@ -28,6 +29,7 @@ import { setupScenes } from './scene/setup.js';
 import { Brightness } from './ui/brightness.js';
 import { mountBrightness } from './ui/brightnessUi.js';
 import { PauseState, mountPause } from './ui/pause.js';
+import { AutoRes } from './ui/autoRes.js'; // 자동 해상도 (v1.28.8): FPS 가 낮으면 그리는 해상도만 한 칸씩 낮춘다
 
 // 시작 화면 버전 표시 (배포가 반영됐는지 확인용). 월드 생성 전에 먼저 보이도록 맨 앞에 둔다
 {
@@ -46,7 +48,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = LIGHTS.exposure;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap; // three r186 은 PCFSoft 를 첫 렌더 때 PCF 로 바꾼다 → 처음부터 PCF 로 두어야 미리 만든 셰이더와 맞는다
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.info.autoReset = false; // 후처리 패스까지 합산해 HUD 에 표시
@@ -145,19 +147,26 @@ const pauseUi = mountPause({ touch: touchMode, onResume: resumeGame, onPauseTap:
 
 const hud = new Hud(renderer);
 const state = { quality: 'high', inspect: false, fog: FOG.density };
-
-function applyQuality(name) {
-  state.quality = name;
-  const q = QUALITY[name];
-  const pr = Math.min(devicePixelRatio, q.pixelRatio);
+const autoRes = new AutoRes(PERF_TUNE.autoRes, () => applyRes());
+function applyRes() {
+  const pr = Math.max(PERF_TUNE.autoRes.minRatio, Math.min(devicePixelRatio, QUALITY[state.quality].pixelRatio) * autoRes.scale);
   renderer.setPixelRatio(pr);
   renderer.setSize(innerWidth, innerHeight);
-  post.setQuality(q);
   post.setSize(innerWidth, innerHeight);
+  fx.setPixelRatio(pr);
+}
+// 셰이더·텍스처 미리 준비 (src/world/prewarm.js): 로딩 때와 품질을 바꿀 때 (품질마다 그림자·후처리가 달라 셰이더가 다르다)
+const warm = prewarmer({ renderer, scene, camera, lights, phoneLight: phone.light, post, hold: () => pause.paused, groups: Object.values(world.interior.atmo.groups).filter((g) => g?.isObject3D) });
+function applyQuality(name, again = false) {
+  state.quality = name;
+  const q = QUALITY[name];
+  autoRes.reset();
+  post.setQuality(q);
+  applyRes();
   lights.setShadows(q.shadows);
   phone.light.spot.castShadow = q.shadows;
   fx.setLevel(q.fx);
-  fx.setPixelRatio(pr);
+  if (again && !shot) warm.soon(); // 품질을 연달아 바꾸면 마지막 것만
 }
 
 function setFog(d) {
@@ -184,7 +193,7 @@ const act = {
   fogLess: () => { setFog(state.fog - FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); },
   fogMore: () => { setFog(state.fog + FOG.step); toast(`안개 밀도 ${state.fog.toFixed(4)}`); },
   inspect: () => { state.inspect = !state.inspect; lights.setInspect(state.inspect); toast(`점검 모드 ${onOff(state.inspect)}`); },
-  quality: (name) => { applyQuality(name); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
+  quality: (name) => { applyQuality(name, true); toast(`품질 ${name[0].toUpperCase()}${name.slice(1)}`); },
   event: () => { director.force(); toast(`이상 현상: ${director.status}`); },
   storyNext: () => story.next(),
   storyReset: () => { chase.reset(); puzzle.reset(); story.reset(); scenes.roof.stop(); phone.reset(); player.stamina.reset(); },
@@ -298,17 +307,13 @@ if (touchMode) {
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  post.setSize(innerWidth, innerHeight);
+  applyRes();
 });
 
 applyQuality(shot ? shot.quality : touchMode ? 'mid' : 'high'); // 터치 기기는 Mid 로 시작 (메뉴에서 변경)
 setFog(FOG.density);
 
-const staminaHud = () => {
-  const s = player.stamina;
-  return `스태미나 ${s.value.toFixed(1)}${s.exhausted ? ' 탈진' : ''}${s.draining ? ' 소모' : s.recovering ? ' 회복' : ''}  속도 ${player.speed.toFixed(2)}${player.running ? ' 달리기' : ''}`;
-};
+const staminaHud = (s = player.stamina) => `스태미나 ${s.value.toFixed(1)}${s.exhausted ? ' 탈진' : ''}${s.draining ? ' 소모' : s.recovering ? ' 회복' : ''}  속도 ${player.speed.toFixed(2)}${player.running ? ' 달리기' : ''}`;
 
 function step(t, dt) {
   renderer.info.reset();
@@ -337,24 +342,7 @@ function step(t, dt) {
     });
   }
 }
-// 셰이더 미리 만들기: 핸드폰 라이트를 처음 켜고 끌 때(광원 수·그림자 수가 바뀜) 모든 재질이 한꺼번에 다시 컴파일되어
-// 몇 초씩 멈추던 문제를 막는다. 로딩 중에 라이트 켬/끔 두 상태를 실내 묶음까지 모두 보이게 한 채 한 번씩 그려 둔다.
-function prewarmShaders() {
-  const groups = Object.values(world.interior.atmo.groups).filter((g) => g?.isObject3D);
-  const saved = groups.map((g) => g.visible);
-  const on = phone.light.on;
-  for (const g of groups) g.visible = true;
-  for (const lampsOn of [false, true]) { // 바깥 가로등 점광원: 실내(끔)·바깥(켬) 두 상태 (lighting.setOutdoorLamps)
-    lights.setOutdoorLamps(lampsOn);
-    for (const v of [!on, on]) {
-      phone.light.setOn(v);
-      post.render(0);
-    }
-  }
-  lights.setOutdoorLamps(true);
-  groups.forEach((g, i) => { g.visible = saved[i]; });
-}
-window.__DEBUG = { pause, audio, scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
+window.__DEBUG = { autoRes, pause, audio, scene, camera, step, brightness, mapData, navGuide, where, phonePlace: phone.place, bankView: phone.view, renderer, applyQuality, debugCfg: DEBUG, gate, gateUi, pos: () => camera.position.toArray().map((v) => +v.toFixed(2)), director, world, player, interior: world.interior, story: story.runner, prelude, startFlow, scenes, phone: phone.phone, banks: phone.banks, chase: chase.session, puzzle: puzzle.session };
 // ?light=1 : 라이트를 켠 채 시작 (smoke 등 자동 점검용)
 if (new URLSearchParams(location.search).get('light') === '1') phone.phone.setLight(true);
 
@@ -395,11 +383,12 @@ if (shot) {
     }
   });
 } else {
-  prewarmShaders();
+  warm.now();
   const timer = new THREE.Timer();
   let t = 0;
   renderer.setAnimationLoop(() => {
     timer.update();
+    autoRes.frame(pause.paused ? 0 : timer.getDelta());
     if (pause.paused) return; // 일시정지: 시간·AI·연출·소리 모두 정지 (마지막 프레임이 화면에 남음)
     const dt = Math.min(timer.getDelta(), 0.05);
     t += dt;
