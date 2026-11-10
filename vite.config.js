@@ -10,18 +10,18 @@ const git = (cmd) => {
   }
 };
 
-// 시작 화면 버전: 큰 글씨 `v1.0` (package.json 의 major.minor) + 작은 글씨 커밋 해시.
+// 시작 화면 버전: 큰 글씨 `v1.0.0` (package.json 의 major.minor.patch) + 작은 글씨 커밋 해시.
 // 번호는 `main` 에 반영할 때마다 올린다(CLAUDE.md). 번호를 올리는 걸 잊어도 해시로 새 배포를 구분할 수 있다.
 // 해시 끝 '+' = 커밋 안 된 변경이 있는 로컬 빌드, 개발 서버는 'dev · 해시'.
 function appVersion(command) {
-  const [major, minor] = JSON.parse(readFileSync('package.json', 'utf8')).version.split('.');
+  const [major, minor, patch = '0'] = JSON.parse(readFileSync('package.json', 'utf8')).version.split('.');
   const hash = git('rev-parse --short HEAD') || 'unknown';
   const dirty = git('status --porcelain') ? '+' : '';
   const t = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(new Date());
   return {
-    label: `v${major}.${minor}`,
+    label: `v${major}.${minor}.${patch}`,
     build: command === 'serve' ? `dev · ${hash}${dirty}` : `${hash}${dirty}`,
     time: `${t} KST`,
   };
