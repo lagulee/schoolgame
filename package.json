@@ -1,7 +1,7 @@
 {
   "name": "night-school-demo",
   "private": true,
-  "version": "1.28.7",
+  "version": "1.28.8",
   "type": "module",
   "scripts": {
     "dev": "vite",
